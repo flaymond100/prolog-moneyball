@@ -46,6 +46,13 @@ export default defineConfig([
     },
   },
   {
+    // shadcn/ui components export their cva variants alongside the component.
+    files: ['apps/web/src/components/ui/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [js.configs.recommended],
     languageOptions: {
