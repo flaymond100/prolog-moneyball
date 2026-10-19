@@ -1,6 +1,7 @@
 import { BarChart, LineChart, RadarChart, ScatterChart } from 'echarts/charts'
 import {
   AriaComponent,
+  DataZoomComponent,
   GridComponent,
   LegendComponent,
   MarkLineComponent,
@@ -20,6 +21,7 @@ echarts.use([
   RadarChart,
   ScatterChart,
   AriaComponent,
+  DataZoomComponent,
   GridComponent,
   LegendComponent,
   MarkLineComponent,
@@ -35,9 +37,11 @@ interface ChartProps {
   height?: number
   /** Optional data-table view under the chart. */
   table?: ReactNode
+  /** Click on a data item, e.g. to open a rider profile. */
+  onClick?: (params: { data?: unknown }) => void
 }
 
-export function Chart({ option, label, height = 280, table }: ChartProps) {
+export function Chart({ option, label, height = 280, table, onClick }: ChartProps) {
   return (
     <figure className="space-y-2">
       <div role="img" aria-label={label}>
@@ -47,6 +51,7 @@ export function Chart({ option, label, height = 280, table }: ChartProps) {
           style={{ height }}
           opts={{ renderer: 'svg' }}
           notMerge
+          onEvents={onClick ? { click: onClick } : undefined}
         />
       </div>
       {table && (

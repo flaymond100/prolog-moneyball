@@ -193,3 +193,10 @@ export function metricDef(id: string): MetricDef | undefined {
 export function metricLabel(m: MetricDef): string {
   return m.unit ? `${m.label} (${m.unit})` : m.label
 }
+
+/** Like metricDef, for ids that must exist (defaults); throws on a typo. */
+export function requireMetric(id: string): MetricDef {
+  const def = metricDef(id)
+  if (!def) throw new Error(`Unknown metric: ${id}`)
+  return def
+}

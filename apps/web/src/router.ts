@@ -13,6 +13,7 @@ import { PalettePage } from '@/pages/dev/palette.tsx'
 import { NotFoundPage } from '@/pages/not-found.tsx'
 import { PlaceholderPage } from '@/pages/placeholder.tsx'
 import { RiderPage } from '@/pages/rider.tsx'
+import { ScatterPage } from '@/pages/scatter.tsx'
 import { SquadPage } from '@/pages/squad.tsx'
 
 // Hash history: GitHub Pages has no server-side rewrites, so every deep link
@@ -60,6 +61,21 @@ const compareRoute = createRoute({
   component: ComparePage,
 })
 
+interface ScatterSearch {
+  x?: string
+  y?: string
+}
+
+const scatterRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/scatter',
+  validateSearch: (search: Record<string, unknown>): ScatterSearch => ({
+    x: typeof search.x === 'string' ? search.x : undefined,
+    y: typeof search.y === 'string' ? search.y : undefined,
+  }),
+  component: ScatterPage,
+})
+
 const riderRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/riders/$riderId',
@@ -87,7 +103,7 @@ const routeTree = rootRoute.addChildren([
     riderRoute,
     placeholder('/form', 'Form', '6.6'),
     compareRoute,
-    placeholder('/scatter', 'Scatter', '6.5'),
+    scatterRoute,
     placeholder('/tests', 'Tests', '6.7'),
     placeholder('/settings', 'Settings', '6.8'),
   ]),
