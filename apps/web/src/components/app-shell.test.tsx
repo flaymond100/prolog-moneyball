@@ -36,15 +36,4 @@ describe('AppShell', () => {
     expect(await screen.findByText('Mock Data')).toBeInTheDocument()
     expect(screen.getByText('As of 19 October 2026')).toBeInTheDocument()
   })
-
-  it.each([
-    ['/form', 'Form', '6.6'],
-    ['/scatter', 'Scatter', '6.5'],
-    ['/tests', 'Tests', '6.7'],
-    ['/settings', 'Settings', '6.8'],
-  ])('shows a placeholder at %s', async (path, title, task) => {
-    renderAt(path)
-    expect(await screen.findByRole('heading', { name: title, level: 1 })).toBeInTheDocument()
-    expect(screen.getByText(`This view arrives with task ${task}.`)).toBeInTheDocument()
-  })
 })

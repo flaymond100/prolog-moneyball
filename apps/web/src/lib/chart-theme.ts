@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
 export interface ChartTokens {
-  series: [string, string, string]
+  series: [string, string, string, string, string]
   riderA: string
   riderB: string
   reference: string
@@ -12,7 +12,7 @@ export interface ChartTokens {
 }
 
 const FALLBACK: ChartTokens = {
-  series: ['#3987e5', '#d95926', '#199e70'],
+  series: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181'],
   riderA: '#e2bb7a',
   riderB: '#f6f1e7',
   reference: '#b8ad9a',
@@ -32,6 +32,8 @@ export function useChartTokens(): ChartTokens {
         get('--chart-1', FALLBACK.series[0]),
         get('--chart-2', FALLBACK.series[1]),
         get('--chart-3', FALLBACK.series[2]),
+        get('--chart-4', FALLBACK.series[3]),
+        get('--chart-5', FALLBACK.series[4]),
       ],
       riderA: get('--gold', FALLBACK.riderA),
       riderB: get('--cream', FALLBACK.riderB),
