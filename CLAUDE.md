@@ -43,6 +43,8 @@ Routing uses TanStack Router with hash history (`src/router.ts`), so deep links 
 
 Supabase commands (from Phase 2): `supabase start`, `supabase db diff`, `supabase test db`, `pnpm gen:types`.
 
+`pnpm gen:types` writes `packages/types/src/db.ts` from the **local** database (run `supabase db reset` first), then formats it with Prettier. CI regenerates it and fails if the committed file differs. The output depends on the Supabase CLI version, so CI pins it (`2.98.1` in `.github/workflows/supabase.yml`); upgrade the local CLI and the pin together.
+
 ## Rules
 
 - **Never commit secrets.** Not in the repo, the client bundle or `cron.job` SQL. The client only ever gets `VITE_SUPABASE_URL` and the publishable key. The service role key never leaves Supabase and CI secrets.
