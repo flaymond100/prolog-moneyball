@@ -3,4 +3,5 @@
 export { ageInYears, trainingAgeYears } from './age.ts'
 export { caOnFmScale, caStars } from './ca.ts'
 export { retainedPct } from './durability.ts'
+export { isMeaningfulChange } from './lab.ts'
 export { best, mean, mostLikely } from './summary.ts'

@@ -58,6 +58,22 @@ export interface LabTest {
   fatmaxW: number | null
   carbmaxGH: number | null
   atW: number | null
+  vo2maxLMin?: number | null
+  fatmaxGH?: number | null
+  weightKg?: number | null
+  heightCm?: number | null
+  bodyFatPct?: number | null
+  tester?: string | null
+  notes?: string | null
+}
+
+export interface Anthropometric {
+  athleteId: string
+  date: string
+  heightCm: number | null
+  weightKg: number | null
+  bodyFatPct: number | null
+  notes: string | null
 }
 
 export interface TrainingSummary {
