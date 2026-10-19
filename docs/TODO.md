@@ -10,7 +10,7 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 - If a task conflicts with the KB, the KB wins; stop and ask Kosta.
 - Never invent a threshold or formula. Seed priors in tables, never in code.
 - Ask before anything that touches the remote database outside a migration, rotates secrets or deletes data.
-- Stack: Vite + React 18 + TypeScript (strict), pnpm, Supabase (existing project), TanStack Query/Table/Router, ECharts, Tailwind + shadcn/ui, zod, Vitest, Playwright, pgTAP. British spelling in UI copy.
+- Stack: Vite + React 18 + TypeScript (strict), pnpm, Supabase, TanStack Query/Table/Router, ECharts, Tailwind + shadcn/ui, zod, Vitest, Playwright, pgTAP. British spelling in UI copy.
 - Out of v1: Banister model, recruitment UI, rider logins.
 
 ## Phase 0 – Repository and conventions
@@ -31,7 +31,7 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 
 ## Phase 2 – Supabase link and schema
 
-- [ ] **2.1 Link the existing project.** `supabase init`, `supabase link --project-ref <ref>`, `supabase db pull` as the baseline migration. Do not recreate existing tables. Confirm the project region is in the EU and report it. AC: `supabase db diff` is empty after pull.
+- [ ] **2.1 Link the project and create the baseline.** `supabase init`, `supabase link --project-ref <ref>`. The project started empty, so a baseline migration creates `athletes`, `activities`, `activity_intervals`, `wellness` and `staff` per KB §4–5 (raw jsonb + generated columns, RLS on). Confirm the project region is in the EU and report it. AC: migrations apply to a fresh local database and `supabase db diff` is empty.
 - [ ] **2.2 Generated types.** `supabase gen types typescript --linked > packages/types/db.ts`; npm script `gen:types`; CI fails on stale types.
 - [ ] **2.3 Extend `staff`.** Add `role` enum (`coach`, `analyst`, `medical`, `viewer`) and helper functions `is_staff()`, `has_role(text)` (security definer, stable). AC: pgTAP tests for each role.
 - [ ] **2.4 `rider_profiles`.** Columns per KB §5 incl. `date_of_birth`, `training_age_years`, `training_age_entered_on`, `background`, `primary_type_override`, `hrv_source`, `cohort` (`squad`/`prospect`/`alumni`, default `squad`), `data_source` (`intervals`/`manual_upload`, default `intervals`), `contract_end`. AC: coach writes, staff read.
