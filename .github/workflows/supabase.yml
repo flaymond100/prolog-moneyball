@@ -19,11 +19,25 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Pinned: generated types depend on the CLI version. Upgrade locally and here together.
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.121.0
       # Local stack only — no project link, no remote credentials.
       - run: supabase db start
       - name: Apply all migrations to a fresh local database
         run: supabase db reset --local
       - run: supabase db lint --local --fail-on error
+      - name: Generated DB types are up to date
+        run: |
+          pnpm gen:types
+          git diff --exit-code packages/types/src/db.ts || {
+            echo "::error file=packages/types/src/db.ts::Stale DB types. Run pnpm gen:types and commit the result."
+            exit 1
+          }

@@ -32,7 +32,7 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 ## Phase 2 – Supabase link and schema
 
 - [ ] **2.1 Link the project and create the baseline.** `supabase init`, `supabase link --project-ref <ref>`. The project started empty, so a baseline migration creates `athletes`, `activities`, `activity_intervals`, `wellness` and `staff` per KB §4–5 (raw jsonb + generated columns, RLS on). Confirm the project region is in the EU and report it. AC: migrations apply to a fresh local database and `supabase db diff` is empty.
-- [ ] **2.2 Generated types.** `supabase gen types typescript --linked > packages/types/db.ts`; npm script `gen:types`; CI fails on stale types.
+- [ ] **2.2 Generated types.** `supabase gen types typescript --local > packages/types/src/db.ts` (from the migrations, so CI needs no remote credentials); npm script `gen:types`; CI fails on stale types.
 - [ ] **2.3 Extend `staff`.** Add `role` enum (`coach`, `analyst`, `medical`, `viewer`) and helper functions `is_staff()`, `has_role(text)` (security definer, stable). AC: pgTAP tests for each role.
 - [ ] **2.4 `rider_profiles`.** Columns per KB §5 incl. `date_of_birth`, `training_age_years`, `training_age_entered_on`, `background`, `primary_type_override`, `hrv_source`, `cohort` (`squad`/`prospect`/`alumni`, default `squad`), `data_source` (`intervals`/`manual_upload`, default `intervals`), `contract_end`. AC: coach writes, staff read.
 - [ ] **2.5 `lab_tests` and `anthropometrics`.** Fields and range checks exactly as KB §10; unique (`athlete_id`, `test_date`, `method`); audit table or trigger for edit history. AC: out-of-range inserts fail with a readable error.
