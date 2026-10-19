@@ -8,6 +8,7 @@ describe('@prolog/metrics', () => {
       'best',
       'caOnFmScale',
       'caStars',
+      'isMeaningfulChange',
       'mean',
       'mostLikely',
       'retainedPct',

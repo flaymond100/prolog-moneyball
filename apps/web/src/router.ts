@@ -16,6 +16,7 @@ import { PlaceholderPage } from '@/pages/placeholder.tsx'
 import { RiderPage } from '@/pages/rider.tsx'
 import { ScatterPage } from '@/pages/scatter.tsx'
 import { SquadPage } from '@/pages/squad.tsx'
+import { TestsPage } from '@/pages/tests.tsx'
 
 // Hash history: GitHub Pages has no server-side rewrites, so every deep link
 // (`/#/compare?a=…`) must resolve to index.html and survive a hard refresh.
@@ -83,6 +84,12 @@ const formRoute = createRoute({
   component: FormPage,
 })
 
+const testsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/tests',
+  component: TestsPage,
+})
+
 const riderRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/riders/$riderId',
@@ -111,7 +118,7 @@ const routeTree = rootRoute.addChildren([
     formRoute,
     compareRoute,
     scatterRoute,
-    placeholder('/tests', 'Tests', '6.7'),
+    testsRoute,
     placeholder('/settings', 'Settings', '6.8'),
   ]),
   paletteRoute,
