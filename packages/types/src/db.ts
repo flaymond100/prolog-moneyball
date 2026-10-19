@@ -221,17 +221,20 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string | null
+          role: Database['public']['Enums']['staff_role']
           user_id: string
         }
         ComputedFields: never
         Insert: {
           created_at?: string
           display_name?: string | null
+          role?: Database['public']['Enums']['staff_role']
           user_id: string
         }
         Update: {
           created_at?: string
           display_name?: string | null
+          role?: Database['public']['Enums']['staff_role']
           user_id?: string
         }
         Relationships: []
@@ -331,10 +334,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: { Args: { required_role: string }; Returns: boolean }
+      is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      staff_role: 'coach' | 'analyst' | 'medical' | 'viewer'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -445,6 +449,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      staff_role: ['coach', 'analyst', 'medical', 'viewer'],
+    },
   },
 } as const
