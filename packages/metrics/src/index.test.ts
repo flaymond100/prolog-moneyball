@@ -10,6 +10,7 @@ describe('@prolog/metrics', () => {
       'caStars',
       'mean',
       'mostLikely',
+      'retainedPct',
       'trainingAgeYears',
     ])
   })
