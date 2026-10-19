@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+
+# Environment and secrets
+.env*
+!.env.example
+
+# Supabase local state
+supabase/.temp
+supabase/.branches
+
+# Test output
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+
+# Logs and editor files
+*.log
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
