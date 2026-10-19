@@ -1,0 +1,14 @@
+{
+  "name": "@prolog/metrics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure TypeScript formulas (no IO), shared by the web app and Edge Functions",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
