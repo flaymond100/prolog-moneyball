@@ -30,7 +30,7 @@ PROLOG Cycling Team is a women's road team near Leipzig, launching in the 2027 s
 
 ## 3. Tech stack and conventions
 
-The app is a static Vite + React SPA on GitHub Pages, with all data, auth and jobs in the existing Supabase project.
+The app is a static Vite + React SPA on GitHub Pages, with all data, auth and jobs in one Supabase project.
 
 | Layer | Choice |
 | --- | --- |
@@ -131,11 +131,11 @@ Rules for this pattern:
 
 | Table | Status | Key | Holds |
 | --- | --- | --- | --- |
-| `athletes` | existing | `id` (intervals.icu id) | name, active |
-| `activities` | existing | `id` | raw + \~25 generated columns, `start_date_local` |
-| `activity_intervals` | existing | (`activity_id`, `interval_id`) | raw + generated interval metrics |
-| `wellness` | existing | (`athlete_id`, `date`) | raw + generated wellness and CTL/ATL |
-| `staff` | existing, extend | `user_id` | add `role` enum: coach, analyst, medical, viewer |
+| `athletes` | baseline | `id` (intervals.icu id) | name, active |
+| `activities` | baseline | `id` | raw + \~25 generated columns, `start_date_local` |
+| `activity_intervals` | baseline | (`activity_id`, `interval_id`) | raw + generated interval metrics |
+| `wellness` | baseline | (`athlete_id`, `date`) | raw + generated wellness and CTL/ATL |
+| `staff` | baseline, extend | `user_id` | add `role` enum: coach, analyst, medical, viewer |
 | `rider_profiles` | new | `athlete_id` | DOB, training age, background, type override, `cohort`, `data_source` |
 | `lab_tests` | new | id; unique (`athlete_id`, `test_date`, `method`) | INSCYD results (section 10) |
 | `anthropometrics` | new | (`athlete_id`, `date`) | height, weight, body fat outside lab tests |
