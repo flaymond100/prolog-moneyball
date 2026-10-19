@@ -15,27 +15,27 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 
 ## Phase 0 – Repository and conventions
 
-- [ ] **0.1 Create the repo.** `gh repo create prolog-moneyball --private` (GitHub Pages on a private repo needs GitHub Pro or higher; if not available, ask Kosta before making it public). Add `README.md`, proprietary `LICENSE`, `.gitignore` (node, `.env*`, `supabase/.temp`, `supabase/.branches`). AC: `main` is protected (PR required, CI must pass).
-- [ ] **0.2 Add the docs.** Save the KB as `docs/knowledge-base.md` and this list as `docs/TODO.md`. AC: both files in `main`.
-- [ ] **0.3 Write `CLAUDE.md`.** Purpose, stack, folder map, commands, and these rules: never commit secrets; schema only via migrations; formulas only in `packages/metrics` with tests; priors only in seed tables; British spelling; read the KB before each phase. AC: README links to it.
-- [ ] **0.4 Set up the pnpm monorepo.** Workspaces `apps/web`, `packages/metrics` (pure TS, no IO), `packages/types`, plus `supabase/`. AC: `pnpm -r build` passes on an empty skeleton.
+- [x] **0.1 Create the repo.** `gh repo create prolog-moneyball --private` (GitHub Pages on a private repo needs GitHub Pro or higher; if not available, ask Kosta before making it public). Add `README.md`, proprietary `LICENSE`, `.gitignore` (node, `.env*`, `supabase/.temp`, `supabase/.branches`). AC: `main` is protected (PR required, CI must pass).
+- [x] **0.2 Add the docs.** Save the KB as `docs/knowledge-base.md` and this list as `docs/TODO.md`. AC: both files in `main`.
+- [x] **0.3 Write `CLAUDE.md`.** Purpose, stack, folder map, commands, and these rules: never commit secrets; schema only via migrations; formulas only in `packages/metrics` with tests; priors only in seed tables; British spelling; read the KB before each phase. AC: README links to it.
+- [x] **0.4 Set up the pnpm monorepo.** Workspaces `apps/web`, `packages/metrics` (pure TS, no IO), `packages/types`, plus `supabase/`. AC: `pnpm -r build` passes on an empty skeleton.
 
 ## Phase 1 – Scaffold and tooling
 
-- [ ] **1.1 Scaffold the web app.** `pnpm create vite apps/web --template react-ts`; TS `strict` and `noUncheckedIndexedAccess`; path aliases (`@/`). AC: `pnpm dev` serves a blank page.
-- [ ] **1.2 Lint and format.** ESLint flat config (typescript-eslint, react-hooks, jsx-a11y), Prettier, husky + lint-staged pre-commit. AC: `pnpm lint` passes with zero warnings.
-- [ ] **1.3 Tests.** Vitest + Testing Library in `apps/web`, Vitest in `packages/metrics`, Playwright smoke test. AC: one sample test of each kind passes.
-- [ ] **1.4 CI.** GitHub Actions on PR: install → typecheck → lint → unit tests → build. Second workflow: `supabase db lint` and migration dry-run against a local stack. AC: a PR shows green checks.
-- [ ] **1.5 UI foundation.** Tailwind + shadcn/ui; dark theme from the PROLOG palette (KB §12); rating colour tokens 1–5 red, 6–10 amber, 11–15 green, 16–20 teal, plus a colour-blind-safe alternative; tabular numerals. AC: a `/dev/palette` route renders rating chips 1–20 in both palettes.
-- [ ] **1.6 Routing for GitHub Pages.** TanStack Router with hash history (or browser history + `404.html` fallback); Vite `base` from an env var (`/prolog-moneyball/` or `/` for a custom domain). AC: a deep link survives a hard refresh on a production build served from a sub-path.
+- [x] **1.1 Scaffold the web app.** `pnpm create vite apps/web --template react-ts`; TS `strict` and `noUncheckedIndexedAccess`; path aliases (`@/`). AC: `pnpm dev` serves a blank page.
+- [x] **1.2 Lint and format.** ESLint flat config (typescript-eslint, react-hooks, jsx-a11y), Prettier, husky + lint-staged pre-commit. AC: `pnpm lint` passes with zero warnings.
+- [x] **1.3 Tests.** Vitest + Testing Library in `apps/web`, Vitest in `packages/metrics`, Playwright smoke test. AC: one sample test of each kind passes.
+- [x] **1.4 CI.** GitHub Actions on PR: install → typecheck → lint → unit tests → build. Second workflow: `supabase db lint` and migration dry-run against a local stack. AC: a PR shows green checks.
+- [x] **1.5 UI foundation.** Tailwind + shadcn/ui; dark theme from the PROLOG palette (KB §12); rating colour tokens 1–5 red, 6–10 amber, 11–15 green, 16–20 teal, plus a colour-blind-safe alternative; tabular numerals. AC: a `/dev/palette` route renders rating chips 1–20 in both palettes.
+- [x] **1.6 Routing for GitHub Pages.** TanStack Router with hash history (or browser history + `404.html` fallback); Vite `base` from an env var (`/prolog-moneyball/` or `/` for a custom domain). AC: a deep link survives a hard refresh on a production build served from a sub-path.
 
 ## Phase 2 – Supabase link and schema
 
-- [ ] **2.1 Link the project and create the baseline.** `supabase init`, `supabase link --project-ref <ref>`. The project started empty, so a baseline migration creates `athletes`, `activities`, `activity_intervals`, `wellness` and `staff` per KB §4–5 (raw jsonb + generated columns, RLS on). Confirm the project region is in the EU and report it. AC: migrations apply to a fresh local database and `supabase db diff` is empty.
-- [ ] **2.2 Generated types.** `supabase gen types typescript --local > packages/types/src/db.ts` (from the migrations, so CI needs no remote credentials); npm script `gen:types`; CI fails on stale types.
-- [ ] **2.3 Extend `staff`.** Add `role` enum (`coach`, `analyst`, `medical`, `viewer`) and helper functions `is_staff()`, `has_role(text)` (security definer, stable). AC: pgTAP tests for each role.
-- [ ] **2.4 `rider_profiles`.** Columns per KB §5 incl. `date_of_birth`, `training_age_years`, `training_age_entered_on`, `background`, `primary_type_override`, `hrv_source`, `cohort` (`squad`/`prospect`/`alumni`, default `squad`), `data_source` (`intervals`/`manual_upload`, default `intervals`), `contract_end`. AC: coach writes, staff read.
-- [ ] **2.5 `lab_tests` and `anthropometrics`.** Fields and range checks exactly as KB §10; unique (`athlete_id`, `test_date`, `method`); audit table or trigger for edit history. AC: out-of-range inserts fail with a readable error.
+- [x] **2.1 Link the project and create the baseline.** `supabase init`, `supabase link --project-ref <ref>`. The project started empty, so a baseline migration creates `athletes`, `activities`, `activity_intervals`, `wellness` and `staff` per KB §4–5 (raw jsonb + generated columns, RLS on). Confirm the project region is in the EU and report it. AC: migrations apply to a fresh local database and `supabase db diff` is empty.
+- [x] **2.2 Generated types.** `supabase gen types typescript --local > packages/types/src/db.ts` (from the migrations, so CI needs no remote credentials); npm script `gen:types`; CI fails on stale types.
+- [x] **2.3 Extend `staff`.** Add `role` enum (`coach`, `analyst`, `medical`, `viewer`) and helper functions `is_staff()`, `has_role(text)` (security definer, stable). AC: pgTAP tests for each role.
+- [x] **2.4 `rider_profiles`.** Columns per KB §5 incl. `date_of_birth`, `training_age_years`, `training_age_entered_on`, `background`, `primary_type_override`, `hrv_source`, `cohort` (`squad`/`prospect`/`alumni`, default `squad`), `data_source` (`intervals`/`manual_upload`, default `intervals`), `contract_end`. AC: coach writes, staff read.
+- [x] **2.5 `lab_tests` and `anthropometrics`.** Fields and range checks exactly as KB §10; unique (`athlete_id`, `test_date`, `method`); audit table or trigger for edit history. AC: out-of-range inserts fail with a readable error.
 - [ ] **2.6 Sync target tables.** `power_curves`, `planned_events`, `durability_efforts`, `sync_runs` per KB §5; raw jsonb + generated columns where useful.
 - [ ] **2.7 Model tables and seeds.** `benchmark_sets`, `benchmark_points`, `ca_weights`, `model_priors` (with a history table). Seed exactly the values in KB §6 (benchmarks), §7 (CA weight matrix) and §8 (PA priors), each with citation or `[prior]` note. AC: seeds are idempotent; every weight row per type sums to 100.
 - [ ] **2.8 Output tables.** `rider_ratings`, `rider_ca_pa` (incl. `pa_p10/p50/p90`, `ca_12m_p50`, `type_probs`, `model_version`, `seed`), `forecasts`, `saved_layouts`, `saved_filters`. AC: service role writes, staff read.
@@ -138,12 +138,12 @@ These do not block Phases 0–7; the agent should ask about each one when it rea
 
 | Item | Needed by | Question |
 | --- | --- | --- |
-| GitHub plan | 0.1 | GitHub Pro for Pages on a private repo, or a public repo? |
+| GitHub plan | 0.1 | GitHub Pro for Pages on a private repo, or a public repo? **Answered:** public repo (no GitHub Pro). |
 | Custom domain | 10.2 | Use e.g. `dashboard.prolog-cycling.com`? |
-| Supabase region | 2.1 | Is the existing project in an EU region? If not, migrate before real rider data arrives |
+| Supabase region | 2.1 | Is the existing project in an EU region? If not, migrate before real rider data arrives. **Answered:** `eu-central-1` (Frankfurt), Postgres 17 (19 October 2026). |
 | Rider data | 2.4 | Date of birth, training age, background and HRV method for all 12 riders |
 | HRV method | 2.4 | Which app and chest strap will the squad standardise on? |
-| Medical role | 2.3, 8.x | Who holds the `medical` role (team doctor, physio, nobody yet)? |
+| Medical role | 2.3, 8.x | Who holds the `medical` role (team doctor, physio, nobody yet)? **Answered:** nobody yet; the role exists and KB rules apply, so medical-only data stays hidden until someone is assigned (19 October 2026). |
 | Retention | 8.4 | Is 12 months after contract end the right period? |
 | Rouleur benchmark | 7.1 | Watt-based benchmark for absolute 20/60-min power, or keep squad-relative? |
 | Legal review | 8.6, before launch | German employment / data protection lawyer to review privacy docs and the DPIA |
