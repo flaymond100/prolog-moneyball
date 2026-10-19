@@ -217,6 +217,60 @@ export type Database = {
         }
         Relationships: []
       }
+      rider_profiles: {
+        Row: {
+          athlete_id: string
+          background: string | null
+          cohort: Database['public']['Enums']['rider_cohort']
+          contract_end: string | null
+          created_at: string
+          data_source: Database['public']['Enums']['rider_data_source']
+          date_of_birth: string | null
+          hrv_source: string | null
+          primary_type_override: Database['public']['Enums']['rider_type'] | null
+          training_age_entered_on: string | null
+          training_age_years: number | null
+          updated_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          background?: string | null
+          cohort?: Database['public']['Enums']['rider_cohort']
+          contract_end?: string | null
+          created_at?: string
+          data_source?: Database['public']['Enums']['rider_data_source']
+          date_of_birth?: string | null
+          hrv_source?: string | null
+          primary_type_override?: Database['public']['Enums']['rider_type'] | null
+          training_age_entered_on?: string | null
+          training_age_years?: number | null
+          updated_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          background?: string | null
+          cohort?: Database['public']['Enums']['rider_cohort']
+          contract_end?: string | null
+          created_at?: string
+          data_source?: Database['public']['Enums']['rider_data_source']
+          date_of_birth?: string | null
+          hrv_source?: string | null
+          primary_type_override?: Database['public']['Enums']['rider_type'] | null
+          training_age_entered_on?: string | null
+          training_age_years?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'rider_profiles_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: true
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       staff: {
         Row: {
           created_at: string
@@ -338,6 +392,9 @@ export type Database = {
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
+      rider_cohort: 'squad' | 'prospect' | 'alumni'
+      rider_data_source: 'intervals' | 'manual_upload'
+      rider_type: 'sprinter' | 'puncheur' | 'climber' | 'rouleur_tt' | 'all_rounder'
       staff_role: 'coach' | 'analyst' | 'medical' | 'viewer'
     }
     CompositeTypes: {
@@ -450,6 +507,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      rider_cohort: ['squad', 'prospect', 'alumni'],
+      rider_data_source: ['intervals', 'manual_upload'],
+      rider_type: ['sprinter', 'puncheur', 'climber', 'rouleur_tt', 'all_rounder'],
       staff_role: ['coach', 'analyst', 'medical', 'viewer'],
     },
   },
