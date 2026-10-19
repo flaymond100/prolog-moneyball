@@ -17,7 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx'
+import { FilterBuilder } from '@/components/filter-builder.tsx'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.tsx'
+import { matchesAll, useFilterState } from '@/data/filter-store.ts'
 import { MOCK_AS_OF } from '@/data/mock/riders.ts'
 import { useSquad } from '@/data/queries.ts'
 import { downloadCsv, toCsv } from '@/lib/csv.ts'
@@ -38,10 +40,12 @@ export function SquadPage() {
   const [layouts, setLayouts] = useState<SquadLayout[]>(loadLayouts)
   const [layoutName, setLayoutName] = useState('')
 
-  // Min-data filter: rides in the last 84 days (KB §12).
+  const { conditions } = useFilterState()
+
+  // Min-data filter: rides in the last 84 days (KB §12), then the shared AND filter.
   const rows = useMemo(
-    () => riders.filter((r) => r.training.rides84d >= minRides),
-    [riders, minRides],
+    () => riders.filter((r) => r.training.rides84d >= minRides && matchesAll(r, conditions)),
+    [riders, minRides, conditions],
   )
 
   // A column shows when it belongs to the active tab and the chooser has not hidden it.
@@ -102,6 +106,8 @@ export function SquadPage() {
       <h1 id="page-title" className="text-2xl font-semibold">
         Squad
       </h1>
+
+      <FilterBuilder matched={rows.length} total={riders.length} />
 
       <div className="flex flex-wrap items-center gap-3">
         <Tabs
