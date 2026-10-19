@@ -43,7 +43,7 @@ Routing uses TanStack Router with hash history (`src/router.ts`), so deep links 
 
 Supabase commands (from Phase 2): `supabase start`, `supabase db diff`, `supabase test db`, `pnpm gen:types`.
 
-`pnpm gen:types` writes `packages/types/src/db.ts` from the **local** database (run `supabase db reset` first), then formats it with Prettier. CI regenerates it and fails if the committed file differs. The output depends on the Supabase CLI version, so CI pins it (`2.98.1` in `.github/workflows/supabase.yml`); upgrade the local CLI and the pin together.
+`pnpm gen:types` writes `packages/types/src/db.ts` from the **local** database (run `supabase db reset` first), then formats it with Prettier. CI regenerates it and fails if the committed file differs. The output depends on the Supabase CLI version, so CI pins it (`2.121.0` in `.github/workflows/supabase.yml`); upgrade the local CLI and the pin together.
 
 ## Rules
 

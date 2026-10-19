@@ -28,7 +28,7 @@ jobs:
       # Pinned: generated types depend on the CLI version. Upgrade locally and here together.
       - uses: supabase/setup-cli@v1
         with:
-          version: 2.98.1
+          version: 2.121.0
       # Local stack only — no project link, no remote credentials.
       - run: supabase db start
       - name: Apply all migrations to a fresh local database
