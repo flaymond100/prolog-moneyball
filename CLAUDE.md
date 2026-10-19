@@ -36,8 +36,10 @@ pnpm typecheck            # tsc --noEmit across workspaces
 pnpm lint                 # ESLint, zero warnings allowed
 pnpm format               # Prettier write
 pnpm test                 # Vitest across workspaces
-pnpm test:e2e             # Playwright smoke tests (apps/web)
+pnpm test:e2e             # Playwright tests against a production build served from /prolog-moneyball/
 ```
+
+Routing uses TanStack Router with hash history (`src/router.ts`), so deep links survive a refresh on GitHub Pages. The Vite `base` comes from `VITE_BASE_PATH` (`/prolog-moneyball/` on GitHub Pages, `/` for a custom domain). See `apps/web/.env.example`.
 
 Supabase commands (from Phase 2): `supabase start`, `supabase db diff`, `supabase test db`, `pnpm gen:types`.
 

@@ -1,10 +1,14 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import App from '@/App.tsx'
 
 describe('App', () => {
-  it('renders the main landmark', () => {
+  afterEach(() => {
+    window.location.hash = ''
+  })
+
+  it('renders the main landmark', async () => {
     render(<App />)
-    expect(screen.getByRole('main', { name: 'PROLOG Moneyball' })).toBeInTheDocument()
+    expect(await screen.findByRole('main', { name: 'PROLOG Moneyball' })).toBeInTheDocument()
   })
 })

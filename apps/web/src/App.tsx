@@ -1,7 +1,8 @@
-import { PalettePage } from '@/pages/dev/palette.tsx'
+import { RouterProvider } from '@tanstack/react-router'
+import { createAppRouter } from '@/router.ts'
 
-// Temporary hash check; TanStack Router replaces this in 1.6.
+const router = createAppRouter()
+
 export default function App() {
-  if (window.location.hash === '#/dev/palette') return <PalettePage />
-  return <main aria-label="PROLOG Moneyball" />
+  return <RouterProvider router={router} />
 }
