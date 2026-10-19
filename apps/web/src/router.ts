@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router'
 import { createElement } from 'react'
 import { AppShell } from '@/components/app-shell.tsx'
+import { ComparePage } from '@/pages/compare.tsx'
 import { PalettePage } from '@/pages/dev/palette.tsx'
 import { NotFoundPage } from '@/pages/not-found.tsx'
 import { PlaceholderPage } from '@/pages/placeholder.tsx'
@@ -43,6 +44,22 @@ const squadRoute = createRoute({
   component: SquadPage,
 })
 
+interface CompareSearch {
+  a?: string
+  b?: string
+}
+
+// The selection lives in the URL so a copied link reopens the same comparison.
+const compareRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/compare',
+  validateSearch: (search: Record<string, unknown>): CompareSearch => ({
+    a: typeof search.a === 'string' ? search.a : undefined,
+    b: typeof search.b === 'string' ? search.b : undefined,
+  }),
+  component: ComparePage,
+})
+
 const riderRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/riders/$riderId',
@@ -69,7 +86,7 @@ const routeTree = rootRoute.addChildren([
     squadRoute,
     riderRoute,
     placeholder('/form', 'Form', '6.6'),
-    placeholder('/compare', 'Compare', '6.3'),
+    compareRoute,
     placeholder('/scatter', 'Scatter', '6.5'),
     placeholder('/tests', 'Tests', '6.7'),
     placeholder('/settings', 'Settings', '6.8'),
