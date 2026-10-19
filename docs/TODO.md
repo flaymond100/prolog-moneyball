@@ -117,9 +117,7 @@ Riders are employees; the legal basis rules are in KB §11. The agent drafts doc
 
 ## Phase 9 – Quality and performance
 
-- [ ] **9.1 E2E suite.** Playwright: login, squad table sort and export, profile, compare URL, scatter axis change, lab test entry, consent flow. AC: runs in CI against a local Supabase stack.
-- [ ] **9.2 Synthetic seed data.** `supabase/seed.sql` with 12 fictional riders aged 18–32, FTP around 4.1 W/kg, mixed types, 6 months of activities, wellness and two INSCYD tests each. AC: every view renders meaningfully on seed data alone. *Do this early, before Phase 6.*
-- [ ] **9.3 Performance and accessibility.** Lighthouse ≥ 90; keyboard navigation for table, filters and pickers; colour-blind palette toggle; charts have text alternatives (table view).
+- [ ] **9.1 Synthetic seed data.** `supabase/seed.sql` with 12 fictional riders aged 18–32, FTP around 4.1 W/kg, mixed types, 6 months of activities, wellness and two INSCYD tests each. AC: every view renders meaningfully on seed data alone. *Do this early, before Phase 6.*
 
 ## Phase 10 – Deployment (GitHub Pages + Supabase)
 
