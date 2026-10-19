@@ -192,6 +192,51 @@ export type Database = {
           },
         ]
       }
+      anthropometrics: {
+        Row: {
+          athlete_id: string
+          body_fat_pct: number | null
+          created_at: string
+          date: string
+          entered_by: string | null
+          height_cm: number | null
+          notes: string | null
+          updated_at: string
+          weight_kg: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          body_fat_pct?: number | null
+          created_at?: string
+          date: string
+          entered_by?: string | null
+          height_cm?: number | null
+          notes?: string | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          athlete_id?: string
+          body_fat_pct?: number | null
+          created_at?: string
+          date?: string
+          entered_by?: string | null
+          height_cm?: number | null
+          notes?: string | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'anthropometrics_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       athletes: {
         Row: {
           active: boolean
@@ -216,6 +261,115 @@ export type Database = {
           synced_at?: string
         }
         Relationships: []
+      }
+      edit_history: {
+        Row: {
+          athlete_id: string
+          changed_at: string
+          changed_by: string | null
+          id: number
+          new_row: Json | null
+          old_row: Json | null
+          operation: string
+          table_name: string
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: never
+          new_row?: Json | null
+          old_row?: Json | null
+          operation: string
+          table_name: string
+        }
+        Update: {
+          athlete_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: never
+          new_row?: Json | null
+          old_row?: Json | null
+          operation?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      lab_tests: {
+        Row: {
+          at_w: number | null
+          athlete_id: string
+          body_fat_pct: number | null
+          carbmax_g_h: number | null
+          created_at: string
+          entered_by: string | null
+          fatmax_g_h: number | null
+          fatmax_w: number | null
+          height_cm: number | null
+          id: string
+          method: Database['public']['Enums']['lab_test_method']
+          notes: string | null
+          test_date: string
+          tester: string | null
+          updated_at: string
+          vlamax_mmol_l_s: number | null
+          vo2max_l_min: number | null
+          vo2max_ml_kg_min: number | null
+          weight_kg: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          at_w?: number | null
+          athlete_id: string
+          body_fat_pct?: number | null
+          carbmax_g_h?: number | null
+          created_at?: string
+          entered_by?: string | null
+          fatmax_g_h?: number | null
+          fatmax_w?: number | null
+          height_cm?: number | null
+          id?: string
+          method: Database['public']['Enums']['lab_test_method']
+          notes?: string | null
+          test_date: string
+          tester?: string | null
+          updated_at?: string
+          vlamax_mmol_l_s?: number | null
+          vo2max_l_min?: number | null
+          vo2max_ml_kg_min?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          at_w?: number | null
+          athlete_id?: string
+          body_fat_pct?: number | null
+          carbmax_g_h?: number | null
+          created_at?: string
+          entered_by?: string | null
+          fatmax_g_h?: number | null
+          fatmax_w?: number | null
+          height_cm?: number | null
+          id?: string
+          method?: Database['public']['Enums']['lab_test_method']
+          notes?: string | null
+          test_date?: string
+          tester?: string | null
+          updated_at?: string
+          vlamax_mmol_l_s?: number | null
+          vo2max_l_min?: number | null
+          vo2max_ml_kg_min?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'lab_tests_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
       }
       rider_profiles: {
         Row: {
@@ -388,10 +542,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assert_in_range: {
+        Args: { hi: number; label: string; lo: number; val: number }
+        Returns: boolean
+      }
+      assert_not_future: { Args: { label: string; val: string }; Returns: boolean }
       has_role: { Args: { required_role: string }; Returns: boolean }
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
+      lab_test_method: 'inscyd_lab' | 'inscyd_ppd_field'
       rider_cohort: 'squad' | 'prospect' | 'alumni'
       rider_data_source: 'intervals' | 'manual_upload'
       rider_type: 'sprinter' | 'puncheur' | 'climber' | 'rouleur_tt' | 'all_rounder'
@@ -507,6 +667,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      lab_test_method: ['inscyd_lab', 'inscyd_ppd_field'],
       rider_cohort: ['squad', 'prospect', 'alumni'],
       rider_data_source: ['intervals', 'manual_upload'],
       rider_type: ['sprinter', 'puncheur', 'climber', 'rouleur_tt', 'all_rounder'],
