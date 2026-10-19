@@ -1,0 +1,29 @@
+name: Supabase
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: supabase-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  database:
+    name: Migrations dry-run and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      # Local stack only — no project link, no remote credentials.
+      - run: supabase db start
+      - name: Apply all migrations to a fresh local database
+        run: supabase db reset --local
+      - run: supabase db lint --local --fail-on error
