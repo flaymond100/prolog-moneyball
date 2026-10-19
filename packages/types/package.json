@@ -1,0 +1,14 @@
+{
+  "name": "@prolog/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generated Supabase database types and zod schemas",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}
