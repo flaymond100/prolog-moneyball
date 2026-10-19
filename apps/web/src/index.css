@@ -48,6 +48,17 @@
   --rider-b: var(--cream);
 
   /*
+   * Chart series for single-rider charts (power windows, durability). Validated
+   * against Espresso with the dataviz palette checks (lightness, chroma, CVD ΔE ≥ 9).
+   * Compare views use --rider-a / --rider-b (KB §12) with direct labels and line styles.
+   */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-reference: #b8ad9a;
+  --chart-grid: #3a2c20;
+
+  /*
    * Rating bands (KB §6): 1–5 red, 6–10 amber, 11–15 green, 16–20 teal.
    * Every fill keeps ≥4.9:1 contrast with Espresso text.
    */
