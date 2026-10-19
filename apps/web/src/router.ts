@@ -9,6 +9,7 @@ import {
 import { createElement } from 'react'
 import { AppShell } from '@/components/app-shell.tsx'
 import { ComparePage } from '@/pages/compare.tsx'
+import { FormPage } from '@/pages/form.tsx'
 import { PalettePage } from '@/pages/dev/palette.tsx'
 import { NotFoundPage } from '@/pages/not-found.tsx'
 import { PlaceholderPage } from '@/pages/placeholder.tsx'
@@ -76,6 +77,12 @@ const scatterRoute = createRoute({
   component: ScatterPage,
 })
 
+const formRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/form',
+  component: FormPage,
+})
+
 const riderRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/riders/$riderId',
@@ -101,7 +108,7 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     squadRoute,
     riderRoute,
-    placeholder('/form', 'Form', '6.6'),
+    formRoute,
     compareRoute,
     scatterRoute,
     placeholder('/tests', 'Tests', '6.7'),

@@ -81,6 +81,31 @@ export interface ReadinessSummary {
   sleepHours: number | null
 }
 
+export interface DatedValue {
+  date: string
+  value: number
+}
+
+export interface UpcomingRace {
+  name: string
+  date: string
+  /** Projected TSB on race day at planned load (KB §9 load projection). */
+  projectedTsb: number
+}
+
+export interface FormSeries {
+  /** 7-day rolling ln rMSSD, one value per day. */
+  lnRmssd7d: DatedValue[]
+  /** 60-day baseline of ln rMSSD. */
+  baselineMean: number
+  baselineSd: number
+  /** HRV readings in the last 7 days; fewer than 3 means insufficient data (KB §9). */
+  hrvReadings7d: number
+  /** Weekly eFTP in W/kg. */
+  eftpWkg: DatedValue[]
+  nextRace: UpcomingRace | null
+}
+
 export interface RiderNote {
   date: string
   author: string
@@ -105,5 +130,6 @@ export interface Rider {
   labTests: LabTest[]
   training: TrainingSummary
   readiness: ReadinessSummary
+  form: FormSeries
   notes: RiderNote[]
 }

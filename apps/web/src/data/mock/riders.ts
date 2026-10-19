@@ -1,4 +1,4 @@
-import type { PowerCurve, PowerWindow, Rider } from '@/data/types.ts'
+import type { DatedValue, PowerCurve, PowerWindow, Rider } from '@/data/types.ts'
 
 // Two synthetic riders for building views before sync and models exist.
 // Names are placeholders. Values are plausible for the squad (KB §2); the
@@ -30,6 +30,27 @@ function curves(wkg84d: number[], seasonFactor: number, factor42d: number, weigh
     curve('84d', wkg84d, 1, weightKg),
     curve('42d', wkg84d, factor42d, weightKg),
   ]
+}
+
+function daysBefore(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - days)
+  return d.toISOString().slice(0, 10)
+}
+
+/** A smooth, repeatable daily series ending on the as-of date. */
+function daily(days: number, at: (i: number) => number): DatedValue[] {
+  return Array.from({ length: days }, (_, i) => ({
+    date: daysBefore(MOCK_AS_OF, days - 1 - i),
+    value: Math.round(at(i) * 1000) / 1000,
+  }))
+}
+
+function weekly(values: number[]): DatedValue[] {
+  return values.map((value, i) => ({
+    date: daysBefore(MOCK_AS_OF, (values.length - 1 - i) * 7),
+    value,
+  }))
 }
 
 // Climber with a long-effort profile.
@@ -116,6 +137,14 @@ export const MOCK_RIDERS: Rider[] = [
       restingHrDeltaBpm: 1,
       sleepHours: 7.6,
     },
+    form: {
+      lnRmssd7d: daily(28, (i) => 4.3 + 0.035 * Math.sin(i / 3) + 0.0005 * i),
+      baselineMean: 4.3,
+      baselineSd: 0.12,
+      hrvReadings7d: 6,
+      eftpWkg: weekly([4.7, 4.72, 4.71, 4.75, 4.78, 4.8, 4.83, 4.86]),
+      nextRace: { name: 'Erzgebirge Hill Classic (Mock)', date: '2026-11-07', projectedTsb: 8 },
+    },
     notes: [
       {
         date: '2026-10-12',
@@ -195,6 +224,14 @@ export const MOCK_RIDERS: Rider[] = [
       lnRmssdZ: -0.2,
       restingHrDeltaBpm: 2,
       sleepHours: 7.1,
+    },
+    form: {
+      lnRmssd7d: daily(28, (i) => 4.05 + 0.04 * Math.sin(i / 4) - 0.0008 * i),
+      baselineMean: 4.05,
+      baselineSd: 0.15,
+      hrvReadings7d: 4,
+      eftpWkg: weekly([3.95, 3.96, 3.94, 3.97, 3.96, 3.98, 3.97, 3.98]),
+      nextRace: { name: 'Leipzig Kriterium (Mock)', date: '2026-10-31', projectedTsb: 12 },
     },
     notes: [
       {
