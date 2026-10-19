@@ -1,3 +1,3 @@
 export default function App() {
-  return <main />
+  return <main aria-label="PROLOG Moneyball" />
 }
