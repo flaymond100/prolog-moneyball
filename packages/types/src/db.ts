@@ -433,6 +433,54 @@ export type Database = {
         }
         Relationships: []
       }
+      forecasts: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          horizon_date: string
+          metric: string
+          model: string
+          p10: number | null
+          p50: number
+          p90: number | null
+          plateau: boolean | null
+          scenario: number
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          horizon_date: string
+          metric: string
+          model: string
+          p10?: number | null
+          p50: number
+          p90?: number | null
+          plateau?: boolean | null
+          scenario?: number
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          horizon_date?: string
+          metric?: string
+          model?: string
+          p10?: number | null
+          p50?: number
+          p90?: number | null
+          plateau?: boolean | null
+          scenario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'forecasts_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       lab_tests: {
         Row: {
           at_w: number | null
@@ -669,6 +717,73 @@ export type Database = {
           },
         ]
       }
+      rider_ca_pa: {
+        Row: {
+          as_of: string
+          athlete_id: string
+          ca: number
+          ca_12m_p50: number | null
+          computed_at: string
+          model_version: string
+          pa_p10: number | null
+          pa_p50: number | null
+          pa_p90: number | null
+          primary_type: Database['public']['Enums']['rider_type']
+          seed: number | null
+          set_id: string
+          type_overridden: boolean
+          type_probs: NonNullable<Json>
+        }
+        ComputedFields: never
+        Insert: {
+          as_of: string
+          athlete_id: string
+          ca: number
+          ca_12m_p50?: number | null
+          computed_at?: string
+          model_version: string
+          pa_p10?: number | null
+          pa_p50?: number | null
+          pa_p90?: number | null
+          primary_type: Database['public']['Enums']['rider_type']
+          seed?: number | null
+          set_id: string
+          type_overridden?: boolean
+          type_probs: NonNullable<Json>
+        }
+        Update: {
+          as_of?: string
+          athlete_id?: string
+          ca?: number
+          ca_12m_p50?: number | null
+          computed_at?: string
+          model_version?: string
+          pa_p10?: number | null
+          pa_p50?: number | null
+          pa_p90?: number | null
+          primary_type?: Database['public']['Enums']['rider_type']
+          seed?: number | null
+          set_id?: string
+          type_overridden?: boolean
+          type_probs?: NonNullable<Json>
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'rider_ca_pa_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'rider_ca_pa_set_id_fkey'
+            columns: ['set_id']
+            isOneToOne: false
+            referencedRelation: 'benchmark_sets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       rider_profiles: {
         Row: {
           athlete_id: string
@@ -722,6 +837,123 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      rider_ratings: {
+        Row: {
+          as_of: string
+          athlete_id: string
+          attribute: Database['public']['Enums']['rating_attribute']
+          computed_at: string
+          confidence: Database['public']['Enums']['rating_confidence']
+          rating: number
+          set_id: string
+          squad_rating: number | null
+          value: number
+          watts: number | null
+          watts_squad_rating: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          as_of: string
+          athlete_id: string
+          attribute: Database['public']['Enums']['rating_attribute']
+          computed_at?: string
+          confidence: Database['public']['Enums']['rating_confidence']
+          rating: number
+          set_id: string
+          squad_rating?: number | null
+          value: number
+          watts?: number | null
+          watts_squad_rating?: number | null
+        }
+        Update: {
+          as_of?: string
+          athlete_id?: string
+          attribute?: Database['public']['Enums']['rating_attribute']
+          computed_at?: string
+          confidence?: Database['public']['Enums']['rating_confidence']
+          rating?: number
+          set_id?: string
+          squad_rating?: number | null
+          value?: number
+          watts?: number | null
+          watts_squad_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'rider_ratings_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'rider_ratings_set_id_fkey'
+            columns: ['set_id']
+            isOneToOne: false
+            referencedRelation: 'benchmark_sets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      saved_filters: {
+        Row: {
+          conditions: NonNullable<Json>
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          conditions: NonNullable<Json>
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          conditions?: NonNullable<Json>
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_layouts: {
+        Row: {
+          created_at: string
+          id: string
+          layout: NonNullable<Json>
+          name: string
+          updated_at: string
+          user_id: string
+          view: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          id?: string
+          layout: NonNullable<Json>
+          name: string
+          updated_at?: string
+          user_id?: string
+          view?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          layout?: NonNullable<Json>
+          name?: string
+          updated_at?: string
+          user_id?: string
+          view?: string
+        }
+        Relationships: []
       }
       staff: {
         Row: {
@@ -902,6 +1134,7 @@ export type Database = {
       lab_test_method: 'inscyd_lab' | 'inscyd_ppd_field'
       power_curve_window: '42d' | '84d' | 'season'
       rating_attribute: 'p5s' | 'p30s' | 'p1m' | 'p5m' | 'p20m' | 'p60m' | 'durability' | 'vo2max'
+      rating_confidence: 'high' | 'low'
       rider_cohort: 'squad' | 'prospect' | 'alumni'
       rider_data_source: 'intervals' | 'manual_upload'
       rider_type: 'sprinter' | 'puncheur' | 'climber' | 'rouleur_tt' | 'all_rounder'
@@ -1022,6 +1255,7 @@ export const Constants = {
       lab_test_method: ['inscyd_lab', 'inscyd_ppd_field'],
       power_curve_window: ['42d', '84d', 'season'],
       rating_attribute: ['p5s', 'p30s', 'p1m', 'p5m', 'p20m', 'p60m', 'durability', 'vo2max'],
+      rating_confidence: ['high', 'low'],
       rider_cohort: ['squad', 'prospect', 'alumni'],
       rider_data_source: ['intervals', 'manual_upload'],
       rider_type: ['sprinter', 'puncheur', 'climber', 'rouleur_tt', 'all_rounder'],
