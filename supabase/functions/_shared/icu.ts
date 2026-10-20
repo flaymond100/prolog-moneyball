@@ -24,20 +24,19 @@ const BACKOFF_MAX_MS = 60_000
 
 // Known fields --------------------------------------------------------------
 // Only what the sync needs to key and route rows. No transforms, so the parsed
-// object equals the response. Field names are confirmed against the live API
-// in TODO 3.3.
-
-const icuId = z.union([z.string(), z.number()])
+// object equals the response. Names and types follow the OpenAPI spec and the
+// live check in docs/intervals-api.md.
 
 export const icuAthleteSummarySchema = z.array(
-  z.looseObject({ id: icuId, name: z.string().nullish() }),
+  z.looseObject({ athlete_id: z.string(), athlete_name: z.string().nullish() }),
 )
 
 export const icuActivitySchema = z.looseObject({
-  id: icuId,
+  id: z.string(),
   start_date_local: z.string(),
   source: z.string().nullish(),
-  icu_intervals: z.array(z.looseObject({ id: icuId })).nullish(),
+  // Only with ?intervals=true.
+  icu_intervals: z.array(z.looseObject({ id: z.number() })).nullish(),
 })
 export const icuActivitiesSchema = z.array(icuActivitySchema)
 
@@ -45,33 +44,52 @@ export const icuActivitiesSchema = z.array(icuActivitySchema)
 export const icuWellnessSchema = z.array(z.looseObject({ id: z.string() }))
 
 export const icuEventsSchema = z.array(
-  z.looseObject({ id: icuId, start_date_local: z.string(), category: z.string().nullish() }),
+  z.looseObject({ id: z.number(), start_date_local: z.string(), category: z.string().nullish() }),
 )
+
+// `values` are watts; `watts_per_kg` is absent when no weight is known.
+export const icuPowerCurvesSchema = z.looseObject({
+  list: z.array(
+    z.looseObject({
+      id: z.string(),
+      secs: z.array(z.number()),
+      values: z.array(z.number()),
+      watts_per_kg: z.array(z.number()).nullish(),
+    }),
+  ),
+})
 
 export type IcuActivity = z.infer<typeof icuActivitySchema>
 
 // Errors --------------------------------------------------------------------
+// Explicit fields, not parameter properties: Node's type stripping (used by
+// scripts/) only supports erasable TypeScript.
 
 export class IcuHttpError extends Error {
-  constructor(
-    readonly status: number,
-    readonly path: string,
-    readonly body: string,
-  ) {
+  readonly status: number
+  readonly path: string
+  readonly body: string
+
+  constructor(status: number, path: string, body: string) {
     super(`intervals.icu ${path} failed with HTTP ${status}`)
     this.name = 'IcuHttpError'
+    this.status = status
+    this.path = path
+    this.body = body
   }
 }
 
 export class IcuValidationError extends Error {
-  constructor(
-    readonly path: string,
-    readonly issues: z.core.$ZodIssue[],
-  ) {
+  readonly path: string
+  readonly issues: z.core.$ZodIssue[]
+
+  constructor(path: string, issues: z.core.$ZodIssue[]) {
     super(
       `intervals.icu ${path} returned unexpected JSON: ${z.prettifyError(new z.ZodError(issues))}`,
     )
     this.name = 'IcuValidationError'
+    this.path = path
+    this.issues = issues
   }
 }
 
