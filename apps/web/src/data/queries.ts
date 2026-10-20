@@ -65,6 +65,36 @@ async function insertAnthropometric(entry: Anthropometric) {
   return Promise.resolve()
 }
 
+export type RiderProfilePatch = Partial<
+  Pick<
+    Rider,
+    | 'dateOfBirth'
+    | 'trainingAgeYears'
+    | 'trainingAgeEnteredOn'
+    | 'background'
+    | 'primaryTypeOverride'
+    | 'hrvSource'
+    | 'cohort'
+    | 'contractEnd'
+  >
+>
+
+async function updateRiderProfile({ id, patch }: { id: string; patch: RiderProfilePatch }) {
+  riders = riders.map((r) => (r.id === id ? { ...r, ...patch } : r))
+  return Promise.resolve()
+}
+
+export function useUpdateRiderProfile() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: updateRiderProfile,
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ['squad'] })
+      await client.invalidateQueries({ queryKey: ['rider'] })
+    },
+  })
+}
+
 export function useAddLabTest() {
   const client = useQueryClient()
   return useMutation({

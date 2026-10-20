@@ -6,15 +6,14 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router'
-import { createElement } from 'react'
 import { AppShell } from '@/components/app-shell.tsx'
 import { ComparePage } from '@/pages/compare.tsx'
 import { FormPage } from '@/pages/form.tsx'
 import { PalettePage } from '@/pages/dev/palette.tsx'
 import { NotFoundPage } from '@/pages/not-found.tsx'
-import { PlaceholderPage } from '@/pages/placeholder.tsx'
 import { RiderPage } from '@/pages/rider.tsx'
 import { ScatterPage } from '@/pages/scatter.tsx'
+import { SettingsPage } from '@/pages/settings.tsx'
 import { SquadPage } from '@/pages/squad.tsx'
 import { TestsPage } from '@/pages/tests.tsx'
 
@@ -90,19 +89,17 @@ const testsRoute = createRoute({
   component: TestsPage,
 })
 
+const settingsRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/settings',
+  component: SettingsPage,
+})
+
 const riderRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/riders/$riderId',
   component: RiderPage,
 })
-
-function placeholder<TPath extends string>(path: TPath, title: string, task: string) {
-  return createRoute({
-    getParentRoute: () => appRoute,
-    path,
-    component: () => createElement(PlaceholderPage, { title, task }),
-  })
-}
 
 const paletteRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -119,7 +116,7 @@ const routeTree = rootRoute.addChildren([
     compareRoute,
     scatterRoute,
     testsRoute,
-    placeholder('/settings', 'Settings', '6.8'),
+    settingsRoute,
   ]),
   paletteRoute,
 ])
