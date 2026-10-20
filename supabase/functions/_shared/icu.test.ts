@@ -5,6 +5,7 @@ import {
   IcuValidationError,
   icuActivitiesSchema,
   icuAthleteSummarySchema,
+  icuPowerCurvesSchema,
   icuWellnessSchema,
   type IcuClientOptions,
   type IcuLogEvent,
@@ -46,7 +47,7 @@ function setup(replies: Reply[], options: Partial<IcuClientOptions> = {}) {
 
 describe('IcuClient: 200', () => {
   it('sends basic auth with username API_KEY and builds the URL', async () => {
-    const { client, fetch } = setup([json([{ id: 'i1', name: 'Rider One' }])])
+    const { client, fetch } = setup([json([{ athlete_id: 'i1', athlete_name: 'Rider One' }])])
     await client.get('/athlete/0/athlete-summary.json', icuAthleteSummarySchema, {
       oldest: '2026-10-16',
       newest: undefined,
@@ -249,5 +250,19 @@ describe('IcuClient: other failures', () => {
     expect(error).toBeInstanceOf(IcuValidationError)
     expect((error as IcuValidationError).message).toContain('start_date_local')
     expect(fetch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('schemas', () => {
+  it('athlete summary rows are keyed by athlete_id, as in the spec', () => {
+    expect(icuAthleteSummarySchema.safeParse([{ athlete_id: 'i1' }]).success).toBe(true)
+    expect(icuAthleteSummarySchema.safeParse([{ id: 'i1', name: 'Rider One' }]).success).toBe(false)
+  })
+
+  it('a power curve without W/kg is accepted and keeps its other fields', () => {
+    const curves = {
+      list: [{ id: '84d', secs: [5, 60], values: [900, 420], weight: 58, days: 84 }],
+    }
+    expect(icuPowerCurvesSchema.parse(curves)).toEqual(curves)
   })
 })
