@@ -156,7 +156,7 @@ reset role;
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000005", "role": "authenticated"}', true);
 set local role authenticated;
-select is_empty('select * from public.power_curves', 'outsider: cannot read power curves');
+select is_empty('select 1 from public.power_curves', 'outsider: cannot read power curves');
 select is_empty('select * from public.sync_runs', 'outsider: cannot read sync runs');
 reset role;
 
@@ -164,7 +164,7 @@ reset role;
 
 select set_config('request.jwt.claims', '{"role": "anon"}', true);
 set local role anon;
-select is_empty('select * from public.planned_events', 'anon: cannot read planned events');
+select is_empty('select 1 from public.planned_events', 'anon: cannot read planned events');
 select is_empty('select * from public.durability_efforts', 'anon: cannot read durability efforts');
 reset role;
 

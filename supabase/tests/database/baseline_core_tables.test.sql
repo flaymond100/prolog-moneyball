@@ -36,8 +36,8 @@ select is((select resting_hr from public.wellness where athlete_id = 'i1'), 48::
 
 -- No policies yet: client roles see nothing.
 set local role authenticated;
-select is_empty('select * from public.athletes', 'authenticated cannot read athletes');
-select is_empty('select * from public.wellness', 'authenticated cannot read wellness');
+select is_empty('select 1 from public.athletes', 'authenticated cannot read athletes');
+select is_empty('select 1 from public.wellness', 'authenticated cannot read wellness');
 reset role;
 
 select * from finish();
