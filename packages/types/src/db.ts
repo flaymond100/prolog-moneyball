@@ -363,6 +363,90 @@ export type Database = {
         }
         Relationships: []
       }
+      consents: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          granted_at: string
+          id: string
+          notes: string | null
+          policy_version: string
+          recorded_by: string | null
+          scope: Database['public']['Enums']['consent_scope']
+          withdrawn_at: string | null
+          withdrawn_by: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          granted_at?: string
+          id?: string
+          notes?: string | null
+          policy_version: string
+          recorded_by?: string | null
+          scope: Database['public']['Enums']['consent_scope']
+          withdrawn_at?: string | null
+          withdrawn_by?: string | null
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          granted_at?: string
+          id?: string
+          notes?: string | null
+          policy_version?: string
+          recorded_by?: string | null
+          scope?: Database['public']['Enums']['consent_scope']
+          withdrawn_at?: string | null
+          withdrawn_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'consents_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      cycle_data: {
+        Row: {
+          athlete_id: string
+          date: string
+          phase: string | null
+          phase_predicted: string | null
+          raw: NonNullable<Json>
+          synced_at: string
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          date: string
+          phase?: never
+          phase_predicted?: never
+          raw: NonNullable<Json>
+          synced_at?: string
+        }
+        Update: {
+          athlete_id?: string
+          date?: string
+          phase?: never
+          phase_predicted?: never
+          raw?: NonNullable<Json>
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cycle_data_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       durability_efforts: {
         Row: {
           activity_id: string
@@ -549,6 +633,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'lab_tests_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      medical_markers: {
+        Row: {
+          athlete_id: string
+          created_at: string
+          entered_by: string | null
+          id: string
+          marker: string
+          measured_on: string
+          notes: string | null
+          unit: string
+          updated_at: string
+          value: number
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          created_at?: string
+          entered_by?: string | null
+          id?: string
+          marker: string
+          measured_on: string
+          notes?: string | null
+          unit: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          athlete_id?: string
+          created_at?: string
+          entered_by?: string | null
+          id?: string
+          marker?: string
+          measured_on?: string
+          notes?: string | null
+          unit?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'medical_markers_athlete_id_fkey'
             columns: ['athlete_id']
             isOneToOne: false
             referencedRelation: 'athletes'
@@ -1123,6 +1255,10 @@ export type Database = {
         Returns: boolean
       }
       assert_not_future: { Args: { label: string; val: string }; Returns: boolean }
+      has_active_consent: {
+        Args: { p_athlete_id: string; p_scope: Database['public']['Enums']['consent_scope'] }
+        Returns: boolean
+      }
       has_role: { Args: { required_role: string }; Returns: boolean }
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_strictly_increasing: { Args: { vals: number[] }; Returns: boolean }
@@ -1130,6 +1266,7 @@ export type Database = {
     }
     Enums: {
       benchmark_method: 'z_score' | 'anchors'
+      consent_scope: 'cycle_data' | 'medical_markers' | 'recruitment_assessment'
       evidence_status: 'source' | 'prior'
       lab_test_method: 'inscyd_lab' | 'inscyd_ppd_field'
       power_curve_window: '42d' | '84d' | 'season'
@@ -1251,6 +1388,7 @@ export const Constants = {
   public: {
     Enums: {
       benchmark_method: ['z_score', 'anchors'],
+      consent_scope: ['cycle_data', 'medical_markers', 'recruitment_assessment'],
       evidence_status: ['source', 'prior'],
       lab_test_method: ['inscyd_lab', 'inscyd_ppd_field'],
       power_curve_window: ['42d', '84d', 'season'],
