@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   database:
+    # Name is a required status check on main; rename only with branch protection.
     name: Migrations dry-run and lint
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -34,6 +35,8 @@ jobs:
       - name: Apply all migrations to a fresh local database
         run: supabase db reset --local
       - run: supabase db lint --local --fail-on error
+      - name: pgTAP tests (schema, constraints and RLS policies)
+        run: supabase test db
       - name: Generated DB types are up to date
         run: |
           pnpm gen:types
