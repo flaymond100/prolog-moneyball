@@ -36,12 +36,12 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 - [x] **2.3 Extend `staff`.** Add `role` enum (`coach`, `analyst`, `medical`, `viewer`) and helper functions `is_staff()`, `has_role(text)` (security definer, stable). AC: pgTAP tests for each role.
 - [x] **2.4 `rider_profiles`.** Columns per KB §5 incl. `date_of_birth`, `training_age_years`, `training_age_entered_on`, `background`, `primary_type_override`, `hrv_source`, `cohort` (`squad`/`prospect`/`alumni`, default `squad`), `data_source` (`intervals`/`manual_upload`, default `intervals`), `contract_end`. AC: coach writes, staff read.
 - [x] **2.5 `lab_tests` and `anthropometrics`.** Fields and range checks exactly as KB §10; unique (`athlete_id`, `test_date`, `method`); audit table or trigger for edit history. AC: out-of-range inserts fail with a readable error.
-- [ ] **2.6 Sync target tables.** `power_curves`, `planned_events`, `durability_efforts`, `sync_runs` per KB §5; raw jsonb + generated columns where useful.
-- [ ] **2.7 Model tables and seeds.** `benchmark_sets`, `benchmark_points`, `ca_weights`, `model_priors` (with a history table). Seed exactly the values in KB §6 (benchmarks), §7 (CA weight matrix) and §8 (PA priors), each with citation or `[prior]` note. AC: seeds are idempotent; every weight row per type sums to 100.
-- [ ] **2.8 Output tables.** `rider_ratings`, `rider_ca_pa` (incl. `pa_p10/p50/p90`, `ca_12m_p50`, `type_probs`, `model_version`, `seed`), `forecasts`, `saved_layouts`, `saved_filters`. AC: service role writes, staff read.
-- [ ] **2.9 Privacy tables.** `consents`, `cycle_data`, `medical_markers` per KB §11; RLS: `medical` role **and** active consent. AC: pgTAP proves `coach` and `analyst` cannot select them.
-- [ ] **2.10 Weight visibility.** View or column privileges so only `coach`/`medical` see kg; other roles see W/kg only. AC: pgTAP test.
-- [ ] **2.11 RLS test suite.** pgTAP test for every table's policies, run in CI with `supabase test db`.
+- [x] **2.6 Sync target tables.** `power_curves`, `planned_events`, `durability_efforts`, `sync_runs` per KB §5; raw jsonb + generated columns where useful.
+- [x] **2.7 Model tables and seeds.** `benchmark_sets`, `benchmark_points`, `ca_weights`, `model_priors` (with a history table). Seed exactly the values in KB §6 (benchmarks), §7 (CA weight matrix) and §8 (PA priors), each with citation or `[prior]` note. AC: seeds are idempotent; every weight row per type sums to 100.
+- [x] **2.8 Output tables.** `rider_ratings`, `rider_ca_pa` (incl. `pa_p10/p50/p90`, `ca_12m_p50`, `type_probs`, `model_version`, `seed`), `forecasts`, `saved_layouts`, `saved_filters`. AC: service role writes, staff read.
+- [x] **2.9 Privacy tables.** `consents`, `cycle_data`, `medical_markers` per KB §11; RLS: `medical` role **and** active consent. AC: pgTAP proves `coach` and `analyst` cannot select them.
+- [x] **2.10 Weight visibility.** View or column privileges so only `coach`/`medical` see kg; other roles see W/kg only. AC: pgTAP test.
+- [x] **2.11 RLS test suite.** pgTAP test for every table's policies, run in CI with `supabase test db`.
 
 ## Phase 3 – Nightly sync
 
