@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge.tsx'
 import { MOCK_AS_OF } from '@/data/mock/riders.ts'
+import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store.ts'
 import { formatDate } from '@/lib/format.ts'
 
 interface NavItem {
@@ -29,6 +30,7 @@ const NAV: readonly NavItem[] = [
 ]
 
 export function AppShell() {
+  const role = useRole()
   return (
     <div className="flex min-h-screen">
       <nav
@@ -57,12 +59,30 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-11 items-center justify-between border-b px-6 text-sm">
           <span className="text-muted-foreground">As of {formatDate(MOCK_AS_OF)}</span>
-          <Badge
-            variant="outline"
-            title="Two synthetic riders; ratings and models are fixed values"
-          >
-            Mock Data
-          </Badge>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-muted-foreground">
+              Viewing As
+              <select
+                value={role}
+                onChange={(e) => {
+                  setRole(e.target.value as StaffRole)
+                }}
+                className="h-7 rounded-md border bg-transparent px-1.5 text-sm text-foreground"
+              >
+                {(Object.keys(ROLE_LABELS) as StaffRole[]).map((r) => (
+                  <option key={r} value={r}>
+                    {ROLE_LABELS[r]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Badge
+              variant="outline"
+              title="Two synthetic riders; ratings and models are fixed values"
+            >
+              Mock Data
+            </Badge>
+          </div>
         </header>
         <main aria-label="PROLOG Moneyball" className="flex-1 p-6">
           <Outlet />

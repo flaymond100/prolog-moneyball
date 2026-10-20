@@ -137,6 +137,9 @@ export interface Rider {
   background: string
   primaryTypeOverride: RiderType | null
   cohort: RiderCohort
+  /** HRV app and strap (KB §10). */
+  hrvSource?: string | null
+  contractEnd?: string | null
   /** Date the ratings and model outputs refer to. */
   asOf: string
   attributes: Record<AttributeId, AttributeRating>
