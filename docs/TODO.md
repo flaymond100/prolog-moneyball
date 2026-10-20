@@ -82,14 +82,14 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 
 Build views against seeded synthetic data (task 9.2) first, so the UI does not wait for Phase 7. Requirements per view are in KB §12.
 
-- [ ] **6.1 Squad table.** TanStack Table; column-group tabs (General, Power, Durability, Physiology, Training, Readiness); heatmap cells by rating or squad percentile; sort; pinned name column; min-data filter; column chooser; saved layouts; CSV export of visible columns. AC: export matches visible columns; renders 12 rows in under 100 ms.
-- [ ] **6.2 Rider profile.** Header with CA stars and PA band; three attribute panels with 1–20 chips and 28-day arrows; low-confidence chips hatched; terrain position map; power-duration curve (season/84 d/42 d) with benchmark overlay; durability funnel; lab timeline; notes. AC: Playwright snapshot of a synthetic rider.
-- [ ] **6.3 Compare.** Two rider pickers; ECharts radar (A, B, squad mean, squad best, optional pro mean); difference table; durability bubbles; selection in URL. AC: a copied URL reopens the same comparison.
-- [ ] **6.4 Filter builder.** AND conditions from the metric registry; chips; saved filters; shared by table and scatter.
-- [ ] **6.5 Scatter explorer.** X/Y from the registry; min/max sliders; squad-mean quadrant lines (`markLine`); size = CTL, colour = rider type; tooltip; click opens profile.
-- [ ] **6.6 Form board.** Rider cards with TSB, readiness light and reasons, ln rMSSD band chart, eFTP sparkline, next race with projected TSB; grey state when fewer than 3 HRV readings in 7 days.
-- [ ] **6.7 Tests.** zod forms for `lab_tests` and `anthropometrics` with range messages in British English; per-rider timeline; slope chart; delta table against coach-set typical error; VO2max × VLamax quadrant; "modelled" badge for field tests.
-- [ ] **6.8 Settings.** Rider profiles; benchmark set selector and squad-relative toggle; CA weight editor (rows must sum to 100); PA priors editor (coach only, writes history); typical error per lab metric; consent management (medical only); sync health.
+- [x] **6.1 Squad table.** TanStack Table; column-group tabs (General, Power, Durability, Physiology, Training, Readiness); heatmap cells by rating or squad percentile; sort; pinned name column; min-data filter; column chooser; saved layouts; CSV export of visible columns. AC: export matches visible columns; renders 12 rows in under 100 ms.
+- [x] **6.2 Rider profile.** Header with CA stars and PA band; three attribute panels with 1–20 chips and 28-day arrows; low-confidence chips hatched; terrain position map; power-duration curve (season/84 d/42 d) with benchmark overlay; durability funnel; lab timeline; notes. AC: Playwright snapshot of a synthetic rider.
+- [x] **6.3 Compare.** Two rider pickers; ECharts radar (A, B, squad mean, squad best, optional pro mean); difference table; durability bubbles; selection in URL. AC: a copied URL reopens the same comparison.
+- [x] **6.4 Filter builder.** AND conditions from the metric registry; chips; saved filters; shared by table and scatter.
+- [x] **6.5 Scatter explorer.** X/Y from the registry; min/max sliders; squad-mean quadrant lines (`markLine`); size = CTL, colour = rider type; tooltip; click opens profile.
+- [x] **6.6 Form board.** Rider cards with TSB, readiness light and reasons, ln rMSSD band chart, eFTP sparkline, next race with projected TSB; grey state when fewer than 3 HRV readings in 7 days.
+- [x] **6.7 Tests.** zod forms for `lab_tests` and `anthropometrics` with range messages in British English; per-rider timeline; slope chart; delta table against coach-set typical error; VO2max × VLamax quadrant; "modelled" badge for field tests.
+- [x] **6.8 Settings.** Rider profiles; benchmark set selector and squad-relative toggle; CA weight editor (rows must sum to 100); PA priors editor (coach only, writes history); typical error per lab metric; consent management (medical only); sync health.
 
 ## Phase 7 – Models
 
@@ -147,3 +147,4 @@ These do not block Phases 0–7; the agent should ask about each one when it rea
 | Retention | 8.4 | Is 12 months after contract end the right period? |
 | Rouleur benchmark | 7.1 | Watt-based benchmark for absolute 20/60-min power, or keep squad-relative? |
 | Legal review | 8.6, before launch | German employment / data protection lawyer to review privacy docs and the DPIA |
+
