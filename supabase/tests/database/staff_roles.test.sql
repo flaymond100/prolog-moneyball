@@ -79,7 +79,7 @@ select ok(public.is_staff(), 'viewer: is_staff()');
 select ok(public.has_role('viewer'), 'viewer: has_role(viewer)');
 select ok(not public.has_role('coach'), 'viewer: not has_role(coach)');
 select is((select count(*)::int from public.athletes), 1, 'viewer: reads athletes');
-select is_empty('select * from public.wellness', 'viewer: cannot read wellness');
+select is_empty('select 1 from public.wellness', 'viewer: cannot read wellness');
 select is((select count(*)::int from public.staff), 4, 'viewer: reads staff');
 reset role;
 
@@ -89,8 +89,8 @@ select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000
 set local role authenticated;
 select ok(not public.is_staff(), 'outsider: not is_staff()');
 select ok(not public.has_role('coach'), 'outsider: not has_role(coach)');
-select is_empty('select * from public.athletes', 'outsider: cannot read athletes');
-select is_empty('select * from public.wellness', 'outsider: cannot read wellness');
+select is_empty('select 1 from public.athletes', 'outsider: cannot read athletes');
+select is_empty('select 1 from public.wellness', 'outsider: cannot read wellness');
 select is_empty('select * from public.staff', 'outsider: cannot read staff');
 reset role;
 
@@ -98,7 +98,7 @@ reset role;
 
 select set_config('request.jwt.claims', '{"role": "anon"}', true);
 set local role anon;
-select is_empty('select * from public.athletes', 'anon: cannot read athletes');
+select is_empty('select 1 from public.athletes', 'anon: cannot read athletes');
 reset role;
 
 select * from finish();

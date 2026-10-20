@@ -131,7 +131,7 @@ reset role;
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000004", "role": "authenticated"}', true);
 set local role authenticated;
-select is_empty('select * from public.lab_tests', 'viewer: cannot read lab tests');
+select is_empty('select 1 from public.lab_tests', 'viewer: cannot read lab tests');
 select is_empty('select * from public.anthropometrics', 'viewer: cannot read anthropometrics');
 select is_empty('select * from public.edit_history', 'viewer: cannot read edit history');
 select throws_ok($$insert into public.lab_tests (athlete_id, test_date, method) values ('i1', '2026-05-01', 'inscyd_lab')$$,
@@ -142,7 +142,7 @@ reset role;
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000005", "role": "authenticated"}', true);
 set local role authenticated;
-select is_empty('select * from public.lab_tests', 'outsider: cannot read lab tests');
+select is_empty('select 1 from public.lab_tests', 'outsider: cannot read lab tests');
 select throws_ok($$insert into public.anthropometrics (athlete_id, date) values ('i1', '2026-05-01')$$,
   '42501', null, 'outsider: cannot insert anthropometrics');
 reset role;
@@ -151,7 +151,7 @@ reset role;
 
 select set_config('request.jwt.claims', '{"role": "anon"}', true);
 set local role anon;
-select is_empty('select * from public.lab_tests', 'anon: cannot read lab tests');
+select is_empty('select 1 from public.lab_tests', 'anon: cannot read lab tests');
 reset role;
 
 select * from finish();

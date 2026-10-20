@@ -1247,7 +1247,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_body_mass: {
+        Row: {
+          athlete_id: string | null
+          body_fat_pct: number | null
+          date: string | null
+          source: string | null
+          source_id: string | null
+          weight_kg: number | null
+        }
+        ComputedFields: never
+        Relationships: []
+      }
     }
     Functions: {
       assert_in_range: {
