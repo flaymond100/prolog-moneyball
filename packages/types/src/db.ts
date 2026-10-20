@@ -262,6 +262,42 @@ export type Database = {
         }
         Relationships: []
       }
+      durability_efforts: {
+        Row: {
+          activity_id: string
+          computed_at: string
+          duration_s: number
+          kj_kg_bucket: number
+          watts: number
+          wkg: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          activity_id: string
+          computed_at?: string
+          duration_s: number
+          kj_kg_bucket: number
+          watts: number
+          wkg?: number | null
+        }
+        Update: {
+          activity_id?: string
+          computed_at?: string
+          duration_s?: number
+          kj_kg_bucket?: number
+          watts?: number
+          wkg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'durability_efforts_activity_id_fkey'
+            columns: ['activity_id']
+            isOneToOne: false
+            referencedRelation: 'activities'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       edit_history: {
         Row: {
           athlete_id: string
@@ -371,6 +407,96 @@ export type Database = {
           },
         ]
       }
+      planned_events: {
+        Row: {
+          athlete_id: string
+          category: string | null
+          icu_training_load: number | null
+          id: string
+          moving_time: number | null
+          name: string | null
+          raw: NonNullable<Json>
+          start_date_local: string
+          synced_at: string
+          type: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id: string
+          category?: never
+          icu_training_load?: never
+          id: string
+          moving_time?: never
+          name?: never
+          raw: NonNullable<Json>
+          start_date_local: string
+          synced_at?: string
+          type?: never
+        }
+        Update: {
+          athlete_id?: string
+          category?: never
+          icu_training_load?: never
+          id?: string
+          moving_time?: never
+          name?: never
+          raw?: NonNullable<Json>
+          start_date_local?: string
+          synced_at?: string
+          type?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'planned_events_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      power_curves: {
+        Row: {
+          as_of: string
+          athlete_id: string
+          raw: NonNullable<Json>
+          secs: number[]
+          synced_at: string
+          time_window: Database['public']['Enums']['power_curve_window']
+          watts: number[]
+          wkg: number[] | null
+        }
+        ComputedFields: never
+        Insert: {
+          as_of: string
+          athlete_id: string
+          raw?: NonNullable<Json>
+          secs: number[]
+          synced_at?: string
+          time_window: Database['public']['Enums']['power_curve_window']
+          watts: number[]
+          wkg?: number[] | null
+        }
+        Update: {
+          as_of?: string
+          athlete_id?: string
+          raw?: NonNullable<Json>
+          secs?: number[]
+          synced_at?: string
+          time_window?: Database['public']['Enums']['power_curve_window']
+          watts?: number[]
+          wkg?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'power_curves_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       rider_profiles: {
         Row: {
           athlete_id: string
@@ -444,6 +570,52 @@ export type Database = {
           display_name?: string | null
           role?: Database['public']['Enums']['staff_role']
           user_id?: string
+        }
+        Relationships: []
+      }
+      sync_runs: {
+        Row: {
+          api_calls: number | null
+          athlete_ids: string[]
+          counts: NonNullable<Json>
+          error_count: number | null
+          errors: NonNullable<Json>
+          finished_at: string | null
+          id: number
+          job: string
+          params: NonNullable<Json>
+          rate_limit_remaining: number | null
+          started_at: string
+          status: string
+        }
+        ComputedFields: never
+        Insert: {
+          api_calls?: number | null
+          athlete_ids?: string[]
+          counts?: NonNullable<Json>
+          error_count?: never
+          errors?: NonNullable<Json>
+          finished_at?: string | null
+          id?: never
+          job?: string
+          params?: NonNullable<Json>
+          rate_limit_remaining?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          api_calls?: number | null
+          athlete_ids?: string[]
+          counts?: NonNullable<Json>
+          error_count?: never
+          errors?: NonNullable<Json>
+          finished_at?: string | null
+          id?: never
+          job?: string
+          params?: NonNullable<Json>
+          rate_limit_remaining?: number | null
+          started_at?: string
+          status?: string
         }
         Relationships: []
       }
@@ -552,6 +724,7 @@ export type Database = {
     }
     Enums: {
       lab_test_method: 'inscyd_lab' | 'inscyd_ppd_field'
+      power_curve_window: '42d' | '84d' | 'season'
       rider_cohort: 'squad' | 'prospect' | 'alumni'
       rider_data_source: 'intervals' | 'manual_upload'
       rider_type: 'sprinter' | 'puncheur' | 'climber' | 'rouleur_tt' | 'all_rounder'
@@ -668,6 +841,7 @@ export const Constants = {
   public: {
     Enums: {
       lab_test_method: ['inscyd_lab', 'inscyd_ppd_field'],
+      power_curve_window: ['42d', '84d', 'season'],
       rider_cohort: ['squad', 'prospect', 'alumni'],
       rider_data_source: ['intervals', 'manual_upload'],
       rider_type: ['sprinter', 'puncheur', 'climber', 'rouleur_tt', 'all_rounder'],
