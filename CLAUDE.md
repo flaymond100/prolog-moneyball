@@ -23,6 +23,7 @@ apps/web            React app (Vite)
 packages/metrics    pure TS formulas, no IO — shared by the app and Edge Functions
 packages/types      generated DB types + zod schemas
 supabase/           migrations, Edge Functions, seed.sql, pgTAP tests
+supabase/functions  pnpm workspace @prolog/functions; _shared/ uses web-standard APIs only, tested with Vitest
 docs/               knowledge-base.md, TODO.md, privacy.md, dpia.md, runbook.md
 ```
 
