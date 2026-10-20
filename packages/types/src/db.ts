@@ -262,6 +262,107 @@ export type Database = {
         }
         Relationships: []
       }
+      benchmark_points: {
+        Row: {
+          anchor_ratings: number[] | null
+          anchor_values: number[] | null
+          attribute: Database['public']['Enums']['rating_attribute']
+          citation: string
+          mean: number | null
+          method: Database['public']['Enums']['benchmark_method']
+          sd: number | null
+          set_id: string
+          status: Database['public']['Enums']['evidence_status']
+          unit: string
+        }
+        ComputedFields: never
+        Insert: {
+          anchor_ratings?: number[] | null
+          anchor_values?: number[] | null
+          attribute: Database['public']['Enums']['rating_attribute']
+          citation: string
+          mean?: number | null
+          method: Database['public']['Enums']['benchmark_method']
+          sd?: number | null
+          set_id: string
+          status: Database['public']['Enums']['evidence_status']
+          unit: string
+        }
+        Update: {
+          anchor_ratings?: number[] | null
+          anchor_values?: number[] | null
+          attribute?: Database['public']['Enums']['rating_attribute']
+          citation?: string
+          mean?: number | null
+          method?: Database['public']['Enums']['benchmark_method']
+          sd?: number | null
+          set_id?: string
+          status?: Database['public']['Enums']['evidence_status']
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'benchmark_points_set_id_fkey'
+            columns: ['set_id']
+            isOneToOne: false
+            referencedRelation: 'benchmark_sets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      benchmark_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          version: number
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: string
+          is_active?: boolean
+          name: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      ca_weights: {
+        Row: {
+          absolute_watts: boolean
+          attribute: Database['public']['Enums']['rating_attribute']
+          rider_type: Database['public']['Enums']['rider_type']
+          updated_at: string
+          weight: number
+        }
+        ComputedFields: never
+        Insert: {
+          absolute_watts?: boolean
+          attribute: Database['public']['Enums']['rating_attribute']
+          rider_type: Database['public']['Enums']['rider_type']
+          updated_at?: string
+          weight: number
+        }
+        Update: {
+          absolute_watts?: boolean
+          attribute?: Database['public']['Enums']['rating_attribute']
+          rider_type?: Database['public']['Enums']['rider_type']
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       durability_efforts: {
         Row: {
           activity_id: string
@@ -406,6 +507,77 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      model_priors: {
+        Row: {
+          citation: string
+          key: string
+          label: string
+          model: string
+          note: string | null
+          status: Database['public']['Enums']['evidence_status']
+          unit: string
+          updated_at: string
+          updated_by: string | null
+          value: NonNullable<Json>
+        }
+        ComputedFields: never
+        Insert: {
+          citation: string
+          key: string
+          label: string
+          model: string
+          note?: string | null
+          status: Database['public']['Enums']['evidence_status']
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+          value: NonNullable<Json>
+        }
+        Update: {
+          citation?: string
+          key?: string
+          label?: string
+          model?: string
+          note?: string | null
+          status?: Database['public']['Enums']['evidence_status']
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: NonNullable<Json>
+        }
+        Relationships: []
+      }
+      model_priors_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: number
+          key: string
+          new_row: Json | null
+          old_row: Json | null
+          operation: string
+        }
+        ComputedFields: never
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: never
+          key: string
+          new_row?: Json | null
+          old_row?: Json | null
+          operation: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: never
+          key?: string
+          new_row?: Json | null
+          old_row?: Json | null
+          operation?: string
+        }
+        Relationships: []
       }
       planned_events: {
         Row: {
@@ -721,10 +893,15 @@ export type Database = {
       assert_not_future: { Args: { label: string; val: string }; Returns: boolean }
       has_role: { Args: { required_role: string }; Returns: boolean }
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
+      is_strictly_increasing: { Args: { vals: number[] }; Returns: boolean }
+      seed_model_reference: { Args: Record<PropertyKey, never>; Returns: undefined }
     }
     Enums: {
+      benchmark_method: 'z_score' | 'anchors'
+      evidence_status: 'source' | 'prior'
       lab_test_method: 'inscyd_lab' | 'inscyd_ppd_field'
       power_curve_window: '42d' | '84d' | 'season'
+      rating_attribute: 'p5s' | 'p30s' | 'p1m' | 'p5m' | 'p20m' | 'p60m' | 'durability' | 'vo2max'
       rider_cohort: 'squad' | 'prospect' | 'alumni'
       rider_data_source: 'intervals' | 'manual_upload'
       rider_type: 'sprinter' | 'puncheur' | 'climber' | 'rouleur_tt' | 'all_rounder'
@@ -840,8 +1017,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      benchmark_method: ['z_score', 'anchors'],
+      evidence_status: ['source', 'prior'],
       lab_test_method: ['inscyd_lab', 'inscyd_ppd_field'],
       power_curve_window: ['42d', '84d', 'season'],
+      rating_attribute: ['p5s', 'p30s', 'p1m', 'p5m', 'p20m', 'p60m', 'durability', 'vo2max'],
       rider_cohort: ['squad', 'prospect', 'alumni'],
       rider_data_source: ['intervals', 'manual_upload'],
       rider_type: ['sprinter', 'puncheur', 'climber', 'rouleur_tt', 'all_rounder'],
