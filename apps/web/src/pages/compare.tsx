@@ -135,6 +135,78 @@ function radarOption(
   }
 }
 
+/**
+ * Until ratings exist (TODO 7.1), the radar compares measured values instead:
+ * each attribute as a percentage of the squad's best value for it. Only
+ * attributes someone in the squad has a value for are plotted.
+ */
+function valueRadarOption(t: ChartTokens, a: Rider, b: Rider, squad: Rider[]): EChartsOption {
+  const attrs = ATTRIBUTES.filter(
+    (attr) => best(squad.map((r) => r.attributes[attr.id].value)) !== null,
+  )
+  const squadBest = attrs.map((attr) => best(squad.map((r) => r.attributes[attr.id].value)) ?? 1)
+  const share = (values: (number | null)[]) =>
+    values.map((v, i) => (v === null ? 0 : Math.round((v / (squadBest[i] ?? 1)) * 1000) / 10))
+  const of = (r: Rider) => share(attrs.map((attr) => r.attributes[attr.id].value))
+  const squadMean = share(attrs.map((attr) => mean(squad.map((r) => r.attributes[attr.id].value))))
+
+  // Start the scale below the lowest share so small differences stay visible.
+  const lowest = Math.min(...of(a), ...of(b), ...squadMean)
+  const min = Math.max(0, Math.floor((lowest - 10) / 10) * 10)
+
+  const line = (
+    name: string,
+    value: number[],
+    color: string,
+    type: 'solid' | 'dashed' | 'dotted',
+    area = false,
+  ) => ({
+    name,
+    value,
+    symbol: 'circle',
+    symbolSize: 6,
+    lineStyle: { width: 2, color, type },
+    itemStyle: { color },
+    areaStyle: area ? { color, opacity: 0.12 } : undefined,
+  })
+
+  return {
+    legend: {
+      top: 0,
+      left: 0,
+      textStyle: { color: t.muted },
+      itemWidth: 16,
+      itemHeight: 2,
+    },
+    tooltip: {
+      trigger: 'item',
+      ...tooltipStyle(t),
+      valueFormatter: (v) => (typeof v === 'number' ? `${formatNumber(v, 1)}% of squad best` : '–'),
+    },
+    radar: {
+      center: ['50%', '56%'],
+      radius: '74%',
+      splitNumber: 4,
+      indicator: attrs.map((attr) => ({ name: attr.shortLabel, min, max: 100 })),
+      axisName: { color: t.muted, fontSize: 11 },
+      axisLine: { lineStyle: { color: t.grid } },
+      splitLine: { lineStyle: { color: t.grid } },
+      splitArea: { show: false },
+    },
+    series: [
+      {
+        type: 'radar',
+        data: [
+          line(a.name, of(a), t.riderA, 'solid', true),
+          line(b.name, of(b), t.riderB, 'dashed', true),
+          line('Squad Mean', squadMean, t.reference, 'dotted'),
+        ],
+        emphasis: { focus: 'self' },
+      },
+    ],
+  }
+}
+
 function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
   const rows: {
     id: string
@@ -165,11 +237,14 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
       decimals: 0,
     })),
   ]
+  const attrOf = (id: string) => ATTRIBUTES.find((x) => x.id === id)
+  const valueOf = (r: Rider, id: string) =>
+    attrOf(id) ? r.attributes[id as AttributeId].value : null
+  const unitOf = (id: string) => attrOf(id)?.unit ?? ''
+  const valueDecimals = (id: string) => (unitOf(id) === 'W/kg' ? 2 : 0)
   const value = (r: Rider, id: string) => {
-    if (id === 'ca' || id === 'pa') return null
-    const attr = ATTRIBUTES.find((x) => x.id === id)
-    const v = r.attributes[id as AttributeId].value
-    return attr ? `${formatNumber(v, attr.unit === 'W/kg' ? 2 : 0)} ${attr.unit}` : null
+    const attr = attrOf(id)
+    return attr ? `${formatNumber(valueOf(r, id), valueDecimals(id))} ${attr.unit}` : null
   }
 
   return (
@@ -192,7 +267,16 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
       </thead>
       <tbody>
         {rows.map((row) => {
-          const diff = row.ra === null || row.rb === null ? null : row.ra - row.rb
+          // Ratings when both are rated; otherwise the measured values (TODO 7.1).
+          const byRating = row.ra !== null && row.rb !== null
+          const va = valueOf(a, row.id)
+          const vb = valueOf(b, row.id)
+          const diff = byRating
+            ? (row.ra ?? 0) - (row.rb ?? 0)
+            : va !== null && vb !== null
+              ? va - vb
+              : null
+          const unit = byRating ? '' : unitOf(row.id)
           return (
             <tr key={row.id} className="border-b last:border-b-0">
               <th scope="row" className="py-1.5 text-left font-normal">
@@ -213,7 +297,9 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
                   diff !== null && diff < 0 && 'text-cream',
                 )}
               >
-                {diff === 0 ? '0' : formatNumber(diff, row.decimals, true)}
+                {diff === 0
+                  ? '0'
+                  : `${formatNumber(diff, byRating ? row.decimals : valueDecimals(row.id), true)}${unit && diff !== null ? ` ${unit}` : ''}`}
                 {diff !== null && diff !== 0 && (
                   <span className="sr-only"> in favour of {diff > 0 ? a.name : b.name}</span>
                 )}
@@ -384,9 +470,17 @@ export function ComparePage() {
                   label={`Radar of ${a.name} and ${b.name} against the squad mean and squad best, on the 1–20 scale`}
                 />
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  The radar appears once attribute ratings are calculated from the synced data.
-                </p>
+                <>
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Best power over 84 days as a share of the squad best (100%), until 1–20 ratings
+                    are calculated.
+                  </p>
+                  <Chart
+                    option={valueRadarOption(t, a, b, riders)}
+                    height={340}
+                    label={`Radar of ${a.name} and ${b.name}: best power as a percentage of the squad best`}
+                  />
+                </>
               )}
             </Panel>
             <Panel title="Head to Head">
