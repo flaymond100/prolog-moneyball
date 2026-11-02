@@ -37,10 +37,11 @@ const keys = (rows: object[]) => [...new Set(rows.flatMap((r) => Object.keys(r))
 const has = (rows: object[], field: string) => rows.some((r) => field in r)
 
 const summary = await client.get('/athlete/0/athlete-summary.json', icuAthleteSummarySchema)
+// One row per athlete and period, so count distinct athletes.
+const ids = [...new Set(summary.map((s) => s.athlete_id))]
 console.log(
-  `✔ athlete-summary: ${summary.length} coached athletes; fields: ${keys(summary).join(', ')}`,
+  `✔ athlete-summary: ${ids.length} coached athletes in ${summary.length} rows; fields: ${keys(summary).join(', ')}`,
 )
-const ids = summary.map((s) => s.athlete_id)
 const redact = (text: string) => ids.reduce((t, id) => t.replaceAll(id, '<athlete>'), text)
 
 async function check(label: string, run: () => Promise<string>) {

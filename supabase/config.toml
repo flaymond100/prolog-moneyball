@@ -406,3 +406,8 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# pg_cron calls this with x-cron-secret instead of a user JWT, so no key sits in
+# cron.job SQL (TODO 3.4, 3.6). The function checks the secret itself.
+[functions.sync-nightly]
+verify_jwt = false
