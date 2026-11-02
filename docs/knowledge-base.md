@@ -387,6 +387,7 @@ Riders are PROLOG employees, so training and performance data are processed on t
 - Supabase project in an EU region (check Frankfurt); a DPA with Supabase on file.
 - `consents` ledger: `athlete_id`, `scope` (`cycle_data`, `medical_markers`, later `recruitment_assessment`), `granted_at`, `withdrawn_at`, `policy_version`.
 - Sync strips `menstrualPhase*` unless an active `cycle_data` consent exists; then it routes to `cycle_data`, never to `wellness.raw`.
+- Until the lawyer has signed off the privacy documents, the sync keeps only the training-load fields of wellness (CTL, ATL, ramp rate, eFTP, weight) and no HRV, resting HR, sleep or subjective scores (`app_settings.wellness_scope = 'training_load'`; agreed with Kosta, 2 November 2026).
 - Withdrawal deletes the related rows within 24 hours (scheduled job) and logs the deletion.
 - Cycle phases appear only as an overlay on that rider's own form chart; never in squad tables, scatter, compare or exports.
 - Retention: delete or anonymise a rider's personal data a configurable period after her contract ends \[prior: 12 months\]; keep anonymised aggregates for model calibration.

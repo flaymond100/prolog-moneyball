@@ -13,6 +13,14 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 - Stack: Vite + React 18 + TypeScript (strict), pnpm, Supabase, TanStack Query/Table/Router, ECharts, Tailwind + shadcn/ui, zod, Vitest, Playwright, pgTAP. British spelling in UI copy.
 - Out of v1: Banister model, recruitment UI, rider logins.
 
+## MVP scope (agreed with Kosta, 2 November 2026)
+
+Collect data first, then build on it. The sync stores every raw response, so all metrics can be computed later from what is already stored.
+
+1. **Collect:** the go-live checklist (10.5) with the runbook (`docs/runbook.md`): restore the project, push migrations, deploy `sync-nightly` and `backfill`, schedule 3.6, onboard riders, backfill. Workouts and training load only (CTL, ATL, ramp rate, eFTP, weight) until the lawyer signs off the privacy documents (KB §11, `wellness_scope`).
+2. **First useful dashboard:** 9.1 (slim synthetic seed), 5.1, 5.3, 7.1–7.3, 5.6, 4.3, a load-only Form board (CTL/ATL/TSB, ramp rate, eFTP), 10.1.
+3. **Deferred until after the MVP:** 4.2 extras, the wellness half of 5.2 (readiness, HRV, wellness composite), 5.4, 5.5, 5.7 beyond what 7.1–7.3 need, 7.4–7.8, 8.1–8.5 (8.6 is needed before health data is collected), 10.2, 10.3, Phase 11.
+
 ## Phase 0 – Repository and conventions
 
 - [x] **0.1 Create the repo.** `gh repo create prolog-moneyball --private` (GitHub Pages on a private repo needs GitHub Pro or higher; if not available, ask Kosta before making it public). Add `README.md`, proprietary `LICENSE`, `.gitignore` (node, `.env*`, `supabase/.temp`, `supabase/.branches`). AC: `main` is protected (PR required, CI must pass).
@@ -159,4 +167,9 @@ These do not block Phases 0–7; the agent should ask about each one when it rea
 | Season start | 3.4, 5.3 | What is the "season" power-curve window? **Answered:** from 1 October 2026 for the 2027 season, kept as a coach setting (2 November 2026). |
 | Race events | 3.4, 6.6 | Sync `RACE_A/B/C` events as well as workouts, for the Form board's next race? **Answered:** yes (2 November 2026). |
 | Coached athletes | 3.3 | Who are the two athletes coached in intervals.icu? **Answered:** test data for now (2 November 2026). |
+| Supabase plan | 10.5 | Pro, or stay on the free tier? **Answered:** free tier; the nightly sync plus a weekly dashboard login keep it active (2 November 2026). |
+| Health data before legal review | 10.5, 8.6 | Collect HRV, resting HR and sleep from go-live, or wait for the lawyer? **Answered:** wait; collect workouts and training load only until sign-off (`wellness_scope`, 2 November 2026). |
+| Weight for W/kg | 5.3 | Fall back to intervals.icu's W/kg when a rider has no weight? **Answered:** not needed, riders will provide weight (2 November 2026). |
+| Durability rating | 7.1, 7.3 | KB §6 has four retained-% values (5 and 20 min after 20 and 30 kJ/kg) but CA has one durability attribute: how do they combine, and is "fresh" power the 84-day best? |
+| Planned workouts | 5.5, 7.5 | Do planned workouts and races reach the intervals.icu calendar from TrainingPeaks? |
 
