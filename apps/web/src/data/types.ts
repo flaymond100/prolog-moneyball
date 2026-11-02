@@ -14,13 +14,13 @@ export type AttributeId = PowerAttributeId | 'durability' | 'vo2max'
 export type Confidence = 'high' | 'low'
 
 export interface AttributeRating {
-  /** 1–20 rating from the active benchmark set. */
-  rating: number
+  /** 1–20 rating from the active benchmark set; null until ratings are calculated (TODO 7.1). */
+  rating: number | null
   confidence: Confidence
-  /** Rating change over the last 28 days. */
-  change28d: number
-  /** Underlying value in the attribute's unit (W/kg, retained %, mL/kg/min). */
-  value: number
+  /** Rating change over the last 28 days; null without a rating 28 days ago. */
+  change28d: number | null
+  /** Underlying value in the attribute's unit (W/kg, retained %, mL/kg/min); null when not measured. */
+  value: number | null
 }
 
 export interface CaPa {
@@ -40,7 +40,8 @@ export interface PowerCurve {
   window: PowerWindow
   secs: number[]
   watts: number[]
-  wkg: number[]
+  /** Null when intervals.icu knew no weight for the window. */
+  wkg: number[] | null
 }
 
 /** Best 5-min and 20-min W/kg, fresh (0) and after accumulated work. */
@@ -77,12 +78,13 @@ export interface Anthropometric {
 }
 
 export interface TrainingSummary {
-  ctl: number
-  atl: number
-  tsb: number
-  rampRate: number
-  compliance12wPct: number
-  indoorPct: number
+  // Null until there is data: load comes from wellness, compliance from planned workouts (TODO 5.5).
+  ctl: number | null
+  atl: number | null
+  tsb: number | null
+  rampRate: number | null
+  compliance12wPct: number | null
+  indoorPct: number | null
   rides84d: number
 }
 
@@ -106,15 +108,17 @@ export interface UpcomingRace {
   name: string
   date: string
   /** Projected TSB on race day at planned load (KB §9 load projection). */
-  projectedTsb: number
+  /** Null until the load projection exists (TODO 7.5). */
+  projectedTsb: number | null
 }
 
 export interface FormSeries {
   /** 7-day rolling ln rMSSD, one value per day. */
   lnRmssd7d: DatedValue[]
   /** 60-day baseline of ln rMSSD. */
-  baselineMean: number
-  baselineSd: number
+  /** Null without HRV data (not collected until legal sign-off, KB §11). */
+  baselineMean: number | null
+  baselineSd: number | null
   /** HRV readings in the last 7 days; fewer than 3 means insufficient data (KB §9). */
   hrvReadings7d: number
   /** Weekly eFTP in W/kg. */
@@ -131,10 +135,11 @@ export interface RiderNote {
 export interface Rider {
   id: string
   name: string
-  dateOfBirth: string
-  trainingAgeYears: number
-  trainingAgeEnteredOn: string
-  background: string
+  // From rider_profiles; null until the coach enters them.
+  dateOfBirth: string | null
+  trainingAgeYears: number | null
+  trainingAgeEnteredOn: string | null
+  background: string | null
   primaryTypeOverride: RiderType | null
   cohort: RiderCohort
   /** HRV app and strap (KB §10). */
@@ -143,7 +148,8 @@ export interface Rider {
   /** Date the ratings and model outputs refer to. */
   asOf: string
   attributes: Record<AttributeId, AttributeRating>
-  caPa: CaPa
+  /** Null until CA and PA are calculated (TODO 7.3, 7.4). */
+  caPa: CaPa | null
   powerCurves: PowerCurve[]
   durability: DurabilityPoint[]
   labTests: LabTest[]

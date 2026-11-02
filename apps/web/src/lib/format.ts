@@ -22,8 +22,13 @@ export function formatDateTime(iso: string): string {
   return `${dateFormat.format(date)}, ${timeFormat.format(date)} UTC`
 }
 
-/** Fixed decimals with a proper minus sign, e.g. "−7" and "+6" when `signed`. */
-export function formatNumber(value: number, decimals = 0, signed = false): string {
+/** Fixed decimals with a proper minus sign, e.g. "−7" and "+6" when `signed`; "–" when there is no value yet. */
+export function formatNumber(
+  value: number | null | undefined,
+  decimals = 0,
+  signed = false,
+): string {
+  if (value === null || value === undefined) return '–'
   const text = Math.abs(value).toFixed(decimals)
   if (value < 0 && Number(text) !== 0) return `−${text}`
   return signed && Number(text) !== 0 ? `+${text}` : text

@@ -9,6 +9,7 @@ import {
 import { AuthGate } from '@/auth/auth-gate.tsx'
 import { ComparePage } from '@/pages/compare.tsx'
 import { FormPage } from '@/pages/form.tsx'
+import { LivePage } from '@/pages/live.tsx'
 import { PalettePage } from '@/pages/dev/palette.tsx'
 import { NotFoundPage } from '@/pages/not-found.tsx'
 import { RiderPage } from '@/pages/rider.tsx'
@@ -38,6 +39,13 @@ const indexRoute = createRoute({
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router redirects by throwing
     throw redirect({ to: '/squad', replace: true })
   },
+})
+
+// Stored sync data per athlete, until the views read it (TODO 4.3).
+const liveRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/live',
+  component: LivePage,
 })
 
 const squadRoute = createRoute({
@@ -117,6 +125,7 @@ const routeTree = rootRoute.addChildren([
     scatterRoute,
     testsRoute,
     settingsRoute,
+    liveRoute,
   ]),
   paletteRoute,
 ])

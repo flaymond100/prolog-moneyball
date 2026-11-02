@@ -57,7 +57,7 @@ export function PowerCurveChart({ rider }: { rider: Rider }) {
       ...curves.map((c, i) => ({
         name: POWER_WINDOW_LABELS[c.window],
         type: 'line' as const,
-        data: c.secs.map((s, j) => [s, c.wkg[j] ?? null]),
+        data: c.secs.map((s, j) => [s, c.wkg?.[j] ?? null]),
         showSymbol: false,
         symbolSize: 8,
         lineStyle: { width: 2, color: t.series[i] },
@@ -105,7 +105,7 @@ export function PowerCurveChart({ rider }: { rider: Rider }) {
                   </th>
                   {curves.map((c) => (
                     <td key={c.window} className="pr-4 text-right">
-                      {formatNumber(c.wkg[j] ?? 0, 2)}
+                      {c.wkg?.[j] == null ? '—' : formatNumber(c.wkg[j], 2)}
                     </td>
                   ))}
                 </tr>

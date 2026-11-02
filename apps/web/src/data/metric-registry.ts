@@ -45,7 +45,7 @@ export const METRICS: readonly MetricDef[] = [
     decimals: 1,
     higherIsBetter: true,
     group: 'General',
-    get: (r) => r.caPa.ca,
+    get: (r) => r.caPa?.ca ?? null,
   },
   {
     id: 'caFm',
@@ -54,7 +54,7 @@ export const METRICS: readonly MetricDef[] = [
     decimals: 0,
     higherIsBetter: true,
     group: 'General',
-    get: (r) => caOnFmScale(r.caPa.ca),
+    get: (r) => (r.caPa ? caOnFmScale(r.caPa.ca) : null),
   },
   {
     id: 'pa',
@@ -63,7 +63,7 @@ export const METRICS: readonly MetricDef[] = [
     decimals: 1,
     higherIsBetter: true,
     group: 'General',
-    get: (r) => r.caPa.paP50,
+    get: (r) => r.caPa?.paP50 ?? null,
   },
   {
     id: 'age',

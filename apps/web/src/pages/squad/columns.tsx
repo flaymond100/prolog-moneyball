@@ -35,6 +35,12 @@ declare module '@tanstack/react-table' {
 
 const col = createColumnHelper<Rider>()
 
+/** "–" until the type is calculated (TODO 7.2) or set by the coach. */
+function typeLabel(rider: Rider): string {
+  const type = primaryType(rider)
+  return type ? RIDER_TYPE_LABELS[type] : '–'
+}
+
 function latestLab(rider: Rider): LabTest | undefined {
   return rider.labTests.at(-1)
 }
@@ -101,26 +107,32 @@ export const squadColumns = [
   }),
 
   // General
-  col.accessor((r) => RIDER_TYPE_LABELS[primaryType(r)], {
+  col.accessor((r) => typeLabel(r), {
     id: 'type',
     header: 'Type',
-    meta: { group: 'general', label: 'Rider Type', csv: (r) => RIDER_TYPE_LABELS[primaryType(r)] },
+    meta: { group: 'general', label: 'Rider Type', csv: typeLabel },
   }),
   numberColumn('age', 'Age', 'Age', 'general', riderAge),
   numberColumn('trainingAge', 'Train. Age', 'Training Age (Years)', 'general', riderTrainingAge, 1),
-  col.accessor((r) => r.caPa.ca, {
+  col.accessor((r) => r.caPa?.ca ?? null, {
     id: 'ca',
     header: 'CA',
     cell: ({ getValue }) => <RatingChip rating={getValue()} decimals={1} />,
-    meta: { group: 'general', label: 'Current Ability', csv: (r) => r.caPa.ca, numeric: true },
+    meta: {
+      group: 'general',
+      label: 'Current Ability',
+      csv: (r) => r.caPa?.ca ?? null,
+      numeric: true,
+    },
   }),
   numberColumn('caFm', 'CA /200', 'Current Ability (0–200)', 'general', (r) =>
-    caOnFmScale(r.caPa.ca),
+    r.caPa ? caOnFmScale(r.caPa.ca) : null,
   ),
-  col.accessor((r) => r.caPa.paP50, {
+  col.accessor((r) => r.caPa?.paP50 ?? null, {
     id: 'pa',
     header: 'PA',
     cell: ({ row }) => {
+      if (!row.original.caPa) return '–'
       const { paP10, paP50, paP90 } = row.original.caPa
       return (
         <span>
@@ -134,7 +146,7 @@ export const squadColumns = [
     meta: {
       group: 'general',
       label: 'Potential Ability (P50)',
-      csv: (r) => r.caPa.paP50,
+      csv: (r) => r.caPa?.paP50 ?? null,
       numeric: true,
     },
   }),
