@@ -115,6 +115,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'activities_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
       activity_intervals: {
@@ -234,6 +241,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'athletes'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'anthropometrics_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
           },
         ]
       }
@@ -434,6 +448,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'consents_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
       cycle_data: {
@@ -469,6 +490,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'athletes'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cycle_data_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
           },
         ]
       }
@@ -588,6 +616,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'forecasts_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
       lab_tests: {
@@ -663,6 +698,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'lab_tests_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
       medical_markers: {
@@ -710,6 +752,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'athletes'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'medical_markers_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
           },
         ]
       }
@@ -830,6 +879,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'planned_events_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
       power_curves: {
@@ -871,6 +927,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'athletes'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'power_curves_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
           },
         ]
       }
@@ -933,6 +996,13 @@ export type Database = {
             referencedColumns: ['id']
           },
           {
+            foreignKeyName: 'rider_ca_pa_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
+          {
             foreignKeyName: 'rider_ca_pa_set_id_fkey'
             columns: ['set_id']
             isOneToOne: false
@@ -993,6 +1063,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'rider_profiles_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: true
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
       rider_ratings: {
@@ -1043,6 +1120,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'athletes'
             referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'rider_ratings_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
           },
           {
             foreignKeyName: 'rider_ratings_set_id_fkey'
@@ -1268,6 +1352,13 @@ export type Database = {
             referencedRelation: 'athletes'
             referencedColumns: ['id']
           },
+          {
+            foreignKeyName: 'wellness_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
         ]
       }
     }
@@ -1280,6 +1371,29 @@ export type Database = {
           source: string | null
           source_id: string | null
           weight_kg: number | null
+        }
+        ComputedFields: never
+        Relationships: []
+      }
+      v_sync_health: {
+        Row: {
+          athlete_id: string | null
+          last_success_at: string | null
+          name: string | null
+          stale: boolean | null
+        }
+        ComputedFields: never
+        Relationships: []
+      }
+      v_sync_last_run: {
+        Row: {
+          api_calls: number | null
+          error_count: number | null
+          errors: Json | null
+          finished_at: string | null
+          id: number | null
+          outcome: string | null
+          started_at: string | null
         }
         ComputedFields: never
         Relationships: []

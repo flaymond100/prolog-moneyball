@@ -8,6 +8,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
+import { SyncBanner } from '@/components/sync-banner.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { MOCK_AS_OF } from '@/data/mock/riders.ts'
 import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store.ts'
@@ -84,6 +85,7 @@ export function AppShell() {
             </Badge>
           </div>
         </header>
+        <SyncBanner />
         <main aria-label="PROLOG Moneyball" className="flex-1 p-6">
           <Outlet />
         </main>

@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MOCK_RIDERS } from '@/data/mock/riders.ts'
-import type { Anthropometric, LabTest, Rider } from '@/data/types.ts'
+import { MOCK_SYNC_HEALTH } from '@/data/mock/sync-health.ts'
+import type { Anthropometric, LabTest, Rider, SyncHealth } from '@/data/types.ts'
 
 // The one place views get rider data from. Mock fixtures for now, kept in
 // memory so entries made in the Tests view last for the session; swap these
@@ -42,6 +43,17 @@ export function useRider(id: string) {
 
 export function useAnthropometrics() {
   return useQuery(anthropometricsQuery)
+}
+
+/** v_sync_last_run and v_sync_health (TODO 3.7); mock until the data layer (4.3). */
+async function fetchSyncHealth(): Promise<SyncHealth> {
+  return Promise.resolve(MOCK_SYNC_HEALTH)
+}
+
+export const syncHealthQuery = queryOptions({ queryKey: ['sync-health'], queryFn: fetchSyncHealth })
+
+export function useSyncHealth() {
+  return useQuery(syncHealthQuery)
 }
 
 /** Mirrors the unique constraint lab_tests_one_per_athlete_date_method. */

@@ -10,11 +10,12 @@ import {
   type CaWeightAttribute,
   type PaPrior,
 } from '@/data/mock/model-settings.ts'
-import { useUpdateRiderProfile, type RiderProfilePatch } from '@/data/queries.ts'
+import { useSyncHealth, useUpdateRiderProfile, type RiderProfilePatch } from '@/data/queries.ts'
 import { ROLE_LABELS, type StaffRole } from '@/data/role-store.ts'
 import { setTypicalError, useTypicalErrors } from '@/data/typical-error-store.ts'
 import type { Rider, RiderCohort, RiderType } from '@/data/types.ts'
-import { formatDate, formatNumber } from '@/lib/format.ts'
+import { formatDate, formatDateTime, formatNumber } from '@/lib/format.ts'
+import { SYNC_OUTCOME_LABELS } from '@/lib/sync-health.ts'
 import { cn } from '@/lib/utils.ts'
 import { Panel } from '@/pages/rider/panels.tsx'
 
@@ -574,6 +575,9 @@ export function ConsentsSection({ riders }: { riders: Rider[] }) {
 // Sync health --------------------------------------------------------------------
 
 export function SyncHealthSection() {
+  const { data } = useSyncHealth()
+  const lastRun = data?.lastRun ?? null
+  const failed = lastRun?.outcome === 'failed' || lastRun?.outcome === 'stalled'
   return (
     <Panel title="Sync Health">
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
@@ -587,9 +591,57 @@ export function SyncHealthSection() {
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Last Run</dt>
-          <dd className="text-muted-foreground">None yet: the sync arrives in Phase 3.</dd>
+          {lastRun ? (
+            <dd>
+              <span className={cn(failed && 'text-destructive')}>
+                {SYNC_OUTCOME_LABELS[lastRun.outcome]}
+              </span>{' '}
+              <span className="text-muted-foreground">
+                · {formatDateTime(lastRun.startedAt)}
+                {lastRun.apiCalls !== null && ` · ${formatNumber(lastRun.apiCalls)} API calls`}
+              </span>
+            </dd>
+          ) : (
+            <dd className="text-muted-foreground">No nightly sync has run yet.</dd>
+          )}
         </div>
       </dl>
+
+      {lastRun && lastRun.errors.length > 0 && (
+        <ul className="mt-3 space-y-1 text-sm" aria-label="Errors in the last run">
+          {lastRun.errors.map((e, i) => (
+            <li key={i} className="text-destructive">
+              {e.athleteId ?? 'Setup'} · {e.step}:{' '}
+              <span className="text-foreground">{e.message}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {data && data.riders.length > 0 && (
+        <table className="mt-4 w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-muted-foreground">
+              <th className="py-1 font-normal">Rider</th>
+              <th className="py-1 font-normal">Last Clean Sync</th>
+              <th className="py-1 font-normal">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.riders.map((r) => (
+              <tr key={r.athleteId} className="border-t">
+                <td className="py-1.5">{r.name}</td>
+                <td className="py-1.5 tabular-nums">
+                  {r.lastSuccessAt ? formatDateTime(r.lastSuccessAt) : 'Never'}
+                </td>
+                <td className={cn('py-1.5', r.stale && 'text-destructive')}>
+                  {r.stale ? 'Stale (over 48 hours)' : 'Up to date'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </Panel>
   )
 }
