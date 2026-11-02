@@ -78,7 +78,7 @@ All training data comes from the official intervals.icu REST API, read with the 
 - The coach key can read every athlete who added Kosta as coach. OAuth tokens do **not** give access to coached athletes, so use the key.
 - Rider onboarding: free intervals.icu account → connect Garmin/Wahoo/Hammerhead **directly** (not via Strava) → add the coach in settings.
 
-**Rate limits \[source: intervals.icu forum\]:** 5,000 calls/day, 2,500 per rolling 15 min, 10 calls/s per IP. A 429 response carries `Retry-After`; honour it with back-off. Throttle to ≤5 calls/s.
+**Rate limits \[source: intervals.icu forum\]:** 5,000 calls/day, 2,500 per rolling 15 min, 10 calls/s per IP. A 429 response carries `Retry-After`; honour it with back-off. Throttle to ≤5 calls/s. Normal responses carry no rate-limit headers, so the sync counts its own calls against the daily budget (confirmed 20 October 2026, `docs/intervals-api.md`).
 
 | Purpose | Endpoint |
 | --- | --- |
@@ -87,9 +87,9 @@ All training data comes from the official intervals.icu REST API, read with the 
 | One activity with intervals | `GET /activity/{id}?intervals=true` |
 | Per-second streams | `GET /activity/{id}/streams.json?types=watts,heartrate,cadence,altitude,time` |
 | Wellness by day | `GET /athlete/{id}/wellness?oldest=…&newest=…` |
-| Athlete power curves | `GET /athlete/{id}/power-curves.json?type=Ride&curves=…` (confirm window syntax: 42d, 84d, season) |
+| Athlete power curves | `GET /athlete/{id}/power-curves.json?type=Ride&curves=42d,84d,r.{season start}.{today}` (`r.` = inclusive date range; season start below) |
 | Power model / eFTP | `GET /athlete/{id}/mmp-model` and wellness `sportInfo[].eftp` |
-| Planned workouts | `GET /athlete/{id}/events?category=WORKOUT&oldest=…&newest=…` |
+| Planned workouts and races | `GET /athlete/{id}/events.json?category=WORKOUT,RACE_A,RACE_B,RACE_C&oldest=…&newest=…` (races feed the Form board's next race; agreed with Kosta, 2 November 2026) |
 | Original file (optional) | `GET /activity/{id}/file` (gzip FIT/TCX/GPX) |
 
 **Key activity fields** (all metric; seconds, m/s, °C):
@@ -168,7 +168,7 @@ Every attribute is rated 1–20, with the female-pro mean set at 15. Ratings com
 
 | Group | Attributes | Source | In CA? |
 | --- | --- | --- | --- |
-| Power profile | Sprint 5 s, Anaerobic 30 s, Punch 1 min, VO2 5 min, Threshold 20 min, Endurance 60 min (W/kg); absolute 20/60 min W for rouleurs | `power_curves` (84-day window; season shown alongside) | Yes |
+| Power profile | Sprint 5 s, Anaerobic 30 s, Punch 1 min, VO2 5 min, Threshold 20 min, Endurance 60 min (W/kg); absolute 20/60 min W for rouleurs | `power_curves` (84-day window; season shown alongside — season runs from the season start date, a coach setting, 1 October 2026 for the 2027 season) | Yes |
 | Durability | Retained % of fresh 5 min and 20 min power after 20 and 30 kJ/kg | `durability_efforts` (84 days) | Yes, 25% |
 | Physiology | VO2max (rated); VLamax, FatMax, CarbMax, AT (shown, not rated) | `lab_tests` | VO2max only, 5% |
 | Training and consistency | 12-week compliance, CTL level, ramp-rate stability, intensity distribution, indoor/outdoor ratio | activities, `planned_events`, zone views | No |
