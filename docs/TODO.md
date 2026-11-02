@@ -45,15 +45,15 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 
 ## Phase 3 – Nightly sync
 
-- [ ] **3.1 Secrets.** `supabase secrets set INTERVALS_API_KEY=… CRON_SECRET=…`; store `project_url` and `cron_secret` in Vault. AC: `select * from cron.job` shows no plaintext secret.
-- [ ] **3.2 intervals.icu client** (`supabase/functions/_shared/icu.ts`). Basic auth (`API_KEY:<key>`), throttle ≤5 req/s, honour 429 `Retry-After` with exponential back-off, log remaining rate limit, zod-validate known fields but keep the full JSON. AC: unit tests with mocked fetch cover 200, 429 and 5xx.
-- [ ] **3.3 Confirm endpoints.** Check every endpoint in KB §4 against the live Swagger, especially power-curve window syntax and the events filter; record findings in `docs/intervals-api.md`. AC: a test script hits each endpoint once for one rider.
+- [ ] **3.1 Secrets.** `supabase secrets set INTERVALS_API_KEY=… CRON_SECRET=…`; store `project_url` and `cron_secret` in Vault. AC: `select * from cron.job` shows no plaintext secret. *Status (20 October 2026): secrets and Vault entries set and matched by hash; the AC is checked when 3.6 creates the jobs.*
+- [x] **3.2 intervals.icu client** (`supabase/functions/_shared/icu.ts`). Basic auth (`API_KEY:<key>`), throttle ≤5 req/s, honour 429 `Retry-After` with exponential back-off, log remaining rate limit, zod-validate known fields but keep the full JSON. AC: unit tests with mocked fetch cover 200, 429 and 5xx.
+- [ ] **3.3 Confirm endpoints.** Check every endpoint in KB §4 against the live Swagger, especially power-curve window syntax and the events filter; record findings in `docs/intervals-api.md`. AC: a test script hits each endpoint once for one rider. *Status (2 November 2026): done except activity detail, streams and event fields, which need one re-run once a rider syncs a device directly (current athletes are Strava-only test data).*
 - [ ] **3.4 `sync-nightly` Edge Function.** Verifies `x-cron-secret`, then for each coached athlete (from `athlete-summary`):
   1. Upsert `athletes`.
   2. Activities from today − 4 days; detail with intervals for new or changed ones; strip `icu_intervals`/`icu_groups` into `activity_intervals`; skip and log Strava-sourced ones.
   3. Wellness for the last 4 days; strip `menstrualPhase*` unless active `cycle_data` consent (then write to `cycle_data`).
-  4. Power curves for 42 d, 84 d and season into `power_curves`.
-  5. Planned workouts for the next 56 days into `planned_events`.
+  4. Power curves for 42 d, 84 d and season (from the season start setting, `r.{start}.{today}`) into `power_curves`.
+  5. Planned workouts and races (`WORKOUT,RACE_A,RACE_B,RACE_C`) for the next 56 days into `planned_events`.
   6. Write a `sync_runs` row.
 
   AC: re-running is idempotent; fewer than 400 API calls per night for 12 riders.
@@ -147,4 +147,7 @@ These do not block Phases 0–7; the agent should ask about each one when it rea
 | Retention | 8.4 | Is 12 months after contract end the right period? |
 | Rouleur benchmark | 7.1 | Watt-based benchmark for absolute 20/60-min power, or keep squad-relative? |
 | Legal review | 8.6, before launch | German employment / data protection lawyer to review privacy docs and the DPIA |
+| Season start | 3.4, 5.3 | What is the "season" power-curve window? **Answered:** from 1 October 2026 for the 2027 season, kept as a coach setting (2 November 2026). |
+| Race events | 3.4, 6.6 | Sync `RACE_A/B/C` events as well as workouts, for the Form board's next race? **Answered:** yes (2 November 2026). |
+| Coached athletes | 3.3 | Who are the two athletes coached in intervals.icu? **Answered:** test data for now (2 November 2026). |
 
