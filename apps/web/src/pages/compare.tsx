@@ -24,8 +24,13 @@ const route = getRouteApi('/app/compare')
 
 const RADAR_ATTRIBUTES = ATTRIBUTES.map((a) => a.id)
 
+// Unrated attributes plot at 0; the radar only shows once someone is rated.
 function ratings(rider: Rider): number[] {
-  return RADAR_ATTRIBUTES.map((id) => rider.attributes[id].rating)
+  return RADAR_ATTRIBUTES.map((id) => rider.attributes[id].rating ?? 0)
+}
+
+function hasRatings(rider: Rider): boolean {
+  return RADAR_ATTRIBUTES.some((id) => rider.attributes[id].rating !== null)
 }
 
 function squadSummary(riders: Rider[], summarise: typeof mean): number[] {
@@ -131,9 +136,27 @@ function radarOption(
 }
 
 function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
-  const rows: { id: string; label: string; ra: number; rb: number; decimals: number }[] = [
-    { id: 'ca', label: 'Current Ability', ra: a.caPa.ca, rb: b.caPa.ca, decimals: 1 },
-    { id: 'pa', label: 'Potential Ability (P50)', ra: a.caPa.paP50, rb: b.caPa.paP50, decimals: 1 },
+  const rows: {
+    id: string
+    label: string
+    ra: number | null
+    rb: number | null
+    decimals: number
+  }[] = [
+    {
+      id: 'ca',
+      label: 'Current Ability',
+      ra: a.caPa?.ca ?? null,
+      rb: b.caPa?.ca ?? null,
+      decimals: 1,
+    },
+    {
+      id: 'pa',
+      label: 'Potential Ability (P50)',
+      ra: a.caPa?.paP50 ?? null,
+      rb: b.caPa?.paP50 ?? null,
+      decimals: 1,
+    },
     ...ATTRIBUTES.map((attr) => ({
       id: attr.id,
       label: attr.label,
@@ -169,7 +192,7 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
       </thead>
       <tbody>
         {rows.map((row) => {
-          const diff = row.ra - row.rb
+          const diff = row.ra === null || row.rb === null ? null : row.ra - row.rb
           return (
             <tr key={row.id} className="border-b last:border-b-0">
               <th scope="row" className="py-1.5 text-left font-normal">
@@ -186,12 +209,12 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
               <td
                 className={cn(
                   'py-1.5 text-right font-medium',
-                  diff > 0 && 'text-gold',
-                  diff < 0 && 'text-cream',
+                  diff !== null && diff > 0 && 'text-gold',
+                  diff !== null && diff < 0 && 'text-cream',
                 )}
               >
                 {diff === 0 ? '0' : formatNumber(diff, row.decimals, true)}
-                {diff !== 0 && (
+                {diff !== null && diff !== 0 && (
                   <span className="sr-only"> in favour of {diff > 0 ? a.name : b.name}</span>
                 )}
               </td>
@@ -354,11 +377,17 @@ export function ComparePage() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Panel title="Attributes">
-              <Chart
-                option={radarOption(t, a, b, riders, showPro)}
-                height={360}
-                label={`Radar of ${a.name} and ${b.name} against the squad mean and squad best, on the 1–20 scale`}
-              />
+              {hasRatings(a) || hasRatings(b) ? (
+                <Chart
+                  option={radarOption(t, a, b, riders, showPro)}
+                  height={360}
+                  label={`Radar of ${a.name} and ${b.name} against the squad mean and squad best, on the 1–20 scale`}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  The radar appears once attribute ratings are calculated from the synced data.
+                </p>
+              )}
             </Panel>
             <Panel title="Head to Head">
               <DifferenceTable a={a} b={b} />

@@ -2,12 +2,13 @@ import { ArrowDown, ArrowUp } from 'lucide-react'
 import { cn } from '@/lib/utils.ts'
 
 interface ChangeArrowProps {
-  /** Rating change over 28 days (KB §6). */
-  change: number
+  /** Rating change over 28 days (KB §6); null when there is nothing to compare. */
+  change: number | null
   className?: string
 }
 
 export function ChangeArrow({ change, className }: ChangeArrowProps) {
+  if (change === null) return <span className={cn('inline-block w-3.5', className)} />
   if (change === 0) {
     return (
       <span className={cn('inline-block w-3.5', className)} aria-label="No change in 28 days" />

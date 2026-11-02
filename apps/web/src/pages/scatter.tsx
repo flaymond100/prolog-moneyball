@@ -59,7 +59,8 @@ interface Point {
   rider: Rider
   x: number
   y: number
-  ctl: number
+  /** Point size; null when the rider has no load data yet. */
+  ctl: number | null
 }
 
 // 15% headroom so edge points and their labels are not clipped.
@@ -68,11 +69,14 @@ function pad(range: { min: number; max: number }): number {
 }
 
 // Point area follows CTL: 14 px at the squad minimum, 36 px at the maximum.
-function sizeScale(points: Point[]): (ctl: number) => number {
-  const ctls = points.map((p) => p.ctl)
+function sizeScale(points: Point[]): (ctl: number | null) => number {
+  const ctls = points.flatMap((p) => (p.ctl === null ? [] : [p.ctl]))
   const lo = Math.min(...ctls)
   const hi = Math.max(...ctls)
-  return (ctl) => (hi === lo ? 24 : 14 + 22 * Math.sqrt((ctl - lo) / (hi - lo)))
+  return (ctl) => {
+    if (ctl === null) return 14 // no load data: smallest point
+    return hi === lo ? 24 : 14 + 22 * Math.sqrt((ctl - lo) / (hi - lo))
+  }
 }
 
 export function ScatterPage() {
@@ -167,13 +171,14 @@ export function ScatterPage() {
       ...tooltipStyle(t),
       formatter: (p) => {
         const item = Array.isArray(p) ? p[0] : p
-        const d = item?.data as { name: string; value: [number, number]; ctl: number } | undefined
+        const d = item?.data as
+          { name: string; value: [number, number]; ctl: number | null } | undefined
         if (!d) return ''
         return [
           `<strong>${d.name}</strong> · ${item?.seriesName ?? ''}`,
           `${xDef.label}: ${formatNumber(d.value[0], xDef.decimals)} ${xDef.unit}`,
           `${yDef.label}: ${formatNumber(d.value[1], yDef.decimals)} ${yDef.unit}`,
-          `CTL: ${formatNumber(d.ctl)}`,
+          `CTL: ${d.ctl === null ? '—' : formatNumber(d.ctl)}`,
         ].join('<br/>')
       },
     },
@@ -292,7 +297,9 @@ export function ScatterPage() {
                     </th>
                     <td className="pr-4 text-right">{formatNumber(p.x, xDef.decimals)}</td>
                     <td className="pr-4 text-right">{formatNumber(p.y, yDef.decimals)}</td>
-                    <td className="pr-4 text-right">{formatNumber(p.ctl)}</td>
+                    <td className="pr-4 text-right">
+                      {p.ctl === null ? '—' : formatNumber(p.ctl)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -225,11 +225,21 @@ export function ReadinessStrip({ rider }: { rider: Rider }) {
 export function TerrainMap({ rider }: { rider: Rider }) {
   // Terrain order runs from flat to climbing, with the time trial last.
   const order = ['sprinter', 'all_rounder', 'puncheur', 'climber', 'rouleur_tt'] as const
+  const { caPa } = rider
+  if (!caPa) {
+    return (
+      <Panel title="Terrain">
+        <p className="text-sm text-muted-foreground">
+          Appears once the rider type is calculated from the power profile.
+        </p>
+      </Panel>
+    )
+  }
   return (
     <Panel title="Terrain">
       <ol className="grid grid-cols-5 gap-1.5" aria-label="Terrain fit by rider-type probability">
         {order.map((type) => {
-          const p = rider.caPa.typeProbs[type]
+          const p = caPa.typeProbs[type]
           return (
             <li
               key={type}

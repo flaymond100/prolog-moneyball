@@ -20,7 +20,8 @@ const ratingChipVariants = cva(
 const HATCH = 'repeating-linear-gradient(135deg, transparent 0 3px, rgb(0 0 0 / 0.3) 3px 5px)'
 
 interface RatingChipProps {
-  rating: number
+  /** Null until the rating is calculated: renders a neutral placeholder. */
+  rating: number | null
   /** Number of decimals to show; attribute ratings are integers, CA shows one decimal. */
   decimals?: number
   lowConfidence?: boolean
@@ -33,6 +34,20 @@ export function RatingChip({
   lowConfidence = false,
   className,
 }: RatingChipProps) {
+  if (rating === null) {
+    return (
+      <span
+        data-slot="rating-chip"
+        title="Not rated yet"
+        className={cn(
+          'inline-flex h-6 min-w-7 items-center justify-center rounded-sm border border-dashed px-1 text-sm text-muted-foreground',
+          className,
+        )}
+      >
+        –<span className="sr-only"> (not rated yet)</span>
+      </span>
+    )
+  }
   return (
     <span
       data-slot="rating-chip"

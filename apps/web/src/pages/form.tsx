@@ -15,6 +15,8 @@ const { lnRmssdBandSd, minHrvReadings7d: MIN_HRV_READINGS } = MOCK_READINESS_PRI
 function LnRmssdBand({ rider }: { rider: Rider }) {
   const t = useChartTokens()
   const { lnRmssd7d, baselineMean, baselineSd } = rider.form
+  // Without a baseline there is no band to draw (no HRV collected, KB §11).
+  if (baselineMean === null || baselineSd === null) return null
   // Readiness band (KB §9): 7-day ln rMSSD within baseline ± the prior SD multiple.
   const lower = baselineMean - lnRmssdBandSd * baselineSd
   const upper = baselineMean + lnRmssdBandSd * baselineSd
@@ -135,9 +137,9 @@ function FormCard({ rider }: { rider: Rider }) {
           <div className="flex items-center gap-2">
             <Sparkline
               values={form.eftpWkg}
-              label={`eFTP over 8 weeks: ${formatNumber(first?.value ?? 0, 2)} to ${formatNumber(last?.value ?? 0, 2)} W/kg`}
+              label={`eFTP over 8 weeks: ${formatNumber(first?.value, 2)} to ${formatNumber(last?.value, 2)} W/kg`}
             />
-            <span className="text-sm font-medium">{formatNumber(last?.value ?? 0, 2)} W/kg</span>
+            <span className="text-sm font-medium">{formatNumber(last?.value, 2)} W/kg</span>
           </div>
         </div>
         <div className="space-y-1 text-right">
