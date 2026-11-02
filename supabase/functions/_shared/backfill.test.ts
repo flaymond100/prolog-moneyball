@@ -187,6 +187,17 @@ describe('runBackfill', () => {
     }
   })
 
+  it('applies the wellness scope to backfilled days too', async () => {
+    const store = new FakeStore()
+    store.scope = 'training_load'
+    await runBackfill({
+      client: squad(1).connect().client,
+      store,
+      request: { from: '2026-01-01', to: '2026-01-02' },
+    })
+    expect(store.wellness.get('i01/2026-01-01')?.raw).toEqual({ id: '2026-01-01' })
+  })
+
   it('records a failing chunk and carries on', async () => {
     const store = new FakeStore()
     const { client } = api({

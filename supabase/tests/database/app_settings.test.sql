@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(14);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-000000000001', 'coach@test.local'),
@@ -18,6 +18,15 @@ select is((select value from public.app_settings where key = 'season_start'), '"
 select throws_ok(
   $$update public.app_settings set value = '"1 October 2026"' where key = 'season_start'$$,
   '23514', null, 'season start must be an ISO date');
+
+select is((select value from public.app_settings where key = 'wellness_scope'), '"training_load"'::jsonb,
+  'wellness scope starts as training load only (KB §11, until legal sign-off)');
+select throws_ok(
+  $$update public.app_settings set value = '"health"' where key = 'wellness_scope'$$,
+  '23514', null, 'wellness scope is training_load or all');
+select lives_ok(
+  $$update public.app_settings set value = '"all"' where key = 'wellness_scope'$$,
+  'wellness scope can be switched to all');
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000001", "role": "authenticated"}', true);
 set local role authenticated;

@@ -13,6 +13,7 @@ import {
   type RunResult,
   type SyncStore,
   type WellnessRow,
+  type WellnessScope,
 } from './sync.ts'
 
 interface Result<T> {
@@ -100,6 +101,19 @@ export class SupabaseSyncStore implements SyncStore {
       'read cycle consents',
     )
     return new Set(consents.map((row) => row.athlete_id))
+  }
+
+  async wellnessScope(): Promise<WellnessScope> {
+    const settings = rows(
+      await this.db
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'wellness_scope')
+        .overrideTypes<{ value: unknown }[], { merge: false }>(),
+      'read wellness scope',
+    )
+    // Missing or unexpected: keep the narrow scope rather than collect health data.
+    return settings[0]?.value === 'all' ? 'all' : 'training_load'
   }
 
   async upsertAthletes(athletes: AthleteRow[]): Promise<void> {
