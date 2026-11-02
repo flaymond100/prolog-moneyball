@@ -13,6 +13,7 @@ import {
   type RunResult,
   type SyncStore,
   type WellnessRow,
+  type WellnessScope,
 } from './sync.ts'
 
 // In-memory store keyed like the tables ---------------------------------------
@@ -49,6 +50,11 @@ export class FakeStore implements SyncStore {
   }
   cycleConsentAthletes() {
     return Promise.resolve(this.consents)
+  }
+  // 'all' so most tests see whole records; the scope tests switch it.
+  scope: WellnessScope = 'all'
+  wellnessScope() {
+    return Promise.resolve(this.scope)
   }
   upsertAthletes(rows: AthleteRow[]) {
     for (const row of rows) this.athletes.set(row.id, row)
