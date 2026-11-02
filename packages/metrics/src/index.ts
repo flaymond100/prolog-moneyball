@@ -5,3 +5,9 @@ export { caOnFmScale, caStars } from './ca.ts'
 export { retainedPct } from './durability.ts'
 export { isMeaningfulChange } from './lab.ts'
 export { best, mean, mostLikely } from './summary.ts'
+export {
+  WELLNESS_SCALES,
+  normaliseWellness,
+  normaliseWellnessValue,
+  type WellnessField,
+} from './wellness.ts'

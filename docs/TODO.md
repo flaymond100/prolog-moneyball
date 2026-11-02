@@ -59,8 +59,8 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
   AC: re-running is idempotent; fewer than 400 API calls per night for 12 riders.
 - [x] **3.5 `backfill` Edge Function.** Same logic with `{athlete_id?, from, to}` in 30-day chunks. AC: 365 days for 12 riders stays under 5,000 calls/day (split across nights if needed).
 - [ ] **3.6 Schedule.** Migration enabling `pg_cron` + `pg_net`; `sync-nightly` at 02:30 UTC and `refresh-derived` at 03:15 UTC via `net.http_post` with Vault values. AC: `cron.job_run_details` shows success the next morning. *Deferred to the go-live checklist (10.5), agreed with Kosta on 2 November 2026: it needs the live project and the deployed functions.*
-- [ ] **3.7 Sync health.** View `v_sync_health` (last success per rider, stale > 48 h); banner in the app when the last run failed.
-- [ ] **3.8 Wellness normalisation.** Implement `normaliseWellness()` in `packages/metrics` per KB §4 gotchas, after checking scale directions against real raw JSON. AC: unit test that higher always means better.
+- [x] **3.7 Sync health.** View `v_sync_health` (last success per rider, stale > 48 h); banner in the app when the last run failed.
+- [x] **3.8 Wellness normalisation.** Implement `normaliseWellness()` in `packages/metrics` per KB §4 gotchas, after checking scale directions against real raw JSON. AC: unit test that higher always means better. *Status (2 November 2026): `sleepQuality` checked against real data; the other fields follow the KB until a rider logs them (10.5).*
 
 ## Phase 4 – Auth and app shell
 
@@ -132,6 +132,7 @@ Riders are employees; the legal basis rules are in KB §11. The agent drafts doc
   4. 3.6: schedule the cron jobs, then check the 3.1 AC (no plaintext secret in `cron.job`) and the 3.6 AC (`cron.job_run_details` success the next morning).
   5. Run the backfill for the squad (`supabase/functions/scripts/backfill.ts`).
   6. Finish 3.3: re-run `check-endpoints.ts` once a rider syncs a device directly.
+  7. Finish 3.8: once riders log mood, motivation, soreness, fatigue, stress and injury, check each scale's direction against their comments or the intervals.icu UI labels, as was done for `sleepQuality`.
 
 ## Phase 11 – Recruitment-ready hooks (no UI)
 
