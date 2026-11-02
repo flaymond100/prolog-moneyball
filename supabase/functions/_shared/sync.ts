@@ -88,6 +88,8 @@ export interface RunResult {
 
 export interface SyncStore {
   startRun(job: string, params: Json): Promise<number>
+  /** API calls logged by runs that started since UTC midnight. */
+  callsToday(): Promise<number>
   finishRun(runId: number, result: RunResult): Promise<void>
   seasonStart(): Promise<string>
   cycleConsentAthletes(): Promise<Set<string>>
@@ -179,9 +181,10 @@ export async function syncActivities(
   newest: string,
 ) {
   const a = encodeURIComponent(athleteId)
+  // `newest` takes a date or a date and time; the time keeps the whole last day in.
   const list = await ctx.client.get(`/athlete/${a}/activities`, icuActivitiesSchema, {
     oldest,
-    newest,
+    newest: `${newest}T23:59:59`,
   })
 
   // Strava-sourced activities come back nearly empty (KB §4): skip and count.
@@ -320,6 +323,71 @@ export async function syncPlannedEvents(ctx: SyncContext, athleteId: string, tod
 
 // Run -----------------------------------------------------------------------
 
+/**
+ * Reads the coached athletes and upserts them; returns their ids in summary
+ * order. With `deactivateMissing`, athletes no longer coached are marked inactive.
+ */
+export async function syncAthletes(
+  ctx: SyncContext,
+  deactivateMissing: boolean,
+): Promise<string[]> {
+  const summary = await ctx.client.get('/athlete/0/athlete-summary.json', icuAthleteSummarySchema)
+  const athletes = latestSummaryPerAthlete(summary)
+  const syncedAt = ctx.now()
+  await ctx.store.upsertAthletes(
+    athletes.map((s) => ({
+      id: s.athlete_id,
+      name: s.athlete_name ?? s.athlete_id,
+      active: true,
+      raw: s,
+      synced_at: syncedAt,
+    })),
+  )
+  count(ctx, 'athletes', athletes.length)
+  const ids = athletes.map((s) => s.athlete_id)
+  // An empty summary is more likely an API problem than a squad of none.
+  if (deactivateMissing && ids.length > 0) {
+    count(ctx, 'athletes_deactivated', await ctx.store.deactivateAthletesExcept(ids))
+  }
+  return ids
+}
+
+/** Runs one step for one athlete, recording a failure instead of throwing. */
+export async function runStep(
+  errors: SyncError[],
+  athleteId: string,
+  step: string,
+  run: () => Promise<void>,
+): Promise<boolean> {
+  try {
+    await run()
+    return true
+  } catch (error) {
+    errors.push({ athlete_id: athleteId, step, message: message(error) })
+    return false
+  }
+}
+
+/** succeeded without errors; partial when some athlete got through; failed otherwise. */
+export function runResult(ctx: SyncContext, athleteIds: string[], errors: SyncError[]): RunResult {
+  const failed = new Set(errors.map((e) => e.athlete_id))
+  const anyAthleteOk = athleteIds.some((id) => !failed.has(id))
+  return {
+    status:
+      errors.length === 0 ? 'succeeded' : !failed.has(null) && anyAthleteOk ? 'partial' : 'failed',
+    athlete_ids: athleteIds,
+    counts: ctx.counts,
+    errors,
+    api_calls: ctx.client.calls,
+    // intervals.icu sends no rate-limit headers (docs/intervals-api.md), so this stays null.
+    rate_limit_remaining: ctx.client.rateLimitRemaining,
+  }
+}
+
+export function setupError(error: unknown): SyncError {
+  return { athlete_id: null, step: 'setup', message: message(error) }
+}
+
 export interface NightlyOptions {
   client: IcuClient
   store: SyncStore
@@ -339,65 +407,37 @@ export async function runNightlySync(
   }
   const errors: SyncError[] = []
   const athleteIds: string[] = []
-  const failedAthletes = new Set<string>()
   const runId = await store.startRun('sync-nightly', { today })
 
   try {
-    const [summary, seasonStart, consents] = await Promise.all([
-      client.get('/athlete/0/athlete-summary.json', icuAthleteSummarySchema),
+    const [ids, seasonStart, consents] = await Promise.all([
+      syncAthletes(ctx, true),
       store.seasonStart(),
       store.cycleConsentAthletes(),
     ])
-    const syncedAt = ctx.now()
-    const athletes = latestSummaryPerAthlete(summary)
-    athleteIds.push(...athletes.map((s) => s.athlete_id))
-    await store.upsertAthletes(
-      athletes.map((s) => ({
-        id: s.athlete_id,
-        name: s.athlete_name ?? s.athlete_id,
-        active: true,
-        raw: s,
-        synced_at: syncedAt,
-      })),
-    )
-    count(ctx, 'athletes', athletes.length)
-    // An empty summary is more likely an API problem than a squad of none.
-    if (athleteIds.length > 0)
-      count(ctx, 'athletes_deactivated', await store.deactivateAthletesExcept(athleteIds))
+    athleteIds.push(...ids)
 
     const oldest = addDays(today, -LOOKBACK_DAYS)
     for (const athleteId of athleteIds) {
-      const steps: [string, () => Promise<void>][] = [
-        ['activities', () => syncActivities(ctx, athleteId, oldest, today)],
-        ['wellness', () => syncWellness(ctx, athleteId, oldest, today, consents.has(athleteId))],
-        ['power_curves', () => syncPowerCurves(ctx, athleteId, today, seasonStart)],
-        ['planned_events', () => syncPlannedEvents(ctx, athleteId, today)],
-      ]
       // One failing step or rider never stops the others.
-      for (const [step, run] of steps) {
-        try {
-          await run()
-        } catch (error) {
-          failedAthletes.add(athleteId)
-          errors.push({ athlete_id: athleteId, step, message: message(error) })
-        }
-      }
+      await runStep(errors, athleteId, 'activities', () =>
+        syncActivities(ctx, athleteId, oldest, today),
+      )
+      await runStep(errors, athleteId, 'wellness', () =>
+        syncWellness(ctx, athleteId, oldest, today, consents.has(athleteId)),
+      )
+      await runStep(errors, athleteId, 'power_curves', () =>
+        syncPowerCurves(ctx, athleteId, today, seasonStart),
+      )
+      await runStep(errors, athleteId, 'planned_events', () =>
+        syncPlannedEvents(ctx, athleteId, today),
+      )
     }
   } catch (error) {
-    errors.push({ athlete_id: null, step: 'setup', message: message(error) })
+    errors.push(setupError(error))
   }
 
-  const anyAthleteOk = athleteIds.some((id) => !failedAthletes.has(id))
-  const setupFailed = errors.some((e) => e.athlete_id === null)
-  const result: RunResult = {
-    status: errors.length === 0 ? 'succeeded' : !setupFailed && anyAthleteOk ? 'partial' : 'failed',
-    athlete_ids: athleteIds,
-    counts: ctx.counts,
-    errors,
-    api_calls: client.calls,
-    // intervals.icu sends no rate-limit headers (docs/intervals-api.md), so this stays null.
-    rate_limit_remaining: client.rateLimitRemaining,
-  }
+  const result = runResult(ctx, athleteIds, errors)
   await store.finishRun(runId, result)
   return { run_id: runId, ...result }
 }

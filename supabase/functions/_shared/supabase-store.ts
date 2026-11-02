@@ -52,6 +52,19 @@ export class SupabaseSyncStore implements SyncStore {
     return run.id
   }
 
+  async callsToday(): Promise<number> {
+    const midnight = `${new Date().toISOString().slice(0, 10)}T00:00:00Z`
+    const runs = rows(
+      await this.db
+        .from('sync_runs')
+        .select('api_calls')
+        .gte('started_at', midnight)
+        .overrideTypes<{ api_calls: number | null }[], { merge: false }>(),
+      'read calls today',
+    )
+    return runs.reduce((sum, run) => sum + (run.api_calls ?? 0), 0)
+  }
+
   async finishRun(runId: number, result: RunResult): Promise<void> {
     ok(
       await this.db
