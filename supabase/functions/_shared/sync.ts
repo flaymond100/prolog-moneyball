@@ -93,6 +93,8 @@ export interface SyncStore {
   finishRun(runId: number, result: RunResult): Promise<void>
   seasonStart(): Promise<string>
   cycleConsentAthletes(): Promise<Set<string>>
+  /** app_settings.wellness_scope; anything unexpected reads as `training_load`. */
+  wellnessScope(): Promise<WellnessScope>
   upsertAthletes(rows: AthleteRow[]): Promise<void>
   /** Marks athletes missing from the summary inactive; returns how many changed. */
   deactivateAthletesExcept(ids: string[]): Promise<number>
@@ -143,6 +145,31 @@ export function latestSummaryPerAthlete<T extends { athlete_id: string; date?: u
     if (!seen || date(row) > date(seen)) latest.set(row.athlete_id, row)
   }
   return [...latest.values()]
+}
+
+/**
+ * Which wellness fields the sync keeps (app_settings.wellness_scope).
+ * `training_load` until the privacy documents are signed off (KB §11).
+ */
+export type WellnessScope = 'training_load' | 'all'
+
+// Allow-list, so a field intervals.icu adds later is never stored by accident.
+// `id` is the date; `updated` lets a later re-sync see changes.
+const TRAINING_LOAD_FIELDS = new Set([
+  'id',
+  'updated',
+  'ctl',
+  'atl',
+  'rampRate',
+  'ctlLoad',
+  'atlLoad',
+  'sportInfo', // eFTP per sport
+  'weight',
+])
+
+/** Keeps only the training-load fields of a wellness record (no HRV, sleep or subjective data). */
+export function trainingLoadOnly(record: Json): Json {
+  return Object.fromEntries(Object.entries(record).filter(([key]) => TRAINING_LOAD_FIELDS.has(key)))
 }
 
 /** Removes cycle fields from a wellness record; returns them only if any is set. */
@@ -232,6 +259,7 @@ export async function syncWellness(
   oldest: string,
   newest: string,
   cycleConsent: boolean,
+  scope: WellnessScope,
 ) {
   const records = await ctx.client.get(
     `/athlete/${encodeURIComponent(athleteId)}/wellness.json`,
@@ -246,7 +274,7 @@ export async function syncWellness(
     wellness.push({
       athlete_id: athleteId,
       date: record.id,
-      raw: split.wellness,
+      raw: scope === 'training_load' ? trainingLoadOnly(split.wellness) : split.wellness,
       synced_at: syncedAt,
     })
     // KB §11: cycle fields only with an active consent, and never in wellness.raw.
@@ -410,10 +438,11 @@ export async function runNightlySync(
   const runId = await store.startRun('sync-nightly', { today })
 
   try {
-    const [ids, seasonStart, consents] = await Promise.all([
+    const [ids, seasonStart, consents, scope] = await Promise.all([
       syncAthletes(ctx, true),
       store.seasonStart(),
       store.cycleConsentAthletes(),
+      store.wellnessScope(),
     ])
     athleteIds.push(...ids)
 
@@ -424,7 +453,7 @@ export async function runNightlySync(
         syncActivities(ctx, athleteId, oldest, today),
       )
       await runStep(errors, athleteId, 'wellness', () =>
-        syncWellness(ctx, athleteId, oldest, today, consents.has(athleteId)),
+        syncWellness(ctx, athleteId, oldest, today, consents.has(athleteId), scope),
       )
       await runStep(errors, athleteId, 'power_curves', () =>
         syncPowerCurves(ctx, athleteId, today, seasonStart),

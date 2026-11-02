@@ -93,10 +93,11 @@ export async function runBackfill(options: BackfillOptions): Promise<BackfillRes
   const runId = await store.startRun('backfill', request)
 
   try {
-    const [coached, consents, usedToday] = await Promise.all([
+    const [coached, consents, usedToday, scope] = await Promise.all([
       syncAthletes(ctx, false),
       store.cycleConsentAthletes(),
       store.callsToday(),
+      store.wellnessScope(),
     ])
     const budget = Math.min(
       options.maxCalls ?? Infinity,
@@ -140,7 +141,7 @@ export async function runBackfill(options: BackfillOptions): Promise<BackfillRes
           syncActivities(ctx, athleteId, chunkStart, chunkEnd),
         )
         await runStep(errors, athleteId, `wellness ${range}`, () =>
-          syncWellness(ctx, athleteId, chunkStart, chunkEnd, consents.has(athleteId)),
+          syncWellness(ctx, athleteId, chunkStart, chunkEnd, consents.has(athleteId), scope),
         )
         ctx.counts.chunks = (ctx.counts.chunks ?? 0) + 1
         chunkStart = addDays(chunkEnd, 1)
