@@ -8,8 +8,10 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react'
+import { useAuth } from '@/auth/auth-context.ts'
 import { SyncBanner } from '@/components/sync-banner.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import { MOCK_AS_OF } from '@/data/mock/riders.ts'
 import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store.ts'
 import { formatDate } from '@/lib/format.ts'
@@ -32,6 +34,8 @@ const NAV: readonly NavItem[] = [
 
 export function AppShell() {
   const role = useRole()
+  const { state, signOut } = useAuth()
+  const mock = state.status === 'staff' && state.mock
   return (
     <div className="flex min-h-screen">
       <nav
@@ -61,22 +65,34 @@ export function AppShell() {
         <header className="flex h-11 items-center justify-between border-b px-6 text-sm">
           <span className="text-muted-foreground">As of {formatDate(MOCK_AS_OF)}</span>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-muted-foreground">
-              Viewing As
-              <select
-                value={role}
-                onChange={(e) => {
-                  setRole(e.target.value as StaffRole)
-                }}
-                className="h-7 rounded-md border bg-transparent px-1.5 text-sm text-foreground"
-              >
-                {(Object.keys(ROLE_LABELS) as StaffRole[]).map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABELS[r]}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {mock ? (
+              // Dev build on mock data: preview what each role sees.
+              <label className="flex items-center gap-2 text-muted-foreground">
+                Viewing As
+                <select
+                  value={role}
+                  onChange={(e) => {
+                    setRole(e.target.value as StaffRole)
+                  }}
+                  className="h-7 rounded-md border bg-transparent px-1.5 text-sm text-foreground"
+                >
+                  {(Object.keys(ROLE_LABELS) as StaffRole[]).map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <>
+                <span className="text-muted-foreground">
+                  {state.status === 'staff' && state.email} · {ROLE_LABELS[role]}
+                </span>
+                <Button variant="outline" size="xs" onClick={() => void signOut()}>
+                  Sign Out
+                </Button>
+              </>
+            )}
             <Badge
               variant="outline"
               title="Two synthetic riders; ratings and models are fixed values"

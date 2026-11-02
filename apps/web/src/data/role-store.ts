@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
 import type { Enums } from '@prolog/types'
 
-// Mock role until login (4.1): lets staff see what each role sees.
+// The signed-in staff member's role, set by the auth provider from `staff`.
+// A dev build on mock data starts as coach and lets the header switch roles.
 export type StaffRole = Enums<'staff_role'>
 
 export const ROLE_LABELS: Record<StaffRole, string> = {

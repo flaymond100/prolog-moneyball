@@ -6,7 +6,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router'
-import { AppShell } from '@/components/app-shell.tsx'
+import { AuthGate } from '@/auth/auth-gate.tsx'
 import { ComparePage } from '@/pages/compare.tsx'
 import { FormPage } from '@/pages/form.tsx'
 import { PalettePage } from '@/pages/dev/palette.tsx'
@@ -24,11 +24,11 @@ const rootRoute = createRootRoute({
   notFoundComponent: NotFoundPage,
 })
 
-// Staff views share the sidebar shell; dev pages stand alone.
+// Staff views share the sidebar shell behind the sign-in gate; dev pages stand alone.
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'app',
-  component: AppShell,
+  component: AuthGate,
 })
 
 const indexRoute = createRoute({
