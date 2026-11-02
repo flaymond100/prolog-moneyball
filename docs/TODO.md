@@ -48,7 +48,7 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 - [ ] **3.1 Secrets.** `supabase secrets set INTERVALS_API_KEY=… CRON_SECRET=…`; store `project_url` and `cron_secret` in Vault. AC: `select * from cron.job` shows no plaintext secret. *Status (20 October 2026): secrets and Vault entries set and matched by hash; the AC is checked when 3.6 creates the jobs.*
 - [x] **3.2 intervals.icu client** (`supabase/functions/_shared/icu.ts`). Basic auth (`API_KEY:<key>`), throttle ≤5 req/s, honour 429 `Retry-After` with exponential back-off, log remaining rate limit, zod-validate known fields but keep the full JSON. AC: unit tests with mocked fetch cover 200, 429 and 5xx.
 - [ ] **3.3 Confirm endpoints.** Check every endpoint in KB §4 against the live Swagger, especially power-curve window syntax and the events filter; record findings in `docs/intervals-api.md`. AC: a test script hits each endpoint once for one rider. *Status (2 November 2026): done except activity detail, streams and event fields, which need one re-run once a rider syncs a device directly (current athletes are Strava-only test data).*
-- [ ] **3.4 `sync-nightly` Edge Function.** Verifies `x-cron-secret`, then for each coached athlete (from `athlete-summary`):
+- [x] **3.4 `sync-nightly` Edge Function.** Verifies `x-cron-secret`, then for each coached athlete (from `athlete-summary`):
   1. Upsert `athletes`.
   2. Activities from today − 4 days; detail with intervals for new or changed ones; strip `icu_intervals`/`icu_groups` into `activity_intervals`; skip and log Strava-sourced ones.
   3. Wellness for the last 4 days; strip `menstrualPhase*` unless active `cycle_data` consent (then write to `cycle_data`).
@@ -57,8 +57,8 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
   6. Write a `sync_runs` row.
 
   AC: re-running is idempotent; fewer than 400 API calls per night for 12 riders.
-- [ ] **3.5 `backfill` Edge Function.** Same logic with `{athlete_id?, from, to}` in 30-day chunks. AC: 365 days for 12 riders stays under 5,000 calls/day (split across nights if needed).
-- [ ] **3.6 Schedule.** Migration enabling `pg_cron` + `pg_net`; `sync-nightly` at 02:30 UTC and `refresh-derived` at 03:15 UTC via `net.http_post` with Vault values. AC: `cron.job_run_details` shows success the next morning.
+- [x] **3.5 `backfill` Edge Function.** Same logic with `{athlete_id?, from, to}` in 30-day chunks. AC: 365 days for 12 riders stays under 5,000 calls/day (split across nights if needed).
+- [ ] **3.6 Schedule.** Migration enabling `pg_cron` + `pg_net`; `sync-nightly` at 02:30 UTC and `refresh-derived` at 03:15 UTC via `net.http_post` with Vault values. AC: `cron.job_run_details` shows success the next morning. *Deferred to the go-live checklist (10.5), agreed with Kosta on 2 November 2026: it needs the live project and the deployed functions.*
 - [ ] **3.7 Sync health.** View `v_sync_health` (last success per rider, stale > 48 h); banner in the app when the last run failed.
 - [ ] **3.8 Wellness normalisation.** Implement `normaliseWellness()` in `packages/metrics` per KB §4 gotchas, after checking scale directions against real raw JSON. AC: unit test that higher always means better.
 
@@ -125,6 +125,13 @@ Riders are employees; the legal basis rules are in KB §11. The agent drafts doc
 - [ ] **10.2 Custom domain (optional).** `CNAME` for e.g. `dashboard.prolog-cycling.com`, Vite `base` = `/`, HTTPS enforced; add the domain to Supabase Auth redirect URLs. Ask Kosta before doing this.
 - [ ] **10.3 Supabase deploy workflow.** On `main`: `supabase db push` and `supabase functions deploy`, gated by a manual approval environment. AC: a migration only reaches production after approval.
 - [ ] **10.4 Runbook.** `docs/runbook.md`: rotate the intervals.icu key; re-run backfill; recover a failed cron; add a rider (free intervals.icu account → connect Garmin/Wahoo directly, not Strava → add the coach → create `rider_profiles` row → backfill); HRV measurement instructions for riders (KB §10).
+- [ ] **10.5 Go-live checklist** (final stage, agreed with Kosta on 2 November 2026). The Supabase project has been paused (free tier, 7 days inactive) since late October 2026, so every step that touches the live project waits until here:
+  1. Restore the project in the Supabase dashboard; decide on the Pro plan so it never pauses with the nightly sync running.
+  2. Push the pending migrations (from `20261102141756_app_settings` onwards) and check `supabase migration list --linked`.
+  3. Deploy `sync-nightly` and `backfill` (via 10.3 or by hand, Kosta to decide).
+  4. 3.6: schedule the cron jobs, then check the 3.1 AC (no plaintext secret in `cron.job`) and the 3.6 AC (`cron.job_run_details` success the next morning).
+  5. Run the backfill for the squad (`supabase/functions/scripts/backfill.ts`).
+  6. Finish 3.3: re-run `check-endpoints.ts` once a rider syncs a device directly.
 
 ## Phase 11 – Recruitment-ready hooks (no UI)
 
