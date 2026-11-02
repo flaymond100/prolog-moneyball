@@ -258,6 +258,50 @@ describe('runNightlySync', () => {
   })
 })
 
+describe('runNightlySync: wellness scope (KB §11, option b)', () => {
+  it('keeps only training-load fields while the scope is training_load', async () => {
+    const store = new FakeStore()
+    store.scope = 'training_load'
+    const { client } = squadApi({
+      '/athlete/i1/wellness.json': [
+        {
+          id: '2026-11-01',
+          updated: '2026-11-01T06:00:00Z',
+          ctl: 61.2,
+          atl: 70.4,
+          rampRate: 3.5,
+          sportInfo: [{ type: 'Ride', eftp: 245 }],
+          weight: 58.4,
+          hrv: 82,
+          restingHR: 48,
+          sleepSecs: 27000,
+          sleepQuality: 2,
+          mood: 1,
+          comments: 'tired legs',
+          aNewHealthField: 1,
+        },
+      ],
+    })
+    await runNightlySync({ client, store, today: TODAY })
+    expect(store.wellness.get('i1/2026-11-01')?.raw).toEqual({
+      id: '2026-11-01',
+      updated: '2026-11-01T06:00:00Z',
+      ctl: 61.2,
+      atl: 70.4,
+      rampRate: 3.5,
+      sportInfo: [{ type: 'Ride', eftp: 245 }],
+      weight: 58.4,
+    })
+  })
+
+  it('keeps the whole record once the scope is all', async () => {
+    const store = new FakeStore()
+    store.scope = 'all'
+    await runNightlySync({ client: squadApi().client, store, today: TODAY })
+    expect(store.wellness.get('i1/2026-11-01')?.raw).toHaveProperty('hrv', 82)
+  })
+})
+
 describe('runNightlySync: cycle data (KB §11)', () => {
   it('never keeps cycle fields without consent', async () => {
     const store = new FakeStore()
