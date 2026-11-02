@@ -152,3 +152,33 @@ export interface Rider {
   form: FormSeries
   notes: RiderNote[]
 }
+
+/** Outcome of a nightly sync run (v_sync_last_run.outcome). */
+export type SyncOutcome = 'running' | 'succeeded' | 'partial' | 'failed' | 'stalled'
+
+/** The latest nightly sync run, shaped after v_sync_last_run. */
+export interface SyncRun {
+  id: number
+  outcome: SyncOutcome
+  /** ISO timestamps. */
+  startedAt: string
+  finishedAt: string | null
+  apiCalls: number | null
+  errorCount: number
+  errors: { athleteId: string | null; step: string; message: string }[]
+}
+
+/** One active rider's sync state, shaped after v_sync_health. */
+export interface RiderSyncHealth {
+  athleteId: string
+  name: string
+  /** ISO timestamp of the last nightly run that synced this rider without an error. */
+  lastSuccessAt: string | null
+  /** No clean sync in the last 48 hours. */
+  stale: boolean
+}
+
+export interface SyncHealth {
+  lastRun: SyncRun | null
+  riders: RiderSyncHealth[]
+}
