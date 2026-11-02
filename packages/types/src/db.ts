@@ -237,6 +237,31 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          key: string
+          label: string
+          updated_at: string
+          updated_by: string | null
+          value: NonNullable<Json>
+        }
+        ComputedFields: never
+        Insert: {
+          key: string
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+          value: NonNullable<Json>
+        }
+        Update: {
+          key?: string
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: NonNullable<Json>
+        }
+        Relationships: []
+      }
       athletes: {
         Row: {
           active: boolean
@@ -1274,6 +1299,7 @@ export type Database = {
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_strictly_increasing: { Args: { vals: number[] }; Returns: boolean }
       seed_model_reference: { Args: Record<PropertyKey, never>; Returns: undefined }
+      sync_upsert_activity: { Args: { p_activity: Json; p_intervals: Json }; Returns: undefined }
     }
     Enums: {
       benchmark_method: 'z_score' | 'anchors'

@@ -5,12 +5,12 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(57);
+select plan(58);
 
 -- Inventory -------------------------------------------------------------------
 
 select tables_are('public', array[
-  'activities', 'activity_intervals', 'anthropometrics', 'athletes', 'benchmark_points',
+  'activities', 'activity_intervals', 'anthropometrics', 'app_settings', 'athletes', 'benchmark_points',
   'benchmark_sets', 'ca_weights', 'consents', 'cycle_data', 'durability_efforts', 'edit_history',
   'forecasts', 'lab_tests', 'medical_markers', 'model_priors', 'model_priors_history',
   'planned_events', 'power_curves', 'rider_ca_pa', 'rider_profiles', 'rider_ratings',
@@ -32,6 +32,7 @@ select is_empty(
 
 -- Exact policy set per table ----------------------------------------------------
 
+select policies_are('public', 'app_settings', array['Staff read app settings', 'Coach updates app settings']);
 select policies_are('public', 'activities', array['Staff read activities']);
 select policies_are('public', 'activity_intervals', array['Staff read activity intervals']);
 select policies_are('public', 'anthropometrics', array[
