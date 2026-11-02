@@ -64,7 +64,7 @@ Work phase by phase, top to bottom; every task names its acceptance criteria (AC
 
 ## Phase 4 – Auth and app shell
 
-- [ ] **4.1 Supabase Auth.** Magic link login; after login check `staff` membership and role; non-staff see a "no access" page. Add the GitHub Pages URL and `localhost` to Auth redirect URLs. AC: Playwright covers staff and non-staff paths.
+- [x] **4.1 Supabase Auth.** Magic link login; after login check `staff` membership and role; non-staff see a "no access" page. Add the GitHub Pages URL and `localhost` to Auth redirect URLs. AC: Playwright covers staff and non-staff paths. *Status (2 November 2026): redirect URLs are in `supabase/config.toml` (local); the live project gets them in 10.5.*
 - [ ] **4.2 App shell.** Sidebar (Squad, Form, Compare, Scatter, Tests, Settings), rider switcher, global "as of" date picker, role-aware navigation (Settings sections hidden by role).
 - [ ] **4.3 Data layer.** TanStack Query hooks per view using generated types; error boundary; skeleton loaders; a metric registry (`id`, label, unit, format, source column, higher-is-better) used by table, scatter and filters. AC: adding a metric to the registry makes it available in all three views.
 
@@ -133,6 +133,7 @@ Riders are employees; the legal basis rules are in KB §11. The agent drafts doc
   5. Run the backfill for the squad (`supabase/functions/scripts/backfill.ts`).
   6. Finish 3.3: re-run `check-endpoints.ts` once a rider syncs a device directly.
   7. Finish 3.8: once riders log mood, motivation, soreness, fatigue, stress and injury, check each scale's direction against their comments or the intervals.icu UI labels, as was done for `sleepQuality`.
+  8. Finish 4.1 on the live project: set Site URL to `https://flaymond100.github.io/prolog-moneyball/` and the redirect URLs from `supabase/config.toml` (dashboard or `supabase config push`); create each staff member's auth user (sign-ups are off for magic links, `shouldCreateUser: false`) and their `staff` row with the right role — ask Kosta first, it is a data edit.
 
 ## Phase 11 – Recruitment-ready hooks (no UI)
 
