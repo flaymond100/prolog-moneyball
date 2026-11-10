@@ -313,12 +313,13 @@ export async function syncActivityPowerCurves(
     { type: RIDE_CURVE_TYPE, oldest, newest },
   )
   const syncedAt = ctx.now()
+  const secs = res.secs ?? []
   const rows: ActivityPowerCurveRow[] = []
   let skipped = 0
   for (const curve of res.curves) {
     const watts = curve.watts.filter((w): w is number => w !== null)
     // A gap or a curve longer than the durations can't be lined up with `secs`.
-    if (watts.length === 0 || watts.length < curve.watts.length || watts.length > res.secs.length) {
+    if (watts.length === 0 || watts.length < curve.watts.length || watts.length > secs.length) {
       skipped++
       continue
     }
@@ -326,7 +327,7 @@ export async function syncActivityPowerCurves(
       activity_id: curve.id,
       athlete_id: athleteId,
       start_date_local: curve.start_date_local,
-      secs: res.secs.slice(0, watts.length),
+      secs: secs.slice(0, watts.length),
       watts,
       raw: curve,
       synced_at: syncedAt,

@@ -365,7 +365,7 @@ describe('runNightlySync: failures', () => {
       '/athlete/i1/power-curves.json': new Response('boom', { status: 500 }),
       '/athlete/i2/activities': [],
       '/athlete/i2/wellness.json': [],
-      '/athlete/i2/activity-power-curves.json': { secs: [], curves: [] },
+      '/athlete/i2/activity-power-curves.json': { after_kj: 0, secs: null, curves: [] },
       '/athlete/i2/power-curves.json': { list: [] },
       '/athlete/i2/events.json': [],
     })
