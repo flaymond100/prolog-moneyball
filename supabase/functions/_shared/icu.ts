@@ -60,9 +60,10 @@ export const icuPowerCurvesSchema = z.looseObject({
 })
 
 // One curve per ride; `watts[i]` is the best for `secs[i]`, so a curve is only
-// as long as its ride. `weight` (kg) stays in `raw`.
+// as long as its ride. `weight` (kg) stays in `raw`. A range without rides
+// comes back as `secs: null, curves: []`.
 export const icuActivityPowerCurvesSchema = z.looseObject({
-  secs: z.array(z.number()),
+  secs: z.array(z.number()).nullable(),
   curves: z.array(
     z.looseObject({
       id: z.string(),
