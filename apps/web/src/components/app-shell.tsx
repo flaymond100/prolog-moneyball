@@ -2,6 +2,7 @@ import { Link, Outlet } from '@tanstack/react-router'
 import {
   Activity,
   ChartScatter,
+  Database,
   FlaskConical,
   GitCompareArrows,
   Settings,
@@ -13,11 +14,12 @@ import { SyncBanner } from '@/components/sync-banner.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { MOCK_AS_OF } from '@/data/mock/riders.ts'
+import { supabase } from '@/lib/supabase.ts'
 import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store.ts'
 import { formatDate } from '@/lib/format.ts'
 
 interface NavItem {
-  to: '/squad' | '/form' | '/compare' | '/scatter' | '/tests' | '/settings'
+  to: '/squad' | '/form' | '/compare' | '/scatter' | '/tests' | '/settings' | '/live'
   label: string
   icon: LucideIcon
 }
@@ -30,6 +32,8 @@ const NAV: readonly NavItem[] = [
   { to: '/scatter', label: 'Scatter', icon: ChartScatter },
   { to: '/tests', label: 'Tests', icon: FlaskConical },
   { to: '/settings', label: 'Settings', icon: Settings },
+  // Stored sync data, until the views above read it (TODO 4.3).
+  { to: '/live', label: 'Live Data', icon: Database },
 ]
 
 export function AppShell() {
@@ -63,7 +67,9 @@ export function AppShell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-11 items-center justify-between border-b px-6 text-sm">
-          <span className="text-muted-foreground">As of {formatDate(MOCK_AS_OF)}</span>
+          <span className="text-muted-foreground">
+            As of {formatDate(supabase ? new Date().toISOString().slice(0, 10) : MOCK_AS_OF)}
+          </span>
           <div className="flex items-center gap-3">
             {mock ? (
               // Dev build on mock data: preview what each role sees.
@@ -93,12 +99,14 @@ export function AppShell() {
                 </Button>
               </>
             )}
-            <Badge
-              variant="outline"
-              title="Two synthetic riders; ratings and models are fixed values"
-            >
-              Mock Data
-            </Badge>
+            {!supabase && (
+              <Badge
+                variant="outline"
+                title="Synthetic riders; ratings and models are fixed values"
+              >
+                Mock Data
+              </Badge>
+            )}
           </div>
         </header>
         <SyncBanner />
