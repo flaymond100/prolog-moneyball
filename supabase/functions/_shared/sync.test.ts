@@ -44,6 +44,15 @@ function squadApi(overrides: Record<string, unknown> = {}) {
       { id: '2026-11-01', hrv: 82, menstrualPhase: 'FOLLICULAR', menstrualPhasePredicted: null },
       { id: '2026-11-02', hrv: 79 },
     ],
+    '/athlete/i1/activity-power-curves.json': {
+      after_kj: 0,
+      secs: [5, 60, 300],
+      curves: [
+        { id: 'a1', start_date_local: '2026-11-01T09:00:00', weight: 58, watts: [880, 410, 290] },
+        { id: 'a2', start_date_local: '2026-10-31T10:00:00', weight: 58, watts: [700, 380] },
+        { id: 'a3', start_date_local: '2026-10-30T10:00:00', weight: 58, watts: [650, null, 250] },
+      ],
+    },
     '/athlete/i1/power-curves.json': {
       list: [
         { id: '42d', secs: [5, 60], values: [900, 420], watts_per_kg: [15.5, 7.2] },
@@ -85,6 +94,8 @@ describe('runNightlySync', () => {
       activity_intervals: 2,
       wellness: 2,
       cycle_data: 0,
+      activity_power_curves: 2,
+      activity_power_curves_skipped: 1,
       power_curves: 3,
       planned_events: 2,
       planned_events_deleted: 0,
@@ -100,8 +111,13 @@ describe('runNightlySync', () => {
     expect(query('/events.json')?.get('oldest')).toBe(TODAY)
     expect(query('/events.json')?.get('newest')).toBe('2026-12-28')
     expect(query('/events.json')?.get('category')).toBe('WORKOUT,RACE_A,RACE_B,RACE_C')
-    expect(query('/power-curves.json')?.get('curves')).toBe('42d,84d,r.2026-10-01.2026-11-02')
-    expect(query('/power-curves.json')?.get('type')).toBe('Ride')
+    expect(query('/activity-power-curves.json')?.get('oldest')).toBe('2026-10-29')
+    expect(query('/activity-power-curves.json')?.get('newest')).toBe(TODAY)
+    expect(query('/activity-power-curves.json')?.get('type')).toBe('Ride')
+    expect(query('/athlete/i1/power-curves.json')?.get('curves')).toBe(
+      '42d,84d,r.2026-10-01.2026-11-02',
+    )
+    expect(query('/athlete/i1/power-curves.json')?.get('type')).toBe('Ride')
     expect(query('/activities/a1,a2')?.get('intervals')).toBe('true')
   })
 
@@ -138,6 +154,22 @@ describe('runNightlySync', () => {
     expect(store.curves.get('i1/2026-11-02/84d')?.wkg).toBeNull()
   })
 
+  it("stores each ride's curve against the durations it covers, skipping curves with gaps", async () => {
+    const store = new FakeStore()
+    await runNightlySync({ client: squadApi().client, store, today: TODAY, now: () => 't' })
+
+    expect([...store.activityCurves.keys()]).toEqual(['a1', 'a2'])
+    expect(store.activityCurves.get('a1')).toMatchObject({
+      athlete_id: 'i1',
+      start_date_local: '2026-11-01T09:00:00',
+      secs: [5, 60, 300],
+      watts: [880, 410, 290],
+      synced_at: 't',
+    })
+    expect(store.activityCurves.get('a1')?.raw).toHaveProperty('weight', 58)
+    expect(store.activityCurves.get('a2')).toMatchObject({ secs: [5, 60], watts: [700, 380] })
+  })
+
   it('stores planned workouts and races with string ids', async () => {
     const store = new FakeStore()
     await runNightlySync({ client: squadApi().client, store, today: TODAY })
@@ -153,6 +185,7 @@ describe('runNightlySync', () => {
       [...store.intervals],
       [...store.wellness],
       [...store.curves],
+      [...store.activityCurves],
       [...store.events],
       [...store.athletes],
     ])
@@ -177,6 +210,7 @@ describe('runNightlySync', () => {
         [...store.intervals],
         [...store.wellness],
         [...store.curves],
+        [...store.activityCurves],
         [...store.events],
         [...store.athletes],
       ]),
@@ -331,6 +365,7 @@ describe('runNightlySync: failures', () => {
       '/athlete/i1/power-curves.json': new Response('boom', { status: 500 }),
       '/athlete/i2/activities': [],
       '/athlete/i2/wellness.json': [],
+      '/athlete/i2/activity-power-curves.json': { secs: [], curves: [] },
       '/athlete/i2/power-curves.json': { list: [] },
       '/athlete/i2/events.json': [],
     })
@@ -357,6 +392,7 @@ describe('runNightlySync: failures', () => {
     expect(result.errors.map((e) => e.step)).toEqual([
       'activities',
       'wellness',
+      'activity_power_curves',
       'power_curves',
       'planned_events',
     ])

@@ -59,7 +59,7 @@ Send the rider the guide in section 7, then:
 
 ## 3. Run a Backfill
 
-The `backfill` function syncs activities and wellness for a date range in 30-day chunks. Each call stops within its call and time budget and returns `next`; the script keeps calling until the range is done. It keeps 500 calls a day free for the nightly sync and stops when the day's budget (5,000) is spent; run the printed command again the next day.
+The `backfill` function syncs activities, wellness and each ride's power curve for a date range in 30-day chunks. Each call stops within its call and time budget and returns `next`; the script keeps calling until the range is done. It keeps 500 calls a day free for the nightly sync and stops when the day's budget (5,000) is spent; run the printed command again the next day.
 
 ```bash
 FUNCTIONS_URL=https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1 \

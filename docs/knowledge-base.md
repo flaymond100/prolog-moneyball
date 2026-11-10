@@ -88,6 +88,7 @@ All training data comes from the official intervals.icu REST API, read with the 
 | Per-second streams | `GET /activity/{id}/streams.json?types=watts,heartrate,cadence,altitude,time` |
 | Wellness by day | `GET /athlete/{id}/wellness?oldest=…&newest=…` |
 | Athlete power curves | `GET /athlete/{id}/power-curves.json?type=Ride&curves=42d,84d,r.{season start}.{today}` (`r.` = inclusive date range; season start below) |
+| Power curve per ride | `GET /athlete/{id}/activity-power-curves.json?type=Ride&oldest=…&newest=…` (one curve per ride, for windowed bests and confidence; TODO 5.3) |
 | Power model / eFTP | `GET /athlete/{id}/mmp-model` and wellness `sportInfo[].eftp` |
 | Planned workouts and races | `GET /athlete/{id}/events.json?category=WORKOUT,RACE_A,RACE_B,RACE_C&oldest=…&newest=…` (races feed the Form board's next race; agreed with Kosta, 2 November 2026) |
 | Original file (optional) | `GET /activity/{id}/file` (gzip FIT/TCX/GPX) |
@@ -208,7 +209,7 @@ Rouleur absolute 20/60 min W uses squad-relative percentiles until a watt-based 
 
 - Never mix benchmark sets on one scale; each rating row stores its `benchmark_set_id`.
 - Compare MMP with MMP. Never rate intervals.icu eFTP against the 60-min MMP benchmark.
-- W/kg uses the weight nearest the effort date (lab test, anthropometrics, then wellness).
+- W/kg uses the weight nearest the effort date from any source; on equally near days, lab test beats anthropometrics beats wellness (agreed with Kosta, 10 November 2026).
 - Colours: 1–5 red, 6–10 amber, 11–15 green, 16–20 teal; offer a colour-blind-safe palette.
 - Show a 28-day change arrow (↑/↓) for every attribute.
 

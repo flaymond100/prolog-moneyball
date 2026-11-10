@@ -5,19 +5,19 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(58);
+select plan(59);
 
 -- Inventory -------------------------------------------------------------------
 
 select tables_are('public', array[
-  'activities', 'activity_intervals', 'anthropometrics', 'app_settings', 'athletes', 'benchmark_points',
+  'activities', 'activity_intervals', 'activity_power_curves', 'anthropometrics', 'app_settings', 'athletes', 'benchmark_points',
   'benchmark_sets', 'ca_weights', 'consents', 'cycle_data', 'durability_efforts', 'edit_history',
   'forecasts', 'lab_tests', 'medical_markers', 'model_priors', 'model_priors_history',
   'planned_events', 'power_curves', 'rider_ca_pa', 'rider_profiles', 'rider_ratings',
   'saved_filters', 'saved_layouts', 'staff', 'sync_runs', 'wellness'
 ], 'public tables are exactly the known set; add a new table here with its tests');
 
-select views_are('public', array['v_body_mass', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
+select views_are('public', array['v_body_mass', 'v_power_profile', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
 
 select is_empty(
   $$select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -56,6 +56,7 @@ select policies_are('public', 'medical_markers', array[
   'Medical updates consented medical markers', 'Medical deletes consented medical markers']);
 select policies_are('public', 'model_priors', array['Staff read model priors', 'Coach updates model priors']);
 select policies_are('public', 'model_priors_history', array['Staff read model priors history']);
+select policies_are('public', 'activity_power_curves', array['Staff read activity power curves']);
 select policies_are('public', 'planned_events', array['Staff read planned events']);
 select policies_are('public', 'power_curves', array['Staff read power curves']);
 select policies_are('public', 'rider_ca_pa', array['Staff read rider CA and PA']);
