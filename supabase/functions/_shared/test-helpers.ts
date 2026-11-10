@@ -4,6 +4,7 @@
 import { IcuClient } from './icu.ts'
 import {
   activityVersion,
+  type ActivityPowerCurveRow,
   type ActivityRow,
   type AthleteRow,
   type CycleDataRow,
@@ -26,6 +27,7 @@ export class FakeStore implements SyncStore {
   wellness = new Map<string, WellnessRow>()
   cycle = new Map<string, CycleDataRow>()
   curves = new Map<string, PowerCurveRow>()
+  activityCurves = new Map<string, ActivityPowerCurveRow>()
   events = new Map<string, PlannedEventRow>()
   season = '2026-10-01'
   consents = new Set<string>()
@@ -95,6 +97,10 @@ export class FakeStore implements SyncStore {
   upsertPowerCurves(rows: PowerCurveRow[]) {
     for (const row of rows)
       this.curves.set(`${row.athlete_id}/${row.as_of}/${row.time_window}`, row)
+    return Promise.resolve()
+  }
+  upsertActivityPowerCurves(rows: ActivityPowerCurveRow[]) {
+    for (const row of rows) this.activityCurves.set(row.activity_id, row)
     return Promise.resolve()
   }
   replacePlannedEvents(

@@ -2,8 +2,9 @@
 //
 // Per coached athlete: activities from today − 4 days (detail with intervals
 // only for new or re-analysed ones, Strava skipped), wellness for the same
-// days (cycle fields stripped, kept only with consent), power curves for
-// 42 d, 84 d and season, and planned workouts and races for the next 56 days.
+// days (cycle fields stripped, kept only with consent), each ride's power
+// curve for the same days, power curves for 42 d, 84 d and season, and
+// planned workouts and races for the next 56 days.
 // Every write is an upsert on the table's key, so re-running is idempotent.
 //
 // Storage sits behind SyncStore so this file has no IO of its own and the
@@ -12,6 +13,7 @@
 import {
   type IcuClient,
   icuActivitiesSchema,
+  icuActivityPowerCurvesSchema,
   icuAthleteSummarySchema,
   icuEventsSchema,
   icuPowerCurvesSchema,
@@ -63,6 +65,15 @@ export interface PowerCurveRow {
   raw: Json
   synced_at: string
 }
+export interface ActivityPowerCurveRow {
+  activity_id: string
+  athlete_id: string
+  start_date_local: string
+  secs: number[]
+  watts: number[]
+  raw: Json
+  synced_at: string
+}
 export interface PlannedEventRow {
   id: string
   athlete_id: string
@@ -105,6 +116,7 @@ export interface SyncStore {
   upsertWellness(rows: WellnessRow[]): Promise<void>
   upsertCycleData(rows: CycleDataRow[]): Promise<void>
   upsertPowerCurves(rows: PowerCurveRow[]): Promise<void>
+  upsertActivityPowerCurves(rows: ActivityPowerCurveRow[]): Promise<void>
   /** Upserts events, then deletes the athlete's other events in [from, toExclusive); returns deletions. */
   replacePlannedEvents(
     athleteId: string,
@@ -288,6 +300,43 @@ export async function syncWellness(
   count(ctx, 'cycle_data', cycle.length)
 }
 
+/** Each ride's best-power curve, for confidence and windowed bests (TODO 5.3, KB §6). */
+export async function syncActivityPowerCurves(
+  ctx: SyncContext,
+  athleteId: string,
+  oldest: string,
+  newest: string, // inclusive: a date covers the whole day
+) {
+  const res = await ctx.client.get(
+    `/athlete/${encodeURIComponent(athleteId)}/activity-power-curves.json`,
+    icuActivityPowerCurvesSchema,
+    { type: RIDE_CURVE_TYPE, oldest, newest },
+  )
+  const syncedAt = ctx.now()
+  const rows: ActivityPowerCurveRow[] = []
+  let skipped = 0
+  for (const curve of res.curves) {
+    const watts = curve.watts.filter((w): w is number => w !== null)
+    // A gap or a curve longer than the durations can't be lined up with `secs`.
+    if (watts.length === 0 || watts.length < curve.watts.length || watts.length > res.secs.length) {
+      skipped++
+      continue
+    }
+    rows.push({
+      activity_id: curve.id,
+      athlete_id: athleteId,
+      start_date_local: curve.start_date_local,
+      secs: res.secs.slice(0, watts.length),
+      watts,
+      raw: curve,
+      synced_at: syncedAt,
+    })
+  }
+  if (rows.length > 0) await ctx.store.upsertActivityPowerCurves(rows)
+  count(ctx, 'activity_power_curves', rows.length)
+  count(ctx, 'activity_power_curves_skipped', skipped)
+}
+
 export async function syncPowerCurves(
   ctx: SyncContext,
   athleteId: string,
@@ -454,6 +503,9 @@ export async function runNightlySync(
       )
       await runStep(errors, athleteId, 'wellness', () =>
         syncWellness(ctx, athleteId, oldest, today, consents.has(athleteId), scope),
+      )
+      await runStep(errors, athleteId, 'activity_power_curves', () =>
+        syncActivityPowerCurves(ctx, athleteId, oldest, today),
       )
       await runStep(errors, athleteId, 'power_curves', () =>
         syncPowerCurves(ctx, athleteId, today, seasonStart),

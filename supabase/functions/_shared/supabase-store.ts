@@ -4,6 +4,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   activityVersion,
+  type ActivityPowerCurveRow,
   type ActivityRow,
   type AthleteRow,
   type CycleDataRow,
@@ -178,6 +179,13 @@ export class SupabaseSyncStore implements SyncStore {
         .from('power_curves')
         .upsert(curves, { onConflict: 'athlete_id,as_of,time_window' }),
       'upsert power curves',
+    )
+  }
+
+  async upsertActivityPowerCurves(curves: ActivityPowerCurveRow[]): Promise<void> {
+    ok(
+      await this.db.from('activity_power_curves').upsert(curves, { onConflict: 'activity_id' }),
+      'upsert activity power curves',
     )
   }
 

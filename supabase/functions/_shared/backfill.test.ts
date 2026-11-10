@@ -43,6 +43,17 @@ function squad(size: number) {
     if (/^\/athlete\/[^/]+\/wellness\.json$/.test(path)) {
       return window(url).map((day) => ({ id: day, hrv: 80 }))
     }
+    const curves = /^\/athlete\/([^/]+)\/activity-power-curves\.json$/.exec(path)
+    if (curves) {
+      return {
+        secs: [5, 60],
+        curves: window(url).map((day) => ({
+          id: `${curves[1] ?? ''}-${day}`,
+          start_date_local: `${day}T09:00:00`,
+          watts: [800, 400],
+        })),
+      }
+    }
     return undefined
   }
   const routes = { '/athlete/0/athlete-summary.json': ids.map((id) => ({ athlete_id: id })) }
@@ -64,8 +75,9 @@ describe('runBackfill', () => {
     expect(result.counts.chunks).toBe(12 * 13)
     expect(result.counts.activities).toBe(12 * 365)
     expect(store.wellness.size).toBe(12 * 365)
-    // Per rider: 12 × (list + 3 detail batches + wellness) + (list + 1 batch + wellness).
-    expect(result.api_calls).toBe(1 + 12 * (12 * 5 + 3))
+    expect(store.activityCurves.size).toBe(12 * 365)
+    // Per rider: 12 × (list + 3 detail batches + wellness + curves) + (list + 1 batch + wellness + curves).
+    expect(result.api_calls).toBe(1 + 12 * (12 * 6 + 4))
     expect(result.api_calls).toBeLessThan(DAILY_CALL_LIMIT)
     expect(store.runs.get(result.run_id)).toMatchObject({ job: 'backfill', params: YEAR })
   })
@@ -102,12 +114,13 @@ describe('runBackfill', () => {
 
     expect(runs.length).toBeGreaterThan(2)
     expect(runs.slice(0, -1).every((r) => r.stopped_by === 'call_budget')).toBe(true)
-    // A chunk costs at most list + 3 detail batches + wellness = 5 calls past the check.
-    expect(runs.every((r) => r.api_calls <= 12 + 4)).toBe(true)
+    // A chunk costs at most list + 3 detail batches + wellness + curves = 6 calls past the check.
+    expect(runs.every((r) => r.api_calls <= 12 + 5)).toBe(true)
     expect(runs.reduce((n, r) => n + (r.counts.chunks ?? 0), 0)).toBe(3 * 5)
     expect(runs.reduce((n, r) => n + (r.counts.activities ?? 0), 0)).toBe(3 * 123)
     expect(store.activities.size).toBe(3 * 123)
     expect(store.wellness.size).toBe(3 * 123)
+    expect(store.activityCurves.size).toBe(3 * 123)
   })
 
   it('stops at the time budget with a resume cursor', async () => {
@@ -204,6 +217,7 @@ describe('runBackfill', () => {
       '/athlete/0/athlete-summary.json': [{ athlete_id: 'i01' }],
       '/athlete/i01/activities': [],
       '/athlete/i01/wellness.json': new Response('boom', { status: 500 }),
+      '/athlete/i01/activity-power-curves.json': { secs: [], curves: [] },
     })
     const result = await runBackfill({
       client,

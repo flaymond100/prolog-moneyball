@@ -1,6 +1,7 @@
-// Backfill (TODO 3.5): activities and wellness for a date range, in 30-day
-// chunks, reusing the nightly sync's steps. Power curves and planned events
-// are today-only snapshots, so the nightly sync alone keeps them.
+// Backfill (TODO 3.5): activities, wellness and each ride's power curve for a
+// date range, in 30-day chunks, reusing the nightly sync's steps. Window power
+// curves and planned events are today-only snapshots, so the nightly sync
+// alone keeps them.
 //
 // A call stops before it runs out of API calls or wall-clock time and returns
 // `next`: the request to send to carry on. Long backfills therefore span
@@ -14,6 +15,7 @@ import {
   runStep,
   setupError,
   syncActivities,
+  syncActivityPowerCurves,
   syncAthletes,
   syncWellness,
   type RunResult,
@@ -23,7 +25,7 @@ import {
 } from './sync.ts'
 
 export const CHUNK_DAYS = 30
-// KB §4: 5,000 calls a day. Headroom keeps the nightly sync (~75 calls) and
+// KB §4: 5,000 calls a day. Headroom keeps the nightly sync (~90 calls) and
 // manual checks within the limit while a backfill runs.
 export const DAILY_CALL_LIMIT = 5_000
 export const DAILY_HEADROOM = 500
@@ -142,6 +144,9 @@ export async function runBackfill(options: BackfillOptions): Promise<BackfillRes
         )
         await runStep(errors, athleteId, `wellness ${range}`, () =>
           syncWellness(ctx, athleteId, chunkStart, chunkEnd, consents.has(athleteId), scope),
+        )
+        await runStep(errors, athleteId, `activity power curves ${range}`, () =>
+          syncActivityPowerCurves(ctx, athleteId, chunkStart, chunkEnd),
         )
         ctx.counts.chunks = (ctx.counts.chunks ?? 0) + 1
         chunkStart = addDays(chunkEnd, 1)

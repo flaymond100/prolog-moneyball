@@ -59,6 +59,19 @@ export const icuPowerCurvesSchema = z.looseObject({
   ),
 })
 
+// One curve per ride; `watts[i]` is the best for `secs[i]`, so a curve is only
+// as long as its ride. `weight` (kg) stays in `raw`.
+export const icuActivityPowerCurvesSchema = z.looseObject({
+  secs: z.array(z.number()),
+  curves: z.array(
+    z.looseObject({
+      id: z.string(),
+      start_date_local: z.string(),
+      watts: z.array(z.number().nullable()),
+    }),
+  ),
+})
+
 export type IcuActivity = z.infer<typeof icuActivitySchema>
 
 // Errors --------------------------------------------------------------------

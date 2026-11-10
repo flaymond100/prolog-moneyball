@@ -199,6 +199,52 @@ export type Database = {
           },
         ]
       }
+      activity_power_curves: {
+        Row: {
+          activity_id: string
+          athlete_id: string
+          raw: NonNullable<Json>
+          secs: number[]
+          start_date_local: string
+          synced_at: string
+          watts: number[]
+        }
+        ComputedFields: never
+        Insert: {
+          activity_id: string
+          athlete_id: string
+          raw?: NonNullable<Json>
+          secs: number[]
+          start_date_local: string
+          synced_at?: string
+          watts: number[]
+        }
+        Update: {
+          activity_id?: string
+          athlete_id?: string
+          raw?: NonNullable<Json>
+          secs?: number[]
+          start_date_local?: string
+          synced_at?: string
+          watts?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'activity_power_curves_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'activity_power_curves_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
+        ]
+      }
       anthropometrics: {
         Row: {
           athlete_id: string
@@ -1374,6 +1420,42 @@ export type Database = {
         }
         ComputedFields: never
         Relationships: []
+      }
+      v_power_profile: {
+        Row: {
+          as_of: string | null
+          athlete_id: string | null
+          attribute: Database['public']['Enums']['rating_attribute'] | null
+          best_14d_w: number | null
+          best_14d_wkg: number | null
+          best_42d_w: number | null
+          best_42d_wkg: number | null
+          best_84d_w: number | null
+          best_84d_wkg: number | null
+          best_season_w: number | null
+          best_season_wkg: number | null
+          confidence: Database['public']['Enums']['rating_confidence'] | null
+          days_near_best_84d: number | null
+          duration_s: number | null
+          freshness_pct: number | null
+        }
+        ComputedFields: never
+        Relationships: [
+          {
+            foreignKeyName: 'activity_power_curves_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'activity_power_curves_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
+        ]
       }
       v_sync_health: {
         Row: {
