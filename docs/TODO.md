@@ -78,7 +78,7 @@ Collect data first, then build on it. The sync stores every raw response, so all
 
 ## Phase 5 – Derived metrics
 
-- [ ] **5.1 `packages/metrics` core.** Pure functions: `ratingFromZ`, `ratingFromAnchors`, `normaliseWellness`, `lnRmssdStats`, `projectLoad` (CTL/ATL), `retainedPct`. AC: 100% branch coverage; fixtures from KB worked examples (e.g. 5 s 15.3 W/kg → 15, 60 min 4.1 W/kg → ≈14.4).
+- [x] **5.1 `packages/metrics` core.** Pure functions: `ratingFromZ`, `ratingFromAnchors`, `normaliseWellness`, `lnRmssdStats`, `projectLoad` (CTL/ATL), `retainedPct`. AC: 100% branch coverage; fixtures from KB worked examples (e.g. 5 s 15.3 W/kg → 15, 60 min 4.1 W/kg → ≈14.4). *Status (10 November 2026): `projectLoad` uses the exponential update x + (load − x) · (1 − e^(−1/τ)), which reproduces intervals.icu's `ctl`/`atl` to within 1e-5; TrainingPeaks' 1/τ step was up to 0.5 off for ATL.*
 - [ ] **5.2 `v_form_daily` (materialised).** All metrics in KB §9 table: CTL/ATL/TSB, ramp rate, ln rMSSD 7-day mean, 60-day baseline mean/SD, 7-day CV, readings count, resting HR deviation, wellness composite, sleep. Refreshed by `refresh-derived`. AC: pgTAP compares with hand-calculated fixtures.
 - [ ] **5.3 `v_power_profile`.** Best 5/30/60/300/1200/3600 s in W and W/kg (weight nearest the date: lab → anthropometrics → wellness) for 42 d, 84 d, season; 14-day best ÷ 84-day best; confidence per KB §6 (≥3 days at ≥95% of best).
 - [ ] **5.4 `v_efficiency_trends`.** EF on Z2 rides (>60 min, >70% in Z1–2), 7-ride rolling; decoupling on rides over 2 h.

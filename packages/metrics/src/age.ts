@@ -1,13 +1,7 @@
 // Age and training age (KB §8). Dates are ISO `YYYY-MM-DD` strings, read as UTC days.
+import { MS_PER_DAY, parseIsoDate } from './date.ts'
 
-const MS_PER_DAY = 86_400_000
 const DAYS_PER_YEAR = 365.25
-
-function parseIsoDate(value: string): Date {
-  const date = new Date(`${value}T00:00:00Z`)
-  if (Number.isNaN(date.getTime())) throw new RangeError(`Invalid ISO date: ${value}`)
-  return date
-}
 
 /** Whole years of age on `asOf`. */
 export function ageInYears(dateOfBirth: string, asOf: string): number {
