@@ -422,3 +422,7 @@ verify_jwt = false
 # Called manually or by scripts/backfill.ts with x-cron-secret (TODO 3.5).
 [functions.backfill]
 verify_jwt = false
+
+# Called with x-cron-secret, by hand until refresh-derived exists (TODO 7.1, 5.7).
+[functions.compute-ratings]
+verify_jwt = false

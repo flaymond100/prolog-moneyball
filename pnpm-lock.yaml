@@ -322,6 +322,9 @@ importers:
 
   supabase/functions:
     dependencies:
+      '@prolog/metrics':
+        specifier: workspace:*
+        version: link:../../packages/metrics
       '@supabase/supabase-js':
         specifier: ^2.118.0
         version: 2.118.0

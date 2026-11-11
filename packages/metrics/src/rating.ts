@@ -53,3 +53,35 @@ export function ratingFromAnchors(
   const [lo, hi] = segment
   return clampRating(lo.rating + ((x - lo.value) * (hi.rating - lo.rating)) / (hi.value - lo.value))
 }
+
+/** One `benchmark_points` row: a z-score benchmark or anchor points. */
+export type Benchmark =
+  | { method: 'z_score'; mean: number; sd: number }
+  | { method: 'anchors'; anchorValues: readonly number[]; anchorRatings: readonly number[] }
+
+/** Rating of `x` against one benchmark, by its method. */
+export function ratingFromBenchmark(x: number, benchmark: Benchmark): number {
+  return benchmark.method === 'z_score'
+    ? ratingFromZ(x, benchmark.mean, benchmark.sd)
+    : ratingFromAnchors(x, benchmark.anchorValues, benchmark.anchorRatings)
+}
+
+/**
+ * Squad-relative ratings (KB §6): each value's percentile in the squad,
+ * p = (rank − 1) ÷ (riders − 1) with ties sharing their average rank, mapped
+ * to 1 + 19p, so the weakest rates 1 and the strongest 20 (agreed with Kosta,
+ * 10 November 2026). Null for a missing value, and for everyone when fewer
+ * than two riders have one.
+ */
+export function squadRatings(values: readonly (number | null)[]): (number | null)[] {
+  const present = values.filter((v): v is number => v !== null)
+  const n = present.length
+  if (n < 2) return values.map(() => null)
+  return values.map((v) => {
+    if (v === null) return null
+    const below = present.filter((x) => x < v).length
+    const tied = present.filter((x) => x === v).length
+    const rank = below + (tied + 1) / 2
+    return RATING_MIN + ((RATING_MAX - RATING_MIN) * (rank - 1)) / (n - 1)
+  })
+}

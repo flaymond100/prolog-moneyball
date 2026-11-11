@@ -9,6 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@prolog/metrics": "workspace:*",
     "@supabase/supabase-js": "^2.118.0",
     "zod": "^4.6.7"
   },

@@ -3,5 +3,12 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["_shared", "scripts", "sync-nightly", "backfill", "vitest.config.ts"]
+  "include": [
+    "_shared",
+    "scripts",
+    "sync-nightly",
+    "backfill",
+    "compute-ratings",
+    "vitest.config.ts"
+  ]
 }

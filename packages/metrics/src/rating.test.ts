@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ratingFromAnchors, ratingFromZ } from './rating.ts'
+import { ratingFromAnchors, ratingFromBenchmark, ratingFromZ, squadRatings } from './rating.ts'
 
 describe('ratingFromZ', () => {
   // KB §6 worked examples, benchmark set "Female Pro + Coggan provisional".
@@ -63,5 +63,48 @@ describe('ratingFromAnchors', () => {
     expect(() => ratingFromAnchors(5, [4, 5], [12])).toThrow(RangeError)
     expect(() => ratingFromAnchors(5, [4, 5], [9, 12, 15])).toThrow(RangeError)
     expect(() => ratingFromAnchors(5, [4, 5, 5], [9, 12, 15])).toThrow(RangeError)
+  })
+})
+
+describe('ratingFromBenchmark', () => {
+  it('applies a z-score benchmark', () => {
+    expect(ratingFromBenchmark(4.1, { method: 'z_score', mean: 4.2, sd: 0.4 })).toBeCloseTo(
+      14.375,
+      10,
+    )
+  })
+
+  it('applies anchor points', () => {
+    const p5m = {
+      method: 'anchors',
+      anchorValues: [4.65, 5.2, 5.8],
+      anchorRatings: [9, 12, 15],
+    } as const
+    expect(ratingFromBenchmark(5.5, p5m)).toBeCloseTo(13.5, 10)
+  })
+})
+
+describe('squadRatings', () => {
+  it('rates the weakest 1, the strongest 20 and the rest linearly by rank', () => {
+    expect(squadRatings([4.0, 4.6, 4.3])).toEqual([1, 20, 10.5])
+    expect(squadRatings([1, 2, 3, 4, 5])).toEqual([1, 5.75, 10.5, 15.25, 20])
+  })
+
+  it('gives tied riders their average rank', () => {
+    expect(squadRatings([5, 3, 5, 1])).toEqual([
+      1 + 19 * (2.5 / 3),
+      1 + 19 * (1 / 3),
+      1 + 19 * (2.5 / 3),
+      1,
+    ])
+  })
+
+  it('skips missing values and keeps their places', () => {
+    expect(squadRatings([null, 4.2, null, 3.9])).toEqual([null, 20, null, 1])
+  })
+
+  it('has no squad rating with fewer than two riders', () => {
+    expect(squadRatings([4.2, null])).toEqual([null, null])
+    expect(squadRatings([])).toEqual([])
   })
 })

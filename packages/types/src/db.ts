@@ -1440,22 +1440,7 @@ export type Database = {
           freshness_pct: number | null
         }
         ComputedFields: never
-        Relationships: [
-          {
-            foreignKeyName: 'activity_power_curves_athlete_id_fkey'
-            columns: ['athlete_id']
-            isOneToOne: false
-            referencedRelation: 'athletes'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'activity_power_curves_athlete_id_fkey'
-            columns: ['athlete_id']
-            isOneToOne: false
-            referencedRelation: 'v_sync_health'
-            referencedColumns: ['athlete_id']
-          },
-        ]
+        Relationships: []
       }
       v_sync_health: {
         Row: {
@@ -1494,7 +1479,47 @@ export type Database = {
       has_role: { Args: { required_role: string }; Returns: boolean }
       is_staff: { Args: Record<PropertyKey, never>; Returns: boolean }
       is_strictly_increasing: { Args: { vals: number[] }; Returns: boolean }
+      power_profile: {
+        Args: { p_as_of: string }
+        Returns: {
+          as_of: string
+          athlete_id: string
+          attribute: Database['public']['Enums']['rating_attribute']
+          best_14d_w: number
+          best_14d_wkg: number
+          best_42d_w: number
+          best_42d_wkg: number
+          best_84d_w: number
+          best_84d_wkg: number
+          best_season_w: number
+          best_season_wkg: number
+          confidence: Database['public']['Enums']['rating_confidence']
+          days_near_best_84d: number
+          duration_s: number
+          freshness_pct: number
+        }[]
+      }
       seed_model_reference: { Args: Record<PropertyKey, never>; Returns: undefined }
+      staff_power_profile: {
+        Args: { p_as_of: string }
+        Returns: {
+          as_of: string
+          athlete_id: string
+          attribute: Database['public']['Enums']['rating_attribute']
+          best_14d_w: number
+          best_14d_wkg: number
+          best_42d_w: number
+          best_42d_wkg: number
+          best_84d_w: number
+          best_84d_wkg: number
+          best_season_w: number
+          best_season_wkg: number
+          confidence: Database['public']['Enums']['rating_confidence']
+          days_near_best_84d: number
+          duration_s: number
+          freshness_pct: number
+        }[]
+      }
       sync_upsert_activity: { Args: { p_activity: Json; p_intervals: Json }; Returns: undefined }
     }
     Enums: {
