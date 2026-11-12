@@ -1421,6 +1421,19 @@ export type Database = {
         ComputedFields: never
         Relationships: []
       }
+      v_durability: {
+        Row: {
+          as_of: string | null
+          athlete_id: string | null
+          best_84d_w: number | null
+          duration_s: number | null
+          fresh_84d_w: number | null
+          kj_kg_bucket: number | null
+          retained_pct: number | null
+        }
+        ComputedFields: never
+        Relationships: []
+      }
       v_power_profile: {
         Row: {
           as_of: string | null
@@ -1479,6 +1492,29 @@ export type Database = {
           weight_kg: number
         }[]
       }
+      durability_candidates: {
+        Args: { p_after: string; p_limit: number }
+        Returns: {
+          activity_id: string
+          athlete_id: string
+          curve_secs: number[]
+          curve_watts: number[]
+          start_date_local: string
+          weight_kg: number
+        }[]
+      }
+      durability_profile: {
+        Args: { p_as_of: string }
+        Returns: {
+          as_of: string
+          athlete_id: string
+          best_84d_w: number
+          duration_s: number
+          fresh_84d_w: number
+          kj_kg_bucket: number
+          retained_pct: number
+        }[]
+      }
       has_active_consent: {
         Args: { p_athlete_id: string; p_scope: Database['public']['Enums']['consent_scope'] }
         Returns: boolean
@@ -1507,6 +1543,18 @@ export type Database = {
         }[]
       }
       seed_model_reference: { Args: Record<PropertyKey, never>; Returns: undefined }
+      staff_durability_profile: {
+        Args: { p_as_of: string }
+        Returns: {
+          as_of: string
+          athlete_id: string
+          best_84d_w: number
+          duration_s: number
+          fresh_84d_w: number
+          kj_kg_bucket: number
+          retained_pct: number
+        }[]
+      }
       staff_power_profile: {
         Args: { p_as_of: string }
         Returns: {

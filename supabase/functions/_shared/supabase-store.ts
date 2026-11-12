@@ -40,7 +40,7 @@ function inList(ids: string[]): string {
 }
 
 export class SupabaseSyncStore implements SyncStore {
-  private readonly db: SupabaseClient
+  protected readonly db: SupabaseClient
 
   constructor(db: SupabaseClient) {
     this.db = db
