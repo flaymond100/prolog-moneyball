@@ -5,6 +5,7 @@ import {
   rateRiders,
   runComputeRatings,
   type BenchmarkSet,
+  type DurabilityProfileRow,
   type PowerProfileRow,
   type RatingAttribute,
   type RatingRow,
@@ -13,7 +14,7 @@ import {
   type Vo2maxRow,
 } from './ratings.ts'
 
-// KB §6 seed "Female Pro + Coggan provisional" (v1), without durability.
+// KB §6 seed "Female Pro + Coggan provisional" (v1).
 const anchors = (anchorValues: number[], anchorRatings: number[]): Benchmark => ({
   method: 'anchors',
   anchorValues,
@@ -28,6 +29,7 @@ const KB_SET: BenchmarkSet = {
     ['p5m', anchors([4.65, 5.2, 5.8], [9, 12, 15])],
     ['p20m', anchors([4.11, 4.63, 5.11], [9, 12, 15])],
     ['p60m', { method: 'z_score', mean: 4.2, sd: 0.4 }],
+    ['durability', anchors([85, 90, 95, 100], [9, 12, 15, 18])],
     ['vo2max', anchors([50, 57, 63, 70], [9, 12, 15, 18])],
   ]),
 }
@@ -56,6 +58,7 @@ function power(
 function rate(input: {
   riders: Rider[]
   powerProfile?: PowerProfileRow[]
+  durability?: DurabilityProfileRow[]
   vo2max?: Vo2maxRow[]
   benchmarks?: BenchmarkSet
 }) {
@@ -65,8 +68,18 @@ function rate(input: {
     benchmarks: input.benchmarks ?? KB_SET,
     riders: input.riders,
     powerProfile: input.powerProfile ?? [],
+    durability: input.durability ?? [],
     vo2max: input.vo2max ?? [],
   })
+}
+
+function retained(
+  athleteId: string,
+  bucket: number,
+  durationS: number,
+  pct: number | null,
+): DurabilityProfileRow {
+  return { athlete_id: athleteId, kj_kg_bucket: bucket, duration_s: durationS, retained_pct: pct }
 }
 
 function find(rows: RatingRow[], athleteId: string, attribute: RatingAttribute): RatingRow {
@@ -171,6 +184,34 @@ describe('rateRiders', () => {
     expect(find(rows, 'a', 'vo2max')).toMatchObject({ value: 57, rating: 12, confidence: 'high' })
   })
 
+  it('rates durability on the mean retained % of 5 and 20 min after 20 and 30 kJ/kg', () => {
+    const { rows } = rate({
+      riders: squad('a', 'b', 'c'),
+      durability: [
+        retained('a', 20, 300, 96),
+        retained('a', 20, 1200, 94),
+        retained('a', 30, 300, 92),
+        retained('a', 30, 1200, 90),
+        // Not part of the rating: 1 min efforts and the 10 kJ/kg bucket.
+        retained('a', 20, 60, 50),
+        retained('a', 10, 300, 100),
+        // b has two of the four; a value without fresh power is left out.
+        retained('b', 20, 300, 95),
+        retained('b', 20, 1200, 85),
+        retained('b', 30, 300, null),
+        // c has only values outside the rating.
+        retained('c', 10, 1200, 99),
+      ],
+    })
+    // a: mean 93 → between 90 → 12 and 95 → 15.
+    expect(find(rows, 'a', 'durability')).toMatchObject({ value: 93, confidence: 'high' })
+    expect(find(rows, 'a', 'durability').rating).toBeCloseTo(13.8, 10)
+    expect(find(rows, 'a', 'durability').squad_rating).toBe(20)
+    // b: mean 90 → 12.
+    expect(find(rows, 'b', 'durability')).toMatchObject({ value: 90, rating: 12, squad_rating: 1 })
+    expect(rows.filter((r) => r.athlete_id === 'c')).toEqual([])
+  })
+
   it('leaves out a power best without W/kg and counts it', () => {
     const { rows, withoutWeight } = rate({
       riders: squad('a', 'b'),
@@ -250,6 +291,7 @@ class FakeRatingsStore implements RatingsStore {
   benchmarks: BenchmarkSet | null = KB_SET
   riderRows: Rider[] = []
   profile: PowerProfileRow[] = []
+  durability: DurabilityProfileRow[] = []
   vo2max: Vo2maxRow[] = []
   ratings = new Map<string, RatingRow>()
   asked: string[] = []
@@ -263,6 +305,10 @@ class FakeRatingsStore implements RatingsStore {
   powerProfile(asOf: string) {
     this.asked.push(`power ${asOf}`)
     return Promise.resolve(this.profile)
+  }
+  durabilityProfile(asOf: string) {
+    this.asked.push(`durability ${asOf}`)
+    return Promise.resolve(this.durability)
   }
   latestVo2max(asOf: string) {
     this.asked.push(`vo2max ${asOf}`)
@@ -310,7 +356,7 @@ describe('runComputeRatings', () => {
       without_weight: 1,
       without_benchmark: [],
     })
-    expect(store.asked).toEqual(['power 2026-11-10', 'vo2max 2026-11-10'])
+    expect(store.asked).toEqual(['power 2026-11-10', 'durability 2026-11-10', 'vo2max 2026-11-10'])
     expect(store.ratings.size).toBe(4)
     const p60m = store.ratings.get('a|2026-11-10|female_pro_coggan_v1|p60m')
     expect(p60m?.rating).toBeCloseTo(14.375, 10)
