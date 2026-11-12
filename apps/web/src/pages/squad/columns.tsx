@@ -132,8 +132,8 @@ export const squadColumns = [
     id: 'pa',
     header: 'PA',
     cell: ({ row }) => {
-      if (!row.original.caPa) return '–'
-      const { paP10, paP50, paP90 } = row.original.caPa
+      const { paP10, paP50, paP90 } = row.original.caPa ?? {}
+      if (paP10 == null || paP50 == null || paP90 == null) return '–'
       return (
         <span>
           {formatNumber(paP50, 1)}{' '}

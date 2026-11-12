@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@prolog/types'
+import { fetchModelOutputs } from '@/data/real-ratings.ts'
 import type {
   AttributeId,
   AttributeRating,
@@ -10,8 +11,9 @@ import type {
 } from '@/data/types.ts'
 
 // Builds the riders the views show from the live database (TODO 4.3).
-// What exists is shown; what is not calculated yet (ratings, CA/PA, rider
-// type, durability, readiness, eFTP) is left empty for the views to mark.
+// What exists is shown: measured values, and the ratings, rider type and CA
+// the nightly jobs wrote. What is not calculated yet (PA, durability,
+// readiness, eFTP) is left empty for the views to mark.
 // Columns are named explicitly: client roles have column grants (TODO 2.10).
 
 type Client = SupabaseClient<Database>
@@ -59,7 +61,7 @@ function firstBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T> {
 
 export async function fetchRealSquad(client: Client, asOf: string): Promise<Rider[]> {
   const ridesFrom = daysBefore(asOf, RIDES_WINDOW_DAYS)
-  const [athletes, profiles, wellness, curves, activities, races, labs] = await Promise.all([
+  const [athletes, profiles, wellness, curves, activities, races, labs, model] = await Promise.all([
     client.from('athletes').select('id, name').eq('active', true).order('name'),
     client
       .from('rider_profiles')
@@ -95,6 +97,7 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
         'athlete_id, test_date, method, vo2max_ml_kg_min, vo2max_l_min, vlamax_mmol_l_s, fatmax_w, fatmax_g_h, carbmax_g_h, at_w, height_cm, tester, notes',
       )
       .order('test_date'),
+    fetchModelOutputs(client, asOf),
   ])
 
   const profileBy = firstBy(check(profiles, 'rider profiles'), (p) => p.athlete_id)
@@ -138,9 +141,13 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
         notes: l.notes,
       }))
 
-    // Measured values only; ratings come with TODO 7.1.
+    // The rating with the value it was calculated from; otherwise the
+    // measured value alone.
+    const rated = model.ratings.get(athlete.id)
     const attributes = Object.fromEntries(
       ATTRIBUTE_IDS.map((id): [AttributeId, AttributeRating] => {
+        const rating = rated?.[id]
+        if (rating) return [id, rating]
         const secs = POWER_SECS[id]
         let value: number | null = null
         if (secs !== undefined && curve84) {
@@ -165,7 +172,7 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
       contractEnd: profile?.contract_end ?? null,
       asOf,
       attributes,
-      caPa: null,
+      caPa: model.caPa.get(athlete.id) ?? null,
       powerCurves,
       durability: [],
       labTests,

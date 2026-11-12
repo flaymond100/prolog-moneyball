@@ -9,6 +9,9 @@ function position(rating: number): string {
 /** "PA 16.3 (14.8–17.6)" with a band bar on the 1–20 scale; never a single number (KB §8). */
 export function PaBand({ caPa }: { caPa: CaPa }) {
   const { ca, paP10, paP50, paP90 } = caPa
+  if (paP10 === null || paP50 === null || paP90 === null) {
+    return <p className="text-sm text-muted-foreground">Not calculated yet</p>
+  }
   const text = `PA ${formatNumber(paP50, 1)} (${formatNumber(paP10, 1)}–${formatNumber(paP90, 1)})`
   return (
     <div className="space-y-1.5">
