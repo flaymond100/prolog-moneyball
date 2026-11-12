@@ -74,7 +74,7 @@ Collect data first, then build on it. The sync stores every raw response, so all
 
 - [x] **4.1 Supabase Auth.** Magic link login; after login check `staff` membership and role; non-staff see a "no access" page. Add the GitHub Pages URL and `localhost` to Auth redirect URLs. AC: Playwright covers staff and non-staff paths. *Status (2 November 2026): redirect URLs are in `supabase/config.toml` (local); the live project gets them in 10.5.*
 - [ ] **4.2 App shell.** Sidebar (Squad, Form, Compare, Scatter, Tests, Settings), rider switcher, global "as of" date picker, role-aware navigation (Settings sections hidden by role).
-- [ ] **4.3 Data layer.** TanStack Query hooks per view using generated types; error boundary; skeleton loaders; a metric registry (`id`, label, unit, format, source column, higher-is-better) used by table, scatter and filters. AC: adding a metric to the registry makes it available in all three views.
+- [ ] **4.3 Data layer.** TanStack Query hooks per view using generated types; error boundary; skeleton loaders; a metric registry (`id`, label, unit, format, source column, higher-is-better) used by table, scatter and filters. AC: adding a metric to the registry makes it available in all three views. *Status (12 November 2026): real riders come from the live database (part 1), now with the latest ratings of the active set, their 28-day change (whole-number ratings compared), rider type and CA from `rider_ratings` and `rider_ca_pa`; PA shows "Not calculated yet" until 7.4. The squad-relative toggle in Settings does not switch the views yet.*
 
 ## Phase 5 – Derived metrics
 

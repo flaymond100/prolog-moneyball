@@ -14,7 +14,7 @@ export type AttributeId = PowerAttributeId | 'durability' | 'vo2max'
 export type Confidence = 'high' | 'low'
 
 export interface AttributeRating {
-  /** 1–20 rating from the active benchmark set; null until ratings are calculated (TODO 7.1). */
+  /** 1–20 rating from the active benchmark set; null when the rider has none for the attribute. */
   rating: number | null
   confidence: Confidence
   /** Rating change over the last 28 days; null without a rating 28 days ago. */
@@ -25,11 +25,12 @@ export interface AttributeRating {
 
 export interface CaPa {
   ca: number
-  paP10: number
-  paP50: number
-  paP90: number
-  /** CA one year ahead, without the PA floor (KB §8). */
-  ca12mP50: number
+  /** PA band; null until PA is calculated (TODO 7.4). */
+  paP10: number | null
+  paP50: number | null
+  paP90: number | null
+  /** CA one year ahead, without the PA floor (KB §8); null until PA is calculated. */
+  ca12mP50: number | null
   typeProbs: Record<RiderType, number>
   modelVersion: string
 }
@@ -148,7 +149,7 @@ export interface Rider {
   /** Date the ratings and model outputs refer to. */
   asOf: string
   attributes: Record<AttributeId, AttributeRating>
-  /** Null until CA and PA are calculated (TODO 7.3, 7.4). */
+  /** Null until the rider has all six power ratings (KB §7); PA inside it comes with TODO 7.4. */
   caPa: CaPa | null
   powerCurves: PowerCurve[]
   durability: DurabilityPoint[]

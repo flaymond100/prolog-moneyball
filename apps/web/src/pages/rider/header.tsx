@@ -60,9 +60,11 @@ export function ProfileHeader({ rider }: { rider: Rider }) {
               Potential Ability
             </p>
             <PaBand caPa={caPa} />
-            <p className="text-xs text-muted-foreground">
-              CA in 12 months: {formatNumber(caPa.ca12mP50, 1)} (median)
-            </p>
+            {caPa.ca12mP50 !== null && (
+              <p className="text-xs text-muted-foreground">
+                CA in 12 months: {formatNumber(caPa.ca12mP50, 1)} (median)
+              </p>
+            )}
           </div>
         </div>
       ) : (
