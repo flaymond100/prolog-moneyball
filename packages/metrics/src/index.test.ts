@@ -23,8 +23,10 @@ describe('@prolog/metrics', () => {
       'normaliseWellnessValue',
       'projectLoad',
       'ratingFromAnchors',
+      'ratingFromBenchmark',
       'ratingFromZ',
       'retainedPct',
+      'squadRatings',
       'trainingAgeYears',
     ])
   })

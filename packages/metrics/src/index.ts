@@ -12,7 +12,15 @@ export {
 } from './hrv.ts'
 export { isMeaningfulChange } from './lab.ts'
 export { ATL_DAYS, CTL_DAYS, projectLoad, type LoadDay, type LoadState } from './load.ts'
-export { RATING_MAX, RATING_MIN, ratingFromAnchors, ratingFromZ } from './rating.ts'
+export {
+  RATING_MAX,
+  RATING_MIN,
+  ratingFromAnchors,
+  ratingFromBenchmark,
+  ratingFromZ,
+  squadRatings,
+  type Benchmark,
+} from './rating.ts'
 export { best, mean, mostLikely } from './summary.ts'
 export {
   WELLNESS_SCALES,

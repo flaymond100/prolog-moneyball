@@ -112,3 +112,26 @@ update public.app_settings set value = '"all"' where key = 'wellness_scope';
 ```
 
 Then run a backfill over the history you want (section 3) to fill in HRV, resting HR and sleep.
+
+## 9. Compute Ratings
+
+`compute-ratings` rates every active rider 1–20 with the active benchmark set and within the squad, and writes `rider_ratings` (KB §6). Until `refresh-derived` schedules it after the nightly sync (TODO 5.7), run it by hand.
+
+Deploy it after `supabase db push`, as it reads the `power_profile` function:
+
+```bash
+supabase functions deploy compute-ratings
+```
+
+Rate today, or a past day (one call per day, for example to fill the 28-day change arrows):
+
+```bash
+curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ratings \
+  -H "x-cron-secret: <the CRON_SECRET value>"
+
+curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ratings \
+  -H "x-cron-secret: <the CRON_SECRET value>" \
+  -H "content-type: application/json" -d '{"as_of": "2026-10-14"}'
+```
+
+The reply counts the riders and ratings written. `without_weight` counts power bests left unrated because the rider has no body weight for W/kg; `without_benchmark` lists attributes the active set has no benchmark for. Re-running a day is safe: it replaces that day's ratings for the active set.
