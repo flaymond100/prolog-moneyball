@@ -231,8 +231,9 @@ Rider type is a probability over five types computed from the shape of the power
 | All-rounder | 0, 0, 0, 0, 0, 0 | — |
 
 3. Score = −(Euclidean distance)², plus any extra rule bonus. Probabilities = softmax(score / τ) with τ = 4.
-4. `rider_profiles.primary_type_override` replaces the computed result when set.
+4. `rider_profiles.primary_type_override` replaces the computed result when set: it becomes the primary type and CA uses that type's weights at 100%. `type_probs` keeps the computed probabilities (agreed with Kosta, 12 November 2026).
 5. Store `type_probs` as jsonb on `rider_ca_pa`.
+6. The shape vector needs all six power ratings. Until a rider has them she gets no type and no CA (agreed with Kosta, 12 November 2026).
 
 **CA weights (per cent, rows sum to 100) \[prior, agreed with Kosta\]**
 
@@ -253,7 +254,7 @@ Rider type is a probability over five types computed from the shape of the power
 w_i = \sum_{t} p_t \cdot W_{t,i} \qquad CA = \frac{\sum_i w_i \, c_i \, r_i}{\sum_i w_i \, c_i}
 ```
 
-Here p is the type probability, W the weight matrix above, r the attribute rating and c the confidence factor (1.0 high, 0.5 low). A missing attribute (e.g. no lab test) drops out and the remaining weights renormalise.
+Here p is the type probability, W the weight matrix above, r the attribute rating and c the confidence factor (1.0 high, 0.5 low). A missing attribute (e.g. no lab test) drops out and the remaining weights renormalise. The Rouleur/TT share of the 20 and 60 min weights applies to the squad-relative rating of absolute watts; every other type's share applies to the W/kg rating.
 
 - Display CA as 1–20 with one decimal, and as an FM-style 0–200 number (CA × 10) with stars (CA ÷ 4, rounded to half stars).
 - Recompute nightly; keep history in `rider_ca_pa`.

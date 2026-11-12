@@ -1472,6 +1472,13 @@ export type Database = {
         Returns: boolean
       }
       assert_not_future: { Args: { label: string; val: string }; Returns: boolean }
+      body_mass_as_of: {
+        Args: { p_as_of: string }
+        Returns: {
+          athlete_id: string
+          weight_kg: number
+        }[]
+      }
       has_active_consent: {
         Args: { p_athlete_id: string; p_scope: Database['public']['Enums']['consent_scope'] }
         Returns: boolean
