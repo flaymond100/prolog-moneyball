@@ -8,8 +8,7 @@
 import { bestPowerAfterWork } from '@prolog/metrics'
 import { DAILY_CALL_LIMIT, DAILY_HEADROOM } from './backfill.ts'
 import { icuStreamsSchema, type IcuClient } from './icu.ts'
-import type { RunLog } from './refresh.ts'
-import { addDays, type SyncError } from './sync.ts'
+import { addDays, type RunResult, type SyncError } from './sync.ts'
 
 export const DURABILITY_JOB = 'compute-durability'
 /** Work buckets and durations of durability_efforts (KB §6). */
@@ -44,7 +43,9 @@ export interface DurabilityEffortRow {
   computed_at: string
 }
 
-export interface DurabilityStore extends RunLog {
+export interface DurabilityStore {
+  startRun(job: string, params: Record<string, unknown>): Promise<number>
+  finishRun(runId: number, result: RunResult): Promise<void>
   /** API calls logged by runs that started since UTC midnight. */
   callsToday(): Promise<number>
   /** Rides over 2 h that started after `after` and have no efforts yet, oldest first. */

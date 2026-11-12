@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(5);
+select plan(6);
 
 select results_eq(
   $$select schedule, active from cron.job where jobname = 'refresh-derived'$$,
@@ -23,8 +23,10 @@ select is_empty(
   'no job command holds a secret');
 
 select ok(
-  (select command like '%timeout_milliseconds := 60000%' from cron.job where jobname = 'refresh-derived'),
-  'the HTTP call waits long enough for the jobs');
+  (select command like '%timeout_milliseconds := 150000%' from cron.job where jobname = 'refresh-derived'),
+  'the HTTP call waits long enough for the durability job, the ratings and CA');
+select is((select count(*)::int from cron.job where jobname = 'refresh-derived'), 1,
+  'rescheduling replaced the job');
 
 select * from finish();
 rollback;

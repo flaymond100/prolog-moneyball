@@ -5,11 +5,12 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { cronSecretMatches } from '../_shared/cron-auth.ts'
+import { IcuClient } from '../_shared/icu.ts'
 import { parseAsOf } from '../_shared/ratings.ts'
 import { runRefreshDerived } from '../_shared/refresh.ts'
 import { SupabaseCaStore } from '../_shared/supabase-ca-store.ts'
+import { SupabaseDurabilityStore } from '../_shared/supabase-durability-store.ts'
 import { SupabaseRatingsStore } from '../_shared/supabase-ratings-store.ts'
-import { SupabaseSyncStore } from '../_shared/supabase-store.ts'
 
 // Deno globals used here, without pulling Deno types into the Node toolchain.
 declare const Deno: {
@@ -37,8 +38,11 @@ Deno.serve(async (request) => {
   const db = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
     auth: { persistSession: false, autoRefreshToken: false },
   })
+  const durabilityStore = new SupabaseDurabilityStore(db)
   const result = await runRefreshDerived({
-    log: new SupabaseSyncStore(db),
+    log: durabilityStore,
+    client: new IcuClient({ apiKey: env('INTERVALS_API_KEY') }),
+    durabilityStore,
     ratingsStore: new SupabaseRatingsStore(db),
     caStore: new SupabaseCaStore(db),
     asOf: parsed.asOf,

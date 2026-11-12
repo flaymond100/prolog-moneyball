@@ -6,6 +6,7 @@ import type { Benchmark } from '@prolog/metrics'
 import { z } from 'zod'
 import type {
   BenchmarkSet,
+  DurabilityProfileRow,
   PowerProfileRow,
   RatingAttribute,
   RatingRow,
@@ -22,6 +23,15 @@ const powerProfileSchema = z.array(
     best_84d_w: z.number().nullable(),
     best_84d_wkg: z.number().nullable(),
     confidence: z.enum(['high', 'low']).nullable(),
+  }),
+)
+
+const durabilityProfileSchema = z.array(
+  z.object({
+    athlete_id: z.string(),
+    kj_kg_bucket: z.number(),
+    duration_s: z.number(),
+    retained_pct: z.number().nullable(),
   }),
 )
 
@@ -121,6 +131,14 @@ export class SupabaseRatingsStore implements RatingsStore {
       .select('athlete_id, attribute, best_84d_w, best_84d_wkg, confidence')
     if (result.error) throw new Error(`read power profile: ${result.error.message}`)
     return powerProfileSchema.parse(result.data)
+  }
+
+  async durabilityProfile(asOf: string): Promise<DurabilityProfileRow[]> {
+    const result = await this.db
+      .rpc('durability_profile', { p_as_of: asOf })
+      .select('athlete_id, kj_kg_bucket, duration_s, retained_pct')
+    if (result.error) throw new Error(`read durability profile: ${result.error.message}`)
+    return durabilityProfileSchema.parse(result.data)
   }
 
   async latestVo2max(asOf: string): Promise<Vo2maxRow[]> {

@@ -118,10 +118,11 @@ Then run a backfill over the history you want (section 3) to fill in HRV, restin
 
 ## 9. Ratings, Rider Type and CA
 
-Every night at 03:15 UTC, after the sync, pg_cron calls `refresh-derived`. It runs two jobs in order (KB §6–7) and logs one row in `sync_runs` with `job = 'refresh-derived'`:
+Every night at 03:15 UTC, after the sync, pg_cron calls `refresh-derived`. It runs three jobs in order (KB §6–7) and logs one row in `sync_runs` with `job = 'refresh-derived'`:
 
-1. Ratings: every active rider is rated 1–20 with the active benchmark set and within the squad (`rider_ratings`).
-2. Rider type and CA from that day's ratings (`rider_ca_pa`).
+1. Durability efforts for long rides of the last four days (section 10; this job logs its own row too).
+2. Ratings: every active rider is rated 1–20 with the active benchmark set and within the squad (`rider_ratings`).
+3. Rider type and CA from that day's ratings (`rider_ca_pa`).
 
 Check last night's run (SQL editor):
 
@@ -130,7 +131,7 @@ select started_at, status, counts, errors
   from public.sync_runs where job = 'refresh-derived' order by started_at desc limit 1;
 ```
 
-`failed` means the ratings failed and CA was not attempted; `partial` means the ratings were written and CA failed. `errors` names the step.
+`failed` means the ratings failed and CA was not attempted; `partial` means the ratings were written but durability or CA had a problem. `errors` names the step. A durability problem does not stop the ratings: they use the efforts already stored.
 
 **Run it by hand** after fixing data, or for a past day (one call per day, for example to fill the 28-day change arrows):
 

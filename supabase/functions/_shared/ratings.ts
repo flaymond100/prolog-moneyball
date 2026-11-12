@@ -3,11 +3,8 @@
 //
 // The formulas live in @prolog/metrics; this file only gathers their inputs.
 // Storage sits behind RatingsStore, so there is no IO here.
-//
-// Not rated yet: durability, which waits for durability_efforts (TODO 5.6) and
-// for the rule that combines its four retained-% values (open item).
 
-import { ratingFromBenchmark, squadRatings, type Benchmark } from '@prolog/metrics'
+import { mean, ratingFromBenchmark, squadRatings, type Benchmark } from '@prolog/metrics'
 
 export type RatingAttribute =
   'p5s' | 'p30s' | 'p1m' | 'p5m' | 'p20m' | 'p60m' | 'durability' | 'vo2max'
@@ -15,6 +12,14 @@ export type Confidence = 'high' | 'low'
 
 /** Rouleur/TT attributes, also rated on absolute watts within the squad (KB §6–7). */
 const ABSOLUTE_WATTS: ReadonlySet<RatingAttribute> = new Set(['p20m', 'p60m'])
+
+/**
+ * The retained-% values behind the durability rating: 5 and 20 min after 20
+ * and 30 kJ/kg (KB §6). The rating uses the mean of those the rider has
+ * (agreed with Kosta, 12 November 2026).
+ */
+const DURABILITY_DURATIONS_S: readonly number[] = [300, 1200]
+const DURABILITY_BUCKETS_KJ_KG: readonly number[] = [20, 30]
 
 // Inputs --------------------------------------------------------------------
 
@@ -34,6 +39,13 @@ export interface PowerProfileRow {
   best_84d_w: number | null
   best_84d_wkg: number | null
   confidence: Confidence | null
+}
+/** A durability_profile(as_of) row: retained % of fresh power after work, over 84 days. */
+export interface DurabilityProfileRow {
+  athlete_id: string
+  kj_kg_bucket: number
+  duration_s: number
+  retained_pct: number | null
 }
 /** A rider's latest lab VO2max on or before the day. */
 export interface Vo2maxRow {
@@ -63,6 +75,7 @@ export interface RatingsStore {
   activeBenchmarks(): Promise<BenchmarkSet | null>
   riders(): Promise<Rider[]>
   powerProfile(asOf: string): Promise<PowerProfileRow[]>
+  durabilityProfile(asOf: string): Promise<DurabilityProfileRow[]>
   latestVo2max(asOf: string): Promise<Vo2maxRow[]>
   /**
    * Upserts the rows, then deletes the day's other rows for the set (those
@@ -119,6 +132,7 @@ export function rateRiders(input: {
   benchmarks: BenchmarkSet
   riders: readonly Rider[]
   powerProfile: readonly PowerProfileRow[]
+  durability: readonly DurabilityProfileRow[]
   vo2max: readonly Vo2maxRow[]
 }): { rows: RatingRow[]; withoutWeight: number; withoutBenchmark: RatingAttribute[] } {
   const { asOf, computedAt, benchmarks } = input
@@ -148,12 +162,31 @@ export function rateRiders(input: {
       watts: ABSOLUTE_WATTS.has(row.attribute) ? row.best_84d_w : null,
     })
   }
+  const retained = new Map<string, number[]>()
+  for (const row of input.durability) {
+    if (
+      row.retained_pct === null ||
+      !DURABILITY_DURATIONS_S.includes(row.duration_s) ||
+      !DURABILITY_BUCKETS_KJ_KG.includes(row.kj_kg_bucket)
+    ) {
+      continue
+    }
+    const own = retained.get(row.athlete_id)
+    if (own) own.push(row.retained_pct)
+    else retained.set(row.athlete_id, [row.retained_pct])
+  }
+  for (const [athleteId, values] of retained) {
+    const value = mean(values)
+    if (value === null) continue
+    // KB §6 lowers confidence by its days-near-best rule for the power bests only.
+    add({ athlete_id: athleteId, attribute: 'durability', value, confidence: 'high', watts: null })
+  }
   for (const row of input.vo2max) {
     add({
       athlete_id: row.athlete_id,
       attribute: 'vo2max',
       value: row.vo2max_ml_kg_min,
-      // KB §6 lowers confidence for power attributes only.
+      // As for durability: no confidence rule in KB §6.
       confidence: 'high',
       watts: null,
     })
@@ -223,9 +256,10 @@ export async function runComputeRatings(options: {
   const benchmarks = await store.activeBenchmarks()
   if (!benchmarks) throw new Error('No benchmark set is active')
 
-  const [riders, powerProfile, vo2max] = await Promise.all([
+  const [riders, powerProfile, durability, vo2max] = await Promise.all([
     store.riders(),
     store.powerProfile(asOf),
+    store.durabilityProfile(asOf),
     store.latestVo2max(asOf),
   ])
   const computedAt = options.now.toISOString()
@@ -235,6 +269,7 @@ export async function runComputeRatings(options: {
     benchmarks,
     riders,
     powerProfile,
+    durability,
     vo2max,
   })
   const deleted = await store.replaceRatings(asOf, benchmarks.set_id, computedAt, rows)

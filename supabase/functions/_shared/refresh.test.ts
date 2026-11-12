@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { CaRow, CaStore, RatedAttribute } from './ca.ts'
+import type { DurabilityCandidate, DurabilityEffortRow, DurabilityStore } from './durability.ts'
+import type { Benchmark } from '@prolog/metrics'
 import type { RatingAttribute, RatingRow, RatingsStore } from './ratings.ts'
 import { REFRESH_JOB, runRefreshDerived, type RunLog } from './refresh.ts'
 import type { RunResult } from './sync.ts'
+import { api } from './test-helpers.ts'
 
 const AS_OF = '2026-11-12'
 const NOW = new Date('2026-11-12T03:15:00.000Z')
@@ -11,13 +14,44 @@ const POWER: RatingAttribute[] = ['p5s', 'p30s', 'p1m', 'p5m', 'p20m', 'p60m']
 
 // One shared "database": a rider whose six power bests all rate 15, and what
 // the jobs wrote, in order.
-class FakeDb implements RunLog, RatingsStore, CaStore {
+class FakeDb implements RunLog, DurabilityStore, RatingsStore, CaStore {
   events: string[] = []
   runs: { job: string; params: unknown; result?: RunResult }[] = []
   ratingRows: RatingRow[] = []
   caRows: CaRow[] = []
   failRatings = false
   failCa = false
+  failDurability = false
+  rides: DurabilityCandidate[] = []
+  efforts: DurabilityEffortRow[] = []
+  durabilityAfter: string[] = []
+
+  callsToday() {
+    return Promise.resolve(0)
+  }
+  durabilityCandidates(after: string) {
+    this.durabilityAfter.push(after)
+    if (this.failDurability) return Promise.reject(new Error('read durability candidates: down'))
+    return Promise.resolve(this.rides)
+  }
+  upsertDurabilityEfforts(rows: DurabilityEffortRow[]) {
+    this.events.push('write durability')
+    this.efforts.push(...rows)
+    return Promise.resolve()
+  }
+  // Retained 96% for the one effort stored, so the rider gets a durability rating.
+  durabilityProfile() {
+    return Promise.resolve(
+      this.efforts
+        .filter((e) => e.kj_kg_bucket === 20 && e.duration_s === 300)
+        .map((e) => ({
+          athlete_id: 'a',
+          kj_kg_bucket: e.kj_kg_bucket,
+          duration_s: e.duration_s,
+          retained_pct: 96,
+        })),
+    )
+  }
 
   startRun(job: string, params: Record<string, unknown>) {
     this.events.push('start run')
@@ -35,7 +69,13 @@ class FakeDb implements RunLog, RatingsStore, CaStore {
     if (this.failRatings) return Promise.reject(new Error('read active benchmark set: timeout'))
     return Promise.resolve({
       set_id: SET_ID,
-      points: new Map(POWER.map((a) => [a, { method: 'z_score', mean: 10, sd: 1 } as const])),
+      points: new Map<RatingAttribute, Benchmark>([
+        ...POWER.map((a): [RatingAttribute, Benchmark] => [
+          a,
+          { method: 'z_score', mean: 10, sd: 1 },
+        ]),
+        ['durability', { method: 'z_score', mean: 96, sd: 2 }],
+      ]),
     })
   }
   activeSetId() {
@@ -111,41 +151,96 @@ class FakeDb implements RunLog, RatingsStore, CaStore {
   }
 }
 
-function refresh(db: FakeDb) {
-  return runRefreshDerived({ log: db, ratingsStore: db, caStore: db, asOf: AS_OF, now: NOW })
+// 60 kg: 20 kJ/kg is 1.2 MJ, 6,000 s at 200 W; then 600 s at 240 W.
+const STREAM = [
+  ...Array.from({ length: 6000 }, () => 200),
+  ...Array.from({ length: 600 }, () => 240),
+]
+const RIDE: DurabilityCandidate = {
+  activity_id: 'r1',
+  athlete_id: 'a',
+  start_date_local: '2026-11-11T09:00:00',
+  weight_kg: 60,
+  curve_secs: [60, 300],
+  curve_watts: [240, 240],
+}
+
+function refresh(db: FakeDb, routes: Record<string, unknown> = {}) {
+  const { client } = api(routes)
+  return runRefreshDerived({
+    log: db,
+    client,
+    durabilityStore: db,
+    ratingsStore: db,
+    caStore: db,
+    asOf: AS_OF,
+    now: NOW,
+  })
 }
 
 describe('runRefreshDerived', () => {
-  it('rates, then types and works out CA from those ratings, and logs one run', async () => {
+  it('works out durability, rates with it, then types and works out CA, and logs the run', async () => {
     const db = new FakeDb()
-    const result = await refresh(db)
+    db.rides = [RIDE]
+    const result = await refresh(db, {
+      '/activity/r1/streams.json': [{ type: 'watts', data: STREAM }],
+    })
 
     expect(db.events).toEqual([
       'start run',
+      'start run', // the durability job logs its own run
+      'write durability',
+      'finish run',
       'write ratings',
       'read ratings',
       'write CA',
       'finish run',
     ])
+    // The last few days before the day being refreshed.
+    expect(db.durabilityAfter).toEqual(['2026-11-07T23:59:59'])
     expect(result).toMatchObject({ run_id: 1, status: 'succeeded', as_of: AS_OF, errors: [] })
-    expect(result.ratings).toMatchObject({ riders: 1, ratings: 6 })
+    expect(result.durability).toMatchObject({ status: 'succeeded', rides: 1, efforts: 5 })
+    // Six power ratings and the durability rating from the efforts just stored.
+    expect(result.ratings).toMatchObject({ riders: 1, ratings: 7 })
+    expect(db.ratingRows.find((r) => r.attribute === 'durability')).toMatchObject({
+      value: 96,
+      rating: 15,
+    })
     expect(result.ca).toMatchObject({ riders: 1, without_power_profile: 0 })
     expect(db.caRows[0]).toMatchObject({ athlete_id: 'a', primary_type: 'all_rounder' })
     expect(db.caRows[0]?.ca).toBeCloseTo(15, 10)
 
-    expect(db.runs).toEqual([
-      {
-        job: REFRESH_JOB,
-        params: { as_of: AS_OF },
-        result: {
-          status: 'succeeded',
-          athlete_ids: [],
-          counts: { rider_ratings: 6, rider_ca_pa: 1 },
-          errors: [],
-          api_calls: 0,
-          rate_limit_remaining: null,
-        },
+    expect(db.runs.map((run) => [run.job, run.result?.status])).toEqual([
+      [REFRESH_JOB, 'succeeded'],
+      ['compute-durability', 'succeeded'],
+    ])
+    expect(db.runs[0]).toEqual({
+      job: REFRESH_JOB,
+      params: { as_of: AS_OF },
+      result: {
+        status: 'succeeded',
+        athlete_ids: [],
+        counts: { durability_efforts: 5, rider_ratings: 7, rider_ca_pa: 1 },
+        errors: [],
+        api_calls: 0,
+        rate_limit_remaining: null,
       },
+    })
+    expect(db.runs[1]?.result?.api_calls).toBe(1)
+  })
+
+  it('still rates and works out CA when durability fails, and is partial', async () => {
+    const db = new FakeDb()
+    db.failDurability = true
+    const result = await refresh(db)
+
+    expect(db.events).toContain('write ratings')
+    expect(db.events).toContain('write CA')
+    expect(result.status).toBe('partial')
+    expect(result.durability).toMatchObject({ status: 'failed' })
+    expect(result.ratings).toMatchObject({ ratings: 6 })
+    expect(result.errors).toEqual([
+      { athlete_id: null, step: 'durability', message: 'compute-durability failed, run 2' },
     ])
   })
 
@@ -154,14 +249,15 @@ describe('runRefreshDerived', () => {
     db.failRatings = true
     const result = await refresh(db)
 
-    expect(db.events).toEqual(['start run', 'finish run'])
+    expect(db.events).not.toContain('write ratings')
+    expect(db.events).not.toContain('read ratings')
     expect(result).toMatchObject({ status: 'failed', ratings: null, ca: null })
     expect(result.errors).toEqual([
       { athlete_id: null, step: 'ratings', message: 'read active benchmark set: timeout' },
     ])
     expect(db.runs[0]?.result).toMatchObject({
       status: 'failed',
-      counts: { rider_ratings: 0, rider_ca_pa: 0 },
+      counts: { durability_efforts: 0, rider_ratings: 0, rider_ca_pa: 0 },
       errors: result.errors,
     })
   })
@@ -171,7 +267,8 @@ describe('runRefreshDerived', () => {
     db.failCa = true
     const result = await refresh(db)
 
-    expect(db.events).toEqual(['start run', 'write ratings', 'read ratings', 'finish run'])
+    expect(db.events).toContain('write ratings')
+    expect(db.events).not.toContain('write CA')
     expect(result.status).toBe('partial')
     expect(result.ratings).toMatchObject({ ratings: 6 })
     expect(result.ca).toBeNull()
@@ -184,7 +281,7 @@ describe('runRefreshDerived', () => {
     ])
     expect(db.runs[0]?.result).toMatchObject({
       status: 'partial',
-      counts: { rider_ratings: 6, rider_ca_pa: 0 },
+      counts: { durability_efforts: 0, rider_ratings: 6, rider_ca_pa: 0 },
     })
   })
 })
