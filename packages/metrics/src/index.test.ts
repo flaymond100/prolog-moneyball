@@ -15,6 +15,7 @@ describe('@prolog/metrics', () => {
       'WELLNESS_SCALES',
       'ageInYears',
       'best',
+      'bestPowerAfterWork',
       'caOnFmScale',
       'caStars',
       'currentAbility',

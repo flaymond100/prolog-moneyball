@@ -434,3 +434,7 @@ verify_jwt = false
 # pg_cron calls this at 03:15 UTC with x-cron-secret (TODO 5.7).
 [functions.refresh-derived]
 verify_jwt = false
+
+# Called with x-cron-secret, by hand or by refresh-derived (TODO 5.6).
+[functions.compute-durability]
+verify_jwt = false

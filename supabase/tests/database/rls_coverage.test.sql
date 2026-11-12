@@ -17,7 +17,7 @@ select tables_are('public', array[
   'saved_filters', 'saved_layouts', 'staff', 'sync_runs', 'wellness'
 ], 'public tables are exactly the known set; add a new table here with its tests');
 
-select views_are('public', array['v_body_mass', 'v_power_profile', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
+select views_are('public', array['v_body_mass', 'v_durability', 'v_power_profile', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
 
 select is_empty(
   $$select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace

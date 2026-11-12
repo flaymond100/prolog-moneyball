@@ -117,6 +117,14 @@ export interface IcuLogEvent {
   rateLimit: Record<string, string>
 }
 
+/** `GET /activity/{id}/streams.json`: one entry per stream, `data` one value per sample. */
+export const icuStreamsSchema = z.array(
+  z.looseObject({
+    type: z.string(),
+    data: z.array(z.number().nullable()).nullish(),
+  }),
+)
+
 export interface IcuClientOptions {
   apiKey: string
   baseUrl?: string

@@ -157,3 +157,29 @@ supabase functions deploy refresh-derived
 supabase functions deploy compute-ratings
 supabase functions deploy compute-ca
 ```
+
+## 10. Durability
+
+`compute-durability` works on rides over 2 h: it fetches each ride's per-second power from intervals.icu (one API call per ride) and stores the best 1, 5 and 20 min power after 10, 20 and 30 kJ/kg of work in `durability_efforts` (KB §6). A rider needs a body weight for this. Each run logs one row in `sync_runs` with `job = 'compute-durability'`.
+
+Deploy after `supabase db push`:
+
+```bash
+supabase functions deploy compute-durability
+```
+
+Work on the last four days, or on every ride since a day (for example the 84 days the ratings look at):
+
+```bash
+curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-durability \
+  -H "x-cron-secret: <the CRON_SECRET value>" \
+  -H "content-type: application/json" -d '{"from": "2026-08-20"}'
+```
+
+A run stops after 25 rides or 45 seconds. If the reply has a `next_after`, call again with `-d '{"after": "<next_after>"}'` until it is `null`.
+
+What the reply tells you:
+
+- `rides` and `efforts`: what was stored. A ride that already has efforts is not fetched again.
+- `skipped`: rides left out because the rider has no body weight, the ride has no power stream, the stream is not one sample per second, or the ride never reaches 10 kJ/kg.
+- `curve_check.max_diff_pct`: how far the stream's own best 1, 5 and 20 min power is from the ride's stored intervals.icu curve. It should be close to 0; a large value means the stream is not what the job assumes.

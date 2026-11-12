@@ -201,6 +201,8 @@ So the pro mean rates 15, +2 SD rates 20, −2 SD rates 10.
 
 Rouleur absolute 20/60 min W uses squad-relative percentiles until a watt-based benchmark is chosen.
 
+**Durability value:** an effort counts for a work bucket when the work done before its first second is at least that many kJ per kg of body weight (the weight nearest the ride's date). Retained % = best power after the work in the 84-day window ÷ the fresh 84-day best for the same duration, never above 100. The rated value is the mean of the retained % values the rider has among 5 min and 20 min after 20 and 30 kJ/kg (agreed with Kosta, 12 November 2026).
+
 **Squad-relative mode:** a toggle that maps each rider's percentile within the squad linearly to 1–20. Percentile = (rank − 1) ÷ (riders − 1), ties sharing their average rank, so the weakest rider rates 1 and the strongest 20; with fewer than two riders there is no squad rating (agreed with Kosta, 10 November 2026). Only `squad` cohort riders are ranked.
 
 **Confidence:** a power attribute is *high* confidence when at least 3 different days in the 84-day window reach ≥95% of that window's best for the duration; otherwise *low*. Low-confidence attributes render hatched and count at 50% weight in CA.
