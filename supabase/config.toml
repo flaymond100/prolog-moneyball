@@ -430,3 +430,7 @@ verify_jwt = false
 # Called with x-cron-secret after compute-ratings (TODO 7.2, 7.3).
 [functions.compute-ca]
 verify_jwt = false
+
+# pg_cron calls this at 03:15 UTC with x-cron-secret (TODO 5.7).
+[functions.refresh-derived]
+verify_jwt = false

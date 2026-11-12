@@ -10,6 +10,7 @@
     "backfill",
     "compute-ratings",
     "compute-ca",
+    "refresh-derived",
     "vitest.config.ts"
   ]
 }

@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "@prolog/metrics": "../../../packages/metrics/src/index.ts",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.118.0",
+    "zod": "npm:zod@^4.6.7"
+  }
+}
