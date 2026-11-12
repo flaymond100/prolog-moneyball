@@ -67,13 +67,11 @@ export function ratingFromBenchmark(x: number, benchmark: Benchmark): number {
 }
 
 /**
- * Squad-relative ratings (KB §6): each value's percentile in the squad,
- * p = (rank − 1) ÷ (riders − 1) with ties sharing their average rank, mapped
- * to 1 + 19p, so the weakest rates 1 and the strongest 20 (agreed with Kosta,
- * 10 November 2026). Null for a missing value, and for everyone when fewer
- * than two riders have one.
+ * Each value's place in the squad as a fraction: (rank − 1) ÷ (riders − 1),
+ * ties sharing their average rank, so the weakest is 0 and the strongest 1.
+ * Null for a missing value, and for everyone when fewer than two riders have one.
  */
-export function squadRatings(values: readonly (number | null)[]): (number | null)[] {
+function squadFractions(values: readonly (number | null)[]): (number | null)[] {
   const present = values.filter((v): v is number => v !== null)
   const n = present.length
   if (n < 2) return values.map(() => null)
@@ -82,6 +80,26 @@ export function squadRatings(values: readonly (number | null)[]): (number | null
     const below = present.filter((x) => x < v).length
     const tied = present.filter((x) => x === v).length
     const rank = below + (tied + 1) / 2
-    return RATING_MIN + ((RATING_MAX - RATING_MIN) * (rank - 1)) / (n - 1)
+    return (rank - 1) / (n - 1)
   })
+}
+
+/**
+ * Squad percentiles 0–100 (KB §6–7): (rank − 1) ÷ (riders − 1) with ties
+ * sharing their average rank (agreed with Kosta, 10 November 2026). Null for a
+ * missing value, and for everyone when fewer than two riders have one.
+ */
+export function squadPercentiles(values: readonly (number | null)[]): (number | null)[] {
+  return squadFractions(values).map((p) => (p === null ? null : 100 * p))
+}
+
+/**
+ * Squad-relative ratings (KB §6): the squad percentile mapped linearly to
+ * 1–20, so the weakest rates 1 and the strongest 20. Null where there is no
+ * percentile.
+ */
+export function squadRatings(values: readonly (number | null)[]): (number | null)[] {
+  return squadFractions(values).map((p) =>
+    p === null ? null : RATING_MIN + (RATING_MAX - RATING_MIN) * p,
+  )
 }

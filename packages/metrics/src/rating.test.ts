@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { ratingFromAnchors, ratingFromBenchmark, ratingFromZ, squadRatings } from './rating.ts'
+import {
+  ratingFromAnchors,
+  ratingFromBenchmark,
+  ratingFromZ,
+  squadPercentiles,
+  squadRatings,
+} from './rating.ts'
 
 describe('ratingFromZ', () => {
   // KB §6 worked examples, benchmark set "Female Pro + Coggan provisional".
@@ -106,5 +112,21 @@ describe('squadRatings', () => {
   it('has no squad rating with fewer than two riders', () => {
     expect(squadRatings([4.2, null])).toEqual([null, null])
     expect(squadRatings([])).toEqual([])
+  })
+})
+
+describe('squadPercentiles', () => {
+  it('runs from 0 for the weakest to 100 for the strongest', () => {
+    expect(squadPercentiles([250, 310, 280])).toEqual([0, 100, 50])
+    expect(squadPercentiles([1, 2, 3, 4, 5, 6])).toEqual([0, 20, 40, 60, 80, 100])
+  })
+
+  it('gives tied riders their average rank', () => {
+    expect(squadPercentiles([300, 260, 300])).toEqual([75, 0, 75])
+  })
+
+  it('skips missing values, and needs two riders', () => {
+    expect(squadPercentiles([null, 280, 250])).toEqual([null, 100, 0])
+    expect(squadPercentiles([280, null])).toEqual([null, null])
   })
 })

@@ -18,9 +18,20 @@ export {
   ratingFromAnchors,
   ratingFromBenchmark,
   ratingFromZ,
+  squadPercentiles,
   squadRatings,
   type Benchmark,
 } from './rating.ts'
+export {
+  RIDER_TYPES,
+  SHAPE_LENGTH,
+  primaryRiderType,
+  riderTypeProbs,
+  shapeVector,
+  type RiderType,
+  type RiderTypeInput,
+  type RiderTypePriors,
+} from './rider-type.ts'
 export { best, mean, mostLikely } from './summary.ts'
 export {
   WELLNESS_SCALES,
