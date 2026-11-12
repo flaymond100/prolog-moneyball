@@ -426,3 +426,7 @@ verify_jwt = false
 # Called with x-cron-secret, by hand until refresh-derived exists (TODO 7.1, 5.7).
 [functions.compute-ratings]
 verify_jwt = false
+
+# Called with x-cron-secret after compute-ratings (TODO 7.2, 7.3).
+[functions.compute-ca]
+verify_jwt = false

@@ -17,6 +17,7 @@ describe('@prolog/metrics', () => {
       'best',
       'caOnFmScale',
       'caStars',
+      'currentAbility',
       'isMeaningfulChange',
       'lnRmssdStats',
       'mean',

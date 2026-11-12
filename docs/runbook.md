@@ -113,25 +113,40 @@ update public.app_settings set value = '"all"' where key = 'wellness_scope';
 
 Then run a backfill over the history you want (section 3) to fill in HRV, resting HR and sleep.
 
-## 9. Compute Ratings
+## 9. Compute Ratings, Rider Type and CA
 
-`compute-ratings` rates every active rider 1–20 with the active benchmark set and within the squad, and writes `rider_ratings` (KB §6). Until `refresh-derived` schedules it after the nightly sync (TODO 5.7), run it by hand.
+Two functions run in order (KB §6–7):
 
-Deploy it after `supabase db push`, as it reads the `power_profile` function:
+1. `compute-ratings` rates every active rider 1–20 with the active benchmark set and within the squad, and writes `rider_ratings`.
+2. `compute-ca` reads that day's ratings, works out each rider's type and Current Ability, and writes `rider_ca_pa`.
+
+Until `refresh-derived` schedules them after the nightly sync (TODO 5.7), run them by hand.
+
+Deploy both after `supabase db push`, as they read the `power_profile` and `body_mass_as_of` functions:
 
 ```bash
 supabase functions deploy compute-ratings
+supabase functions deploy compute-ca
 ```
 
-Rate today, or a past day (one call per day, for example to fill the 28-day change arrows):
+Rate today:
 
 ```bash
 curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ratings \
   -H "x-cron-secret: <the CRON_SECRET value>"
+curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ca \
+  -H "x-cron-secret: <the CRON_SECRET value>"
+```
 
-curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ratings \
-  -H "x-cron-secret: <the CRON_SECRET value>" \
+Rate a past day (one pair of calls per day, for example to fill the 28-day change arrows) by adding a body to both calls:
+
+```bash
   -H "content-type: application/json" -d '{"as_of": "2026-10-14"}'
 ```
 
-The reply counts the riders and ratings written. `without_weight` counts power bests left unrated because the rider has no body weight for W/kg; `without_benchmark` lists attributes the active set has no benchmark for. Re-running a day is safe: it replaces that day's ratings for the active set.
+What the replies tell you:
+
+- `compute-ratings`: the riders and ratings written. `without_weight` counts power bests left unrated because the rider has no body weight for W/kg; `without_benchmark` lists attributes the active set has no benchmark for.
+- `compute-ca`: the riders given a type and CA. `without_power_profile` counts rated riders left out because they do not have all six power ratings yet.
+
+Re-running a day is safe: each function replaces that day's rows.
