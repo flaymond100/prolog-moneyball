@@ -16,10 +16,13 @@ Goal of the MVP's first step: the nightly sync runs on the live project and stor
    supabase migration list --linked   # local and remote columns match
    ```
 3. **Check the function secrets** (set on 20 October 2026). `supabase secrets list` must show `INTERVALS_API_KEY` and `CRON_SECRET`. Vault must hold `project_url` and `cron_secret` (SQL editor: `select name from vault.secrets;`).
-4. **Deploy the functions.** `verify_jwt = false` for both comes from `supabase/config.toml`.
+4. **Deploy the functions.** `verify_jwt = false` for all of them comes from `supabase/config.toml`.
    ```bash
    supabase functions deploy sync-nightly
    supabase functions deploy backfill
+   supabase functions deploy refresh-derived
+   supabase functions deploy compute-ratings
+   supabase functions deploy compute-ca
    ```
 5. **Smoke test.** A call without the secret must be refused:
    ```bash
@@ -113,40 +116,44 @@ update public.app_settings set value = '"all"' where key = 'wellness_scope';
 
 Then run a backfill over the history you want (section 3) to fill in HRV, resting HR and sleep.
 
-## 9. Compute Ratings, Rider Type and CA
+## 9. Ratings, Rider Type and CA
 
-Two functions run in order (KB §6–7):
+Every night at 03:15 UTC, after the sync, pg_cron calls `refresh-derived`. It runs two jobs in order (KB §6–7) and logs one row in `sync_runs` with `job = 'refresh-derived'`:
 
-1. `compute-ratings` rates every active rider 1–20 with the active benchmark set and within the squad, and writes `rider_ratings`.
-2. `compute-ca` reads that day's ratings, works out each rider's type and Current Ability, and writes `rider_ca_pa`.
+1. Ratings: every active rider is rated 1–20 with the active benchmark set and within the squad (`rider_ratings`).
+2. Rider type and CA from that day's ratings (`rider_ca_pa`).
 
-Until `refresh-derived` schedules them after the nightly sync (TODO 5.7), run them by hand.
+Check last night's run (SQL editor):
 
-Deploy both after `supabase db push`, as they read the `power_profile` and `body_mass_as_of` functions:
-
-```bash
-supabase functions deploy compute-ratings
-supabase functions deploy compute-ca
+```sql
+select started_at, status, counts, errors
+  from public.sync_runs where job = 'refresh-derived' order by started_at desc limit 1;
 ```
 
-Rate today:
+`failed` means the ratings failed and CA was not attempted; `partial` means the ratings were written and CA failed. `errors` names the step.
+
+**Run it by hand** after fixing data, or for a past day (one call per day, for example to fill the 28-day change arrows):
 
 ```bash
-curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ratings \
-  -H "x-cron-secret: <the CRON_SECRET value>"
-curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/compute-ca \
-  -H "x-cron-secret: <the CRON_SECRET value>"
-```
-
-Rate a past day (one pair of calls per day, for example to fill the 28-day change arrows) by adding a body to both calls:
-
-```bash
+curl -s -X POST https://pweoamcptqpfelpcyxyp.supabase.co/functions/v1/refresh-derived \
+  -H "x-cron-secret: <the CRON_SECRET value>" \
   -H "content-type: application/json" -d '{"as_of": "2026-10-14"}'
 ```
 
-What the replies tell you:
+Leave out the body to work on today. Re-running a day is safe: each job replaces that day's rows.
 
-- `compute-ratings`: the riders and ratings written. `without_weight` counts power bests left unrated because the rider has no body weight for W/kg; `without_benchmark` lists attributes the active set has no benchmark for.
-- `compute-ca`: the riders given a type and CA. `without_power_profile` counts rated riders left out because they do not have all six power ratings yet.
+What the reply tells you:
 
-Re-running a day is safe: each function replaces that day's rows.
+- `ratings.without_weight`: power bests left unrated because the rider has no body weight for W/kg.
+- `ratings.without_benchmark`: attributes the active set has no benchmark for.
+- `ca.without_power_profile`: rated riders without a type and CA because they do not have all six power ratings yet.
+
+`compute-ratings` and `compute-ca` run one job each, with the same header and body, and write no log row.
+
+**Deploy** after `supabase db push`, as the jobs read the `power_profile` and `body_mass_as_of` functions and the schedule is a migration:
+
+```bash
+supabase functions deploy refresh-derived
+supabase functions deploy compute-ratings
+supabase functions deploy compute-ca
+```

@@ -84,7 +84,7 @@ Collect data first, then build on it. The sync stores every raw response, so all
 - [ ] **5.4 `v_efficiency_trends`.** EF on Z2 rides (>60 min, >70% in Z1–2), 7-ride rolling; decoupling on rides over 2 h.
 - [ ] **5.5 `v_consistency`.** Weekly planned vs completed load from `planned_events` and activities; 12-week compliance %; indoor/outdoor ratio; intensity distribution from zone views.
 - [ ] **5.6 `compute-durability` Edge Function.** For new rides over 2 h: fetch power streams, compute cumulative kJ/kg, store best 1/5/20 min after 10/20/30 kJ/kg in `durability_efforts`; rider-level 84-day retained % view. AC: unit tests with synthetic streams; nightly run under 60 s.
-- [ ] **5.7 `refresh-derived` Edge Function.** Refresh materialised views, then trigger Phase 7 jobs in order (ratings → type → CA → PA → forecasts). AC: one `sync_runs`-style log row per run.
+- [ ] **5.7 `refresh-derived` Edge Function.** Refresh materialised views, then trigger Phase 7 jobs in order (ratings → type → CA → PA → forecasts). AC: one `sync_runs`-style log row per run. *Status (12 November 2026): the slim version for the MVP is built. It runs the ratings, then rider type and CA, in order and in one process, stops at the first failure, writes one `sync_runs` row per run (`job = 'refresh-derived'`) and is scheduled at 03:15 UTC. Still to add before this is ticked: the materialised views (5.2), PA (7.4) and forecasts (7.5, 7.6).*
 
 ## Phase 6 – Dashboard views
 
@@ -136,7 +136,7 @@ Riders are employees; the legal basis rules are in KB §11. The agent drafts doc
 - [ ] **10.5 Go-live checklist** (final stage, agreed with Kosta on 2 November 2026). The Supabase project has been paused (free tier, 7 days inactive) since late October 2026, so every step that touches the live project waits until here:
   1. Restore the project in the Supabase dashboard; decide on the Pro plan so it never pauses with the nightly sync running.
   2. Push the pending migrations (from `20261102141756_app_settings` onwards) and check `supabase migration list --linked`.
-  3. Deploy `sync-nightly` and `backfill` (via 10.3 or by hand, Kosta to decide).
+  3. Deploy `sync-nightly`, `backfill`, `refresh-derived`, `compute-ratings` and `compute-ca` (via 10.3 or by hand, Kosta to decide).
   4. 3.6: schedule the cron jobs, then check the 3.1 AC (no plaintext secret in `cron.job`) and the 3.6 AC (`cron.job_run_details` success the next morning).
   5. Run the backfill for the squad (`supabase/functions/scripts/backfill.ts`).
   6. Finish 3.3: re-run `check-endpoints.ts` once a rider syncs a device directly.
