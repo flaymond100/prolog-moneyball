@@ -2,6 +2,7 @@ import { Link, Outlet } from '@tanstack/react-router'
 import {
   Activity,
   ChartScatter,
+  ClipboardList,
   Database,
   FlaskConical,
   GitCompareArrows,
@@ -19,7 +20,7 @@ import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store
 import { formatDate } from '@/lib/format.ts'
 
 interface NavItem {
-  to: '/squad' | '/form' | '/compare' | '/scatter' | '/tests' | '/settings' | '/live'
+  to: '/squad' | '/form' | '/compare' | '/scatter' | '/tests' | '/settings' | '/roster' | '/live'
   label: string
   icon: LucideIcon
 }
@@ -32,6 +33,8 @@ const NAV: readonly NavItem[] = [
   { to: '/scatter', label: 'Scatter', icon: ChartScatter },
   { to: '/tests', label: 'Tests', icon: FlaskConical },
   { to: '/settings', label: 'Settings', icon: Settings },
+  // Signed riders with their reported numbers, until they sync from intervals.icu.
+  { to: '/roster', label: 'Roster 2027', icon: ClipboardList },
   // Stored sync data, until the views above read it (TODO 4.3).
   { to: '/live', label: 'Live Data', icon: Database },
 ]

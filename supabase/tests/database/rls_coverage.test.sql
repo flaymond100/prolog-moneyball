@@ -5,7 +5,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(59);
+select plan(60);
 
 -- Inventory -------------------------------------------------------------------
 
@@ -13,11 +13,11 @@ select tables_are('public', array[
   'activities', 'activity_intervals', 'activity_power_curves', 'anthropometrics', 'app_settings', 'athletes', 'benchmark_points',
   'benchmark_sets', 'ca_weights', 'consents', 'cycle_data', 'durability_efforts', 'edit_history',
   'forecasts', 'lab_tests', 'medical_markers', 'model_priors', 'model_priors_history',
-  'planned_events', 'power_curves', 'rider_ca_pa', 'rider_profiles', 'rider_ratings',
+  'planned_events', 'power_curves', 'rider_ca_pa', 'rider_profiles', 'rider_ratings', 'roster_entries',
   'saved_filters', 'saved_layouts', 'staff', 'sync_runs', 'wellness'
 ], 'public tables are exactly the known set; add a new table here with its tests');
 
-select views_are('public', array['v_body_mass', 'v_durability', 'v_power_profile', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
+select views_are('public', array['v_body_mass', 'v_durability', 'v_power_profile', 'v_roster', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
 
 select is_empty(
   $$select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -64,6 +64,9 @@ select policies_are('public', 'rider_profiles', array[
   'Staff read rider profiles', 'Coach inserts rider profiles',
   'Coach updates rider profiles', 'Coach deletes rider profiles']);
 select policies_are('public', 'rider_ratings', array['Staff read rider ratings']);
+select policies_are('public', 'roster_entries', array[
+  'Staff read roster entries', 'Coach inserts roster entries',
+  'Coach updates roster entries', 'Coach deletes roster entries']);
 select policies_are('public', 'saved_filters', array['Staff manage own saved filters']);
 select policies_are('public', 'saved_layouts', array['Staff manage own saved layouts']);
 select policies_are('public', 'staff', array['Staff read staff']);

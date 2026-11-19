@@ -98,6 +98,7 @@ Build views against seeded synthetic data (task 9.2) first, so the UI does not w
 - [x] **6.6 Form board.** Rider cards with TSB, readiness light and reasons, ln rMSSD band chart, eFTP sparkline, next race with projected TSB; grey state when fewer than 3 HRV readings in 7 days.
 - [x] **6.7 Tests.** zod forms for `lab_tests` and `anthropometrics` with range messages in British English; per-rider timeline; slope chart; delta table against coach-set typical error; VO2max × VLamax quadrant; "modelled" badge for field tests.
 - [x] **6.8 Settings.** Rider profiles; benchmark set selector and squad-relative toggle; CA weight editor (rows must sum to 100); PA priors editor (coach only, writes history); typical error per lab metric; consent management (medical only); sync health.
+- [x] **6.9 Roster 2027** (requested by Kosta, 19 November 2026). `roster_entries` + `v_roster`: the signed riders with tier, base, reported 20/5/1 min power and W/kg, data quality, race and team scores, scouting notes and call notes; kg for coach and medical, call notes for the coach only; email and phone not stored. Rider rows are entered on the live database, never in the repo (public). "Roster 2027" view rates the reported W/kg on the active benchmark set. AC: pgTAP covers every role; the view renders the roster for coach and hides kg and call notes for viewers.
 
 ## Phase 7 – Models
 

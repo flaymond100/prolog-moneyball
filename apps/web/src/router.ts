@@ -13,6 +13,7 @@ import { LivePage } from '@/pages/live.tsx'
 import { PalettePage } from '@/pages/dev/palette.tsx'
 import { NotFoundPage } from '@/pages/not-found.tsx'
 import { RiderPage } from '@/pages/rider.tsx'
+import { RosterPage } from '@/pages/roster.tsx'
 import { ScatterPage } from '@/pages/scatter.tsx'
 import { SettingsPage } from '@/pages/settings.tsx'
 import { SquadPage } from '@/pages/squad.tsx'
@@ -103,6 +104,13 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+// Signed riders with their reported numbers, until they sync from intervals.icu.
+const rosterRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: '/roster',
+  component: RosterPage,
+})
+
 const riderRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/riders/$riderId',
@@ -125,6 +133,7 @@ const routeTree = rootRoute.addChildren([
     scatterRoute,
     testsRoute,
     settingsRoute,
+    rosterRoute,
     liveRoute,
   ]),
   paletteRoute,
