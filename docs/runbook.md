@@ -49,7 +49,17 @@ Goal of the MVP's first step: the nightly sync runs on the live project and stor
    ```
 9. **Backfill history** once riders are connected (section 3).
 
-Sign-in URLs for the dashboard (Site URL `https://flaymond100.github.io/prolog-moneyball/`, plus the redirect URLs in `supabase/config.toml`) are set in **Authentication → URL Configuration** when the dashboard is deployed (TODO 10.1). Do not use `supabase config push` for this: it would also push the local `site_url`.
+Sign-in URLs for the dashboard (Site URL `https://app.prolog-cycling.com/`, plus the redirect URLs in `supabase/config.toml`) are set in **Authentication → URL Configuration**. Do not use `supabase config push` for this: it would also push the local `site_url`.
+
+### Dashboard hosting (TODO 10.1, 10.2)
+
+The dashboard is served by GitHub Pages at `https://app.prolog-cycling.com/`; the landing site keeps `prolog-cycling.com` in its own repo (`prolog-cycling`). No extra domain is needed. `.github/workflows/pages.yml` builds `apps/web` with `VITE_BASE_PATH=/` and deploys on every push to `main` that touches the app. One-time setup:
+
+1. **DNS** (at the registrar of `prolog-cycling.com`): add `CNAME` record `app` → `flaymond100.github.io.` Leave the apex records of the landing site alone.
+2. **Repo secrets:** `VITE_SUPABASE_URL` (`https://pweoamcptqpfelpcyxyp.supabase.co`) and `VITE_SUPABASE_PUBLISHABLE_KEY` (the `sb_publishable_…` key from the dashboard, **never** the secret or service role key). The workflow refuses to build without them or with any other key type.
+3. **Pages:** repo Settings → Pages → Source **GitHub Actions**; Custom domain `app.prolog-cycling.com`; tick **Enforce HTTPS** once the certificate is issued (minutes to an hour after DNS resolves). Optionally verify `prolog-cycling.com` under account Settings → Pages so no one else can claim a subdomain.
+4. **Supabase Auth** (dashboard → Authentication → URL Configuration): Site URL `https://app.prolog-cycling.com/`; add it to the redirect URLs. The magic link returns to `window.location.origin` + base, so a missing entry sends staff to the Site URL instead.
+5. Run the workflow (Actions → Pages → Run workflow), open the site and sign in.
 
 ## 2. Add a Rider
 
