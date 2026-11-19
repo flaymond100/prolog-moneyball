@@ -1,0 +1,75 @@
+name: Pages
+
+# Builds apps/web and deploys it to GitHub Pages at https://app.prolog-cycling.com/
+# (TODO 10.1, 10.2). The custom domain is set in the repo's Pages settings; the
+# landing site keeps prolog-cycling.com in its own repo.
+#
+# The client only ever gets the project URL and the publishable key (CLAUDE.md),
+# from repo secrets. Never the service role key.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; a newer push waits rather than cancelling a live deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Without both values the build shows "Not Configured"; never deploy that.
+      - name: Check Supabase settings
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$VITE_SUPABASE_URL" || { echo "::error::Repo secret VITE_SUPABASE_URL is not set"; exit 1; }
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" || { echo "::error::Repo secret VITE_SUPABASE_PUBLISHABLE_KEY is not set"; exit 1; }
+          case "$VITE_SUPABASE_PUBLISHABLE_KEY" in
+            sb_publishable_*) ;;
+            *) echo "::error::VITE_SUPABASE_PUBLISHABLE_KEY must be the publishable key (sb_publishable_…)"; exit 1 ;;
+          esac
+      - run: pnpm --filter @prolog/web build
+        env:
+          # Served from the root of the custom domain.
+          VITE_BASE_PATH: /
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
