@@ -209,9 +209,9 @@ export function SquadPage() {
         <span className="text-xs text-muted-foreground">Saved in this browser only.</span>
       </div>
 
-      <div className="overflow-x-auto rounded-md border">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
         <table className="w-full text-sm">
-          <thead className="bg-card">
+          <thead className="bg-muted">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} className="border-b">
                 {hg.headers.map((header) => {
@@ -230,9 +230,9 @@ export function SquadPage() {
                       }
                       title={header.column.columnDef.meta?.label}
                       className={cn(
-                        'px-3 py-2 font-medium whitespace-nowrap text-muted-foreground',
+                        'px-3 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground',
                         header.column.columnDef.meta?.numeric ? 'text-right' : 'text-left',
-                        pinned && 'sticky left-0 z-10 bg-card',
+                        pinned && 'sticky left-0 z-10 bg-muted',
                       )}
                     >
                       <button
@@ -257,9 +257,9 @@ export function SquadPage() {
                   <td
                     key={cell.id}
                     className={cn(
-                      'px-3 py-2 whitespace-nowrap',
+                      'px-3 py-2.5 whitespace-nowrap',
                       cell.column.columnDef.meta?.numeric && 'text-right',
-                      cell.column.id === 'name' && 'sticky left-0 z-10 bg-background',
+                      cell.column.id === 'name' && 'sticky left-0 z-10 bg-card',
                     )}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -149,7 +149,7 @@ export function ScatterPage() {
   }
 
   const sliderStyle = {
-    fillerColor: 'rgb(226 187 122 / 0.12)',
+    fillerColor: 'rgb(98 80 214 / 0.12)',
     borderColor: t.grid,
     backgroundColor: 'transparent',
     handleStyle: { color: t.muted, borderColor: t.surface },
@@ -262,7 +262,7 @@ export function ScatterPage() {
         </span>
       </div>
 
-      <div className="rounded-md border bg-card p-4">
+      <div className="rounded-xl border bg-card p-5 shadow-card">
         <Chart
           option={option}
           height={520}

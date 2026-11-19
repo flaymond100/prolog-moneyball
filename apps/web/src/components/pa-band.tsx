@@ -22,15 +22,15 @@ export function PaBand({ caPa }: { caPa: CaPa }) {
         className="relative h-2.5 w-48 rounded-full bg-muted"
       >
         <span
-          className="absolute inset-y-0 rounded-full bg-gold/40"
+          className="absolute inset-y-0 rounded-full bg-primary/25"
           style={{ left: position(paP10), width: `calc(${position(paP90)} - ${position(paP10)})` }}
         />
         <span
-          className="absolute -inset-y-0.5 w-0.5 -translate-x-1/2 bg-gold"
+          className="absolute -inset-y-0.5 w-0.5 -translate-x-1/2 bg-primary"
           style={{ left: position(paP50) }}
         />
         <span
-          className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-cream"
+          className="absolute top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-card"
           style={{ left: position(ca) }}
           title={`CA ${formatNumber(ca, 1)}`}
         />

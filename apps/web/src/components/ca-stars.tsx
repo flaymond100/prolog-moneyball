@@ -5,7 +5,7 @@ import { Star, StarHalf } from 'lucide-react'
 export function CaStars({ ca }: { ca: number }) {
   const stars = caStars(ca)
   return (
-    <span role="img" aria-label={`${stars} of 5 stars`} className="inline-flex text-gold">
+    <span role="img" aria-label={`${stars} of 5 stars`} className="inline-flex text-star">
       {Array.from({ length: 5 }, (_, i) => {
         if (stars >= i + 1)
           return <Star key={i} className="size-4 fill-current" aria-hidden="true" />

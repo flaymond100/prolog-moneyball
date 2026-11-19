@@ -27,7 +27,7 @@ export function FilterBuilder({ matched, total }: { matched: number; total: numb
   }
 
   return (
-    <section aria-label="Filter" className="space-y-2 rounded-md border bg-card p-3">
+    <section aria-label="Filter" className="space-y-2 rounded-xl border bg-card p-4 shadow-card">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="font-medium">Filter</span>
         <select
@@ -93,7 +93,7 @@ export function FilterBuilder({ matched, total }: { matched: number; total: numb
             return (
               <li
                 key={`${c.metric}-${String(i)}`}
-                className="inline-flex items-center gap-1 rounded-full border border-gold/50 bg-gold/10 py-0.5 pr-1 pl-2.5 text-xs"
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-secondary text-secondary-foreground py-0.5 pr-1 pl-2.5 text-xs"
               >
                 {text}
                 <button

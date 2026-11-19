@@ -16,7 +16,7 @@ export function ProfileHeader({ rider }: { rider: Rider }) {
   const age = riderAge(rider)
   const trainingAge = riderTrainingAge(rider)
   return (
-    <header className="flex flex-wrap items-start justify-between gap-6 rounded-md border bg-card p-5">
+    <header className="flex flex-wrap items-start justify-between gap-6 rounded-xl border bg-card p-6 shadow-card">
       <div className="space-y-2">
         <h1 id="page-title" className="text-2xl font-semibold">
           {rider.name}

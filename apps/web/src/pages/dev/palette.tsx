@@ -8,10 +8,11 @@ const palettes = [
 ] as const
 
 const swatches = [
-  { name: 'Espresso', className: 'bg-espresso' },
-  { name: 'Deep Blue', className: 'bg-deep-blue' },
-  { name: 'Champagne Gold', className: 'bg-gold' },
-  { name: 'Cream', className: 'bg-cream' },
+  { name: 'Violet (Primary, Rider A)', className: 'bg-primary' },
+  { name: 'Orange (Rider B)', className: 'bg-rider-b' },
+  { name: 'Ink (Text)', className: 'bg-foreground' },
+  { name: 'Lavender (Page)', className: 'bg-background' },
+  { name: 'White (Cards)', className: 'bg-card' },
 ] as const
 
 export function PalettePage() {
@@ -20,7 +21,7 @@ export function PalettePage() {
       <h1 className="text-2xl font-semibold">Palette</h1>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Brand Colours</h2>
+        <h2 className="text-lg font-medium">Theme Colours</h2>
         <ul className="flex flex-wrap gap-4">
           {swatches.map((s) => (
             <li key={s.name} className="flex items-center gap-2 text-sm">

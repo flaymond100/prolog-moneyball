@@ -22,7 +22,7 @@ export function LabTimeline({ rider }: { rider: Rider }) {
           {tests.map((test) => (
             <li key={`${test.date}-${test.method}`} className="relative space-y-1">
               <span
-                className="absolute top-1.5 -left-[1.3rem] size-2 rounded-full bg-gold"
+                className="absolute top-1.5 -left-[1.3rem] size-2 rounded-full bg-primary"
                 aria-hidden="true"
               />
               <p className="flex items-center gap-2 text-sm font-medium">
