@@ -1183,6 +1183,94 @@ export type Database = {
           },
         ]
       }
+      roster_entries: {
+        Row: {
+          athlete_id: string | null
+          base: string | null
+          created_at: string
+          data_quality: Database['public']['Enums']['roster_data_quality'] | null
+          id: string
+          p1m_w: number | null
+          p1m_wkg: number | null
+          p20m_w: number | null
+          p20m_wkg: number | null
+          p5m_w: number | null
+          p5m_wkg: number | null
+          race_score: number | null
+          rider_name: string
+          scouting_notes: string | null
+          season: number
+          staff_notes: string | null
+          team_score: number | null
+          tier: Database['public']['Enums']['roster_tier']
+          total_score: number | null
+          updated_at: string
+          weight_kg: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id?: string | null
+          base?: string | null
+          created_at?: string
+          data_quality?: Database['public']['Enums']['roster_data_quality'] | null
+          id?: string
+          p1m_w?: number | null
+          p1m_wkg?: number | null
+          p20m_w?: number | null
+          p20m_wkg?: number | null
+          p5m_w?: number | null
+          p5m_wkg?: number | null
+          race_score?: number | null
+          rider_name: string
+          scouting_notes?: string | null
+          season: number
+          staff_notes?: string | null
+          team_score?: number | null
+          tier: Database['public']['Enums']['roster_tier']
+          total_score?: never
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          athlete_id?: string | null
+          base?: string | null
+          created_at?: string
+          data_quality?: Database['public']['Enums']['roster_data_quality'] | null
+          id?: string
+          p1m_w?: number | null
+          p1m_wkg?: number | null
+          p20m_w?: number | null
+          p20m_wkg?: number | null
+          p5m_w?: number | null
+          p5m_wkg?: number | null
+          race_score?: number | null
+          rider_name?: string
+          scouting_notes?: string | null
+          season?: number
+          staff_notes?: string | null
+          team_score?: number | null
+          tier?: Database['public']['Enums']['roster_tier']
+          total_score?: never
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'roster_entries_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'roster_entries_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
+        ]
+      }
       saved_filters: {
         Row: {
           conditions: NonNullable<Json>
@@ -1455,6 +1543,91 @@ export type Database = {
         ComputedFields: never
         Relationships: []
       }
+      v_roster: {
+        Row: {
+          athlete_id: string | null
+          base: string | null
+          data_quality: Database['public']['Enums']['roster_data_quality'] | null
+          id: string | null
+          p1m_w: number | null
+          p1m_wkg: number | null
+          p20m_w: number | null
+          p20m_wkg: number | null
+          p5m_w: number | null
+          p5m_wkg: number | null
+          race_score: number | null
+          rider_name: string | null
+          scouting_notes: string | null
+          season: number | null
+          staff_notes: string | null
+          team_score: number | null
+          tier: Database['public']['Enums']['roster_tier'] | null
+          total_score: number | null
+          updated_at: string | null
+          weight_kg: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          athlete_id?: string | null
+          base?: string | null
+          data_quality?: Database['public']['Enums']['roster_data_quality'] | null
+          id?: string | null
+          p1m_w?: number | null
+          p1m_wkg?: number | null
+          p20m_w?: number | null
+          p20m_wkg?: number | null
+          p5m_w?: number | null
+          p5m_wkg?: number | null
+          race_score?: number | null
+          rider_name?: string | null
+          scouting_notes?: string | null
+          season?: number | null
+          staff_notes?: never
+          team_score?: number | null
+          tier?: Database['public']['Enums']['roster_tier'] | null
+          total_score?: number | null
+          updated_at?: string | null
+          weight_kg?: never
+        }
+        Update: {
+          athlete_id?: string | null
+          base?: string | null
+          data_quality?: Database['public']['Enums']['roster_data_quality'] | null
+          id?: string | null
+          p1m_w?: number | null
+          p1m_wkg?: number | null
+          p20m_w?: number | null
+          p20m_wkg?: number | null
+          p5m_w?: number | null
+          p5m_wkg?: number | null
+          race_score?: number | null
+          rider_name?: string | null
+          scouting_notes?: string | null
+          season?: number | null
+          staff_notes?: never
+          team_score?: number | null
+          tier?: Database['public']['Enums']['roster_tier'] | null
+          total_score?: number | null
+          updated_at?: string | null
+          weight_kg?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'roster_entries_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'roster_entries_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
+        ]
+      }
       v_sync_health: {
         Row: {
           athlete_id: string | null
@@ -1588,6 +1761,8 @@ export type Database = {
       rider_cohort: 'squad' | 'prospect' | 'alumni'
       rider_data_source: 'intervals' | 'manual_upload'
       rider_type: 'sprinter' | 'puncheur' | 'climber' | 'rouleur_tt' | 'all_rounder'
+      roster_data_quality: 'modelled' | 'sub_maximal' | 'garmin_estimate'
+      roster_tier: 'ambassador' | 'core' | 'development'
       staff_role: 'coach' | 'analyst' | 'medical' | 'viewer'
     }
     CompositeTypes: {
@@ -1710,6 +1885,8 @@ export const Constants = {
       rider_cohort: ['squad', 'prospect', 'alumni'],
       rider_data_source: ['intervals', 'manual_upload'],
       rider_type: ['sprinter', 'puncheur', 'climber', 'rouleur_tt', 'all_rounder'],
+      roster_data_quality: ['modelled', 'sub_maximal', 'garmin_estimate'],
+      roster_tier: ['ambassador', 'core', 'development'],
       staff_role: ['coach', 'analyst', 'medical', 'viewer'],
     },
   },

@@ -12,14 +12,23 @@ describe('AppShell', () => {
     expect(await screen.findByRole('heading', { name: 'Squad', level: 1 })).toBeInTheDocument()
   })
 
-  it('lists the six views in KB order, then Live Data', async () => {
+  it('lists the six views in KB order, then Roster 2027 and Live Data', async () => {
     renderAt('/squad')
     const nav = await screen.findByRole('navigation', { name: 'Main' })
     expect(
       within(nav)
         .getAllByRole('link')
         .map((l) => l.textContent),
-    ).toEqual(['Squad', 'Form', 'Compare', 'Scatter', 'Tests', 'Settings', 'Live Data'])
+    ).toEqual([
+      'Squad',
+      'Form',
+      'Compare',
+      'Scatter',
+      'Tests',
+      'Settings',
+      'Roster 2027',
+      'Live Data',
+    ])
   })
 
   it('marks the current view in the navigation', async () => {
