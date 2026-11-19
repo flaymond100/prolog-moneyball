@@ -99,13 +99,13 @@ function radarOption(
     line(a.name, ratings(a), t.riderA, 'solid', true),
     line(b.name, ratings(b), t.riderB, 'dashed', true),
     line('Squad Mean', squadSummary(squad, mean), t.reference, 'dotted'),
-    line('Squad Best', squadSummary(squad, best), t.series[0], 'dotted'),
+    line('Squad Best', squadSummary(squad, best), t.series[2], 'dotted'),
     ...(showPro
       ? [
           line(
             'Pro Mean',
             RADAR_ATTRIBUTES.map(() => PRO_MEAN_RATING),
-            t.series[1],
+            t.text,
             'dashed',
           ),
         ]
@@ -293,8 +293,8 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
               <td
                 className={cn(
                   'py-1.5 text-right font-medium',
-                  diff !== null && diff > 0 && 'text-gold',
-                  diff !== null && diff < 0 && 'text-cream',
+                  diff !== null && diff > 0 && 'font-semibold text-rider-a-ink',
+                  diff !== null && diff < 0 && 'font-semibold text-rider-b-ink',
                 )}
               >
                 {diff === 0
@@ -383,7 +383,7 @@ function DurabilityBubbles({ a, b }: { a: Rider; b: Rider }) {
             }}
             className={cn(
               'rounded-sm border px-2 py-0.5 text-xs',
-              effort === key ? 'border-gold text-gold' : 'text-muted-foreground',
+              effort === key ? 'border-primary text-primary' : 'text-muted-foreground',
             )}
           >
             {label}
@@ -455,7 +455,7 @@ export function ComparePage() {
                 onChange={(e) => {
                   setShowPro(e.target.checked)
                 }}
-                className="accent-gold"
+                className="accent-primary"
               />
               Show Pro Mean
             </label>

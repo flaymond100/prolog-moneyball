@@ -21,9 +21,9 @@ export function Panel({
   return (
     <section
       aria-labelledby={id}
-      className={`space-y-3 rounded-md border bg-card p-4 ${className ?? ''}`}
+      className={`space-y-3 rounded-xl border bg-card p-5 shadow-card ${className ?? ''}`}
     >
-      <h2 id={id} className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+      <h2 id={id} className="text-base font-semibold text-foreground">
         {title}
       </h2>
       {children}
@@ -244,13 +244,13 @@ export function TerrainMap({ rider }: { rider: Rider }) {
             <li
               key={type}
               className="flex flex-col items-center justify-end gap-1 rounded-sm border p-2 text-center"
-              style={{ backgroundColor: `rgb(226 187 122 / ${Math.max(0.05, p * 0.85)})` }}
+              style={{ backgroundColor: `rgb(98 80 214 / ${Math.max(0.04, p * 0.5)})` }}
             >
-              <span className={`text-sm font-semibold ${p > 0.5 ? 'text-espresso' : ''}`}>
+              <span className={`text-sm font-semibold ${p > 0.5 ? 'text-foreground' : ''}`}>
                 {formatPercent(p)}
               </span>
               <span
-                className={`text-xs leading-tight ${p > 0.5 ? 'text-espresso' : 'text-muted-foreground'}`}
+                className={`text-xs leading-tight ${p > 0.5 ? 'text-foreground' : 'text-muted-foreground'}`}
               >
                 {RIDER_TYPE_TERRAIN[type]}
               </span>

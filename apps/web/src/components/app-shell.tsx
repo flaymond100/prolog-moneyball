@@ -47,18 +47,32 @@ export function AppShell() {
     <div className="flex min-h-screen">
       <nav
         aria-label="Main"
-        className="flex w-52 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+        className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
-        <div className="px-4 py-4 text-sm font-semibold tracking-wide">
-          PROLOG <span className="text-sidebar-primary">Moneyball</span>
+        <div className="flex items-center gap-2.5 px-5 py-5">
+          <span
+            aria-hidden="true"
+            className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
+          >
+            P
+          </span>
+          <span className="text-sm font-semibold whitespace-nowrap text-foreground">
+            PROLOG <span className="text-sidebar-primary">Moneyball</span>
+          </span>
         </div>
-        <ul className="space-y-0.5 px-2">
+        <p className="px-5 pt-2 pb-2 text-[0.6875rem] font-medium tracking-wider text-muted-foreground uppercase">
+          Views
+        </p>
+        <ul className="space-y-1 px-3">
           {NAV.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <Link
                 to={to}
-                className="flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-sm hover:bg-sidebar-accent"
-                activeProps={{ className: 'bg-sidebar-accent text-sidebar-primary' }}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                activeProps={{
+                  className:
+                    'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground',
+                }}
               >
                 <Icon className="size-4" aria-hidden="true" />
                 {label}
@@ -69,7 +83,7 @@ export function AppShell() {
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-11 items-center justify-between border-b px-6 text-sm">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-card/90 px-6 text-sm backdrop-blur">
           <span className="text-muted-foreground">
             As of {formatDate(supabase ? new Date().toISOString().slice(0, 10) : MOCK_AS_OF)}
           </span>
@@ -113,7 +127,7 @@ export function AppShell() {
           </div>
         </header>
         <SyncBanner />
-        <main aria-label="PROLOG Moneyball" className="flex-1 p-6">
+        <main aria-label="PROLOG Moneyball" className="flex-1 px-6 py-7">
           <Outlet />
         </main>
       </div>

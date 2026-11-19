@@ -12,14 +12,14 @@ export interface ChartTokens {
 }
 
 const FALLBACK: ChartTokens = {
-  series: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181'],
-  riderA: '#e2bb7a',
-  riderB: '#f6f1e7',
-  reference: '#b8ad9a',
-  grid: '#3a2c20',
-  text: '#f6f1e7',
-  muted: '#b8ad9a',
-  surface: '#2e2218',
+  series: ['#6250d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'],
+  riderA: '#6250d6',
+  riderB: '#eb6834',
+  reference: '#8a889c',
+  grid: '#ecebf3',
+  text: '#1d1b30',
+  muted: '#5f5d75',
+  surface: '#ffffff',
 }
 
 /** Theme colours from the CSS tokens in index.css, so charts follow the design system. */
@@ -35,11 +35,11 @@ export function useChartTokens(): ChartTokens {
         get('--chart-4', FALLBACK.series[3]),
         get('--chart-5', FALLBACK.series[4]),
       ],
-      riderA: get('--gold', FALLBACK.riderA),
-      riderB: get('--cream', FALLBACK.riderB),
+      riderA: get('--rider-a', FALLBACK.riderA),
+      riderB: get('--rider-b', FALLBACK.riderB),
       reference: get('--chart-reference', FALLBACK.reference),
       grid: get('--chart-grid', FALLBACK.grid),
-      text: get('--cream', FALLBACK.text),
+      text: get('--foreground', FALLBACK.text),
       muted: get('--muted-foreground', FALLBACK.muted),
       surface: get('--card', FALLBACK.surface),
     }
@@ -51,7 +51,10 @@ export function tooltipStyle(t: ChartTokens) {
   return {
     backgroundColor: t.surface,
     borderColor: t.grid,
+    borderWidth: 1,
+    padding: [8, 12],
     textStyle: { color: t.text, fontSize: 12 },
+    extraCssText: 'border-radius: 10px; box-shadow: 0 4px 16px rgb(29 27 48 / 0.10);',
   }
 }
 

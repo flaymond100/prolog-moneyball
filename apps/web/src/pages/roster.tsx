@@ -139,7 +139,9 @@ function columnsFor(showWeight: boolean): Column[] {
       sortValue: (r) => (r.dataQuality ? DATA_QUALITY_LABELS[r.dataQuality] : null),
       cell: (r) =>
         r.dataQuality ? (
-          <Badge variant="outline">{DATA_QUALITY_LABELS[r.dataQuality]}</Badge>
+          <Badge variant="outline" className="normal-nums">
+            {DATA_QUALITY_LABELS[r.dataQuality]}
+          </Badge>
         ) : (
           <span className="text-muted-foreground">–</span>
         ),
@@ -175,7 +177,7 @@ export function RosterPage() {
   const { data: riders = [], error, isPending } = useRoster()
   const [tier, setTier] = useState<TierFilter>('all')
   const [sort, setSort] = useState<Sort | null>(null)
-  const [showNotes, setShowNotes] = useState(true)
+  const [showNotes, setShowNotes] = useState(false)
 
   const showWeight = role === 'coach' || role === 'medical'
   const columns = useMemo(() => columnsFor(showWeight), [showWeight])
@@ -290,9 +292,9 @@ export function RosterPage() {
             </label>
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
+          <div className="overflow-x-auto rounded-xl border bg-card shadow-card">
             <table className="w-full text-sm tabular-nums">
-              <thead className="bg-card">
+              <thead className="bg-muted">
                 <tr className="border-b">
                   {columns.map((c) => {
                     const sorted = sort?.id === c.id ? (sort.desc ? 'desc' : 'asc') : null
@@ -309,9 +311,9 @@ export function RosterPage() {
                               : undefined
                         }
                         className={cn(
-                          'px-3 py-2 font-medium whitespace-nowrap text-muted-foreground',
+                          'px-2.5 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground',
                           c.numeric ? 'text-right' : 'text-left',
-                          c.id === 'name' && 'sticky left-0 z-10 bg-card',
+                          c.id === 'name' && 'sticky left-0 z-10 bg-muted',
                         )}
                       >
                         <button
@@ -340,9 +342,9 @@ export function RosterPage() {
                           <td
                             key={c.id}
                             className={cn(
-                              'px-3 py-2 whitespace-nowrap',
+                              'px-2.5 py-2.5 whitespace-nowrap',
                               c.numeric && 'text-right',
-                              c.id === 'name' && 'sticky left-0 z-10 bg-background',
+                              c.id === 'name' && 'sticky left-0 z-10 bg-card',
                             )}
                           >
                             {c.cell(r)}
@@ -376,15 +378,15 @@ export function RosterPage() {
                 )}
               </tbody>
               {rows.length > 1 && (
-                <tfoot className="bg-card text-muted-foreground">
+                <tfoot className="bg-muted font-medium text-muted-foreground">
                   <tr className="border-t">
                     {columns.map((c) => (
                       <td
                         key={c.id}
                         className={cn(
-                          'px-3 py-2 whitespace-nowrap',
+                          'px-2.5 py-2.5 whitespace-nowrap',
                           c.numeric && 'text-right',
-                          c.id === 'name' && 'sticky left-0 z-10 bg-card font-medium',
+                          c.id === 'name' && 'sticky left-0 z-10 bg-muted font-medium',
                         )}
                       >
                         {c.id === 'name'
@@ -425,9 +427,9 @@ export function RosterPage() {
 
 function Stat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-md border bg-card px-3 py-2">
+    <div className="rounded-xl border bg-card px-4 py-3 shadow-card">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xl font-semibold tabular-nums">{value}</dd>
+      <dd className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{value}</dd>
       <dd className="text-xs text-muted-foreground">{detail}</dd>
     </div>
   )
@@ -435,7 +437,7 @@ function Stat({ label, value, detail }: { label: string; value: string; detail: 
 
 function Note({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="rounded-sm bg-muted/40 px-2.5 py-1.5 whitespace-pre-line">
+    <div className="rounded-lg bg-muted px-3 py-2 whitespace-pre-line normal-nums">
       <span className="font-medium text-foreground">{label}: </span>
       <span className="text-muted-foreground">{children}</span>
     </div>

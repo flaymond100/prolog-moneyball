@@ -252,7 +252,7 @@ export function BenchmarkSection({ role }: { role: StaffRole }) {
         </Labelled>
         <div className="space-y-1">
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input type="checkbox" disabled className="accent-gold" />
+            <input type="checkbox" disabled className="accent-primary" />
             Squad-Relative Mode
           </label>
           <p className="text-xs text-muted-foreground">

@@ -57,7 +57,7 @@ function LnRmssdBand({ rider }: { rider: Rider }) {
         itemStyle: { color: t.series[0] },
         markArea: {
           silent: true,
-          itemStyle: { color: 'rgb(184 173 154 / 0.14)' },
+          itemStyle: { color: 'rgb(98 80 214 / 0.10)' },
           data: [[{ yAxis: lower }, { yAxis: upper }]],
         },
         markLine: {
@@ -90,7 +90,7 @@ function FormCard({ rider }: { rider: Rider }) {
   return (
     <article
       aria-labelledby={`form-${rider.id}`}
-      className="space-y-3 rounded-md border bg-card p-4"
+      className="space-y-3 rounded-xl border bg-card p-5 shadow-card"
     >
       <header className="flex items-start justify-between gap-3">
         <div>

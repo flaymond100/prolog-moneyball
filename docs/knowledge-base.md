@@ -35,7 +35,7 @@ The app is a static Vite + React SPA on GitHub Pages, with all data, auth and jo
 | Layer | Choice |
 | --- | --- |
 | Front end | Vite, React 18, TypeScript (strict, `noUncheckedIndexedAccess`), pnpm workspaces |
-| UI | Tailwind, shadcn/ui, dark mode default, tabular numerals |
+| UI | Tailwind, shadcn/ui, light theme, Inter, tabular numerals in tables and figures |
 | Data fetching | TanStack Query; tables with TanStack Table; routing with TanStack Router (hash history) |
 | Charts | ECharts via `echarts-for-react` (radar, scatter with mark lines, heatmaps, fan charts) |
 | Validation | zod for forms and API responses |
@@ -418,7 +418,7 @@ The app copies the information architecture of the FM scouting tool — profile,
 | — | **Tests** | Entry forms, per-rider timeline, slope charts, delta table, VO2max × VLamax quadrant |
 | — | **Settings** | Rider profiles, benchmark set, CA weights, PA priors (coach only), consents (medical only), typical error per lab metric, sync health |
 
-**Look and feel:** dark theme, compact density, tabular numerals, PROLOG brand palette — Espresso #241A12 and Deep Blue #00284D for surfaces, Champagne Gold #E2BB7A for rider A and accents, Cream #F6F1E7 for rider B and text; rating colours from section 6.
+**Look and feel:** light theme for readability (agreed with Kosta, 19 November 2026; replaces the dark Espresso / Deep Blue / Champagne Gold theme): white cards on a soft lavender page, near-black ink text, Inter, one violet accent (#6250D6) for actions, selection and rider A, orange (#EB6834) for rider B; text keeps at least 5:1 contrast; chart series from the validated dataviz light palette (tokens in `apps/web/src/index.css`); rating colours from section 6.
 
 ## 13. Glossary and references
 
