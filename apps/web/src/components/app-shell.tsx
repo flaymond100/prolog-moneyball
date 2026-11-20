@@ -1,4 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router'
+import { useState } from 'react'
 import {
   Activity,
   ChartScatter,
@@ -6,6 +7,8 @@ import {
   Database,
   FlaskConical,
   GitCompareArrows,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   Users,
   type LucideIcon,
@@ -18,6 +21,7 @@ import { MOCK_AS_OF } from '@/data/mock/riders.ts'
 import { supabase } from '@/lib/supabase.ts'
 import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store.ts'
 import { formatDate } from '@/lib/format.ts'
+import { cn } from '@/lib/utils.ts'
 
 interface NavItem {
   to: '/squad' | '/form' | '/compare' | '/scatter' | '/tests' | '/settings' | '/roster' | '/live'
@@ -39,47 +43,120 @@ const NAV: readonly NavItem[] = [
   { to: '/live', label: 'Live Data', icon: Database },
 ]
 
+// The menu's collapsed state is a per-browser convenience; storage may be unavailable.
+const COLLAPSED_KEY = 'prolog-moneyball-sidebar-collapsed'
+
+function loadCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function storeCollapsed(collapsed: boolean) {
+  try {
+    localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0')
+  } catch {
+    // Not remembered; the menu still works for this visit.
+  }
+}
+
 export function AppShell() {
   const role = useRole()
   const { state, signOut } = useAuth()
   const mock = state.status === 'staff' && state.mock
+  const [collapsed, setCollapsed] = useState(loadCollapsed)
+
+  function toggle() {
+    setCollapsed((c) => {
+      storeCollapsed(!c)
+      return !c
+    })
+  }
+
   return (
     <div className="flex min-h-screen">
       <nav
+        id="main-nav"
         aria-label="Main"
-        className="sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+        className={cn(
+          'sticky top-0 flex h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200',
+          collapsed ? 'w-16' : 'w-56',
+        )}
       >
-        <div className="flex items-center gap-2.5 px-5 py-5">
+        <div
+          className={cn('flex items-center gap-2.5 py-5', collapsed ? 'justify-center' : 'px-5')}
+        >
           <span
             aria-hidden="true"
-            className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
           >
             P
           </span>
-          <span className="text-sm font-semibold whitespace-nowrap text-foreground">
+          <span
+            className={cn(
+              'text-sm font-semibold whitespace-nowrap text-foreground',
+              collapsed && 'sr-only',
+            )}
+          >
             PROLOG <span className="text-sidebar-primary">Moneyball</span>
           </span>
         </div>
-        <p className="px-5 pt-2 pb-2 text-[0.6875rem] font-medium tracking-wider text-muted-foreground uppercase">
+        <p
+          className={cn(
+            'px-5 pt-2 pb-2 text-[0.6875rem] font-medium tracking-wider text-muted-foreground uppercase',
+            collapsed && 'sr-only',
+          )}
+        >
           Views
         </p>
-        <ul className="space-y-1 px-3">
+        <ul className={cn('space-y-1', collapsed ? 'px-2' : 'px-3')}>
           {NAV.map(({ to, label, icon: Icon }) => (
             <li key={to}>
               <Link
                 to={to}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                // Collapsed: icon only, the label stays for screen readers and as a tooltip.
+                title={collapsed ? label : undefined}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  collapsed ? 'justify-center px-0' : 'px-3',
+                )}
                 activeProps={{
                   className:
                     'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground',
                 }}
               >
-                <Icon className="size-4" aria-hidden="true" />
-                {label}
+                <Icon className="size-4 shrink-0" aria-hidden="true" />
+                <span className={cn('whitespace-nowrap', collapsed && 'sr-only')}>{label}</span>
               </Link>
             </li>
           ))}
         </ul>
+        <div
+          className={cn('mt-auto border-t border-sidebar-border py-3', collapsed ? 'px-2' : 'px-3')}
+        >
+          <button
+            type="button"
+            onClick={toggle}
+            aria-controls="main-nav"
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Expand Menu' : undefined}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              collapsed ? 'justify-center px-0' : 'px-3',
+            )}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="size-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <PanelLeftClose className="size-4 shrink-0" aria-hidden="true" />
+            )}
+            <span className={cn('whitespace-nowrap', collapsed && 'sr-only')}>
+              {collapsed ? 'Expand Menu' : 'Collapse Menu'}
+            </span>
+          </button>
+        </div>
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
