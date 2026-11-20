@@ -194,3 +194,27 @@ What the reply tells you:
 - `rides` and `efforts`: what was stored. A ride that already has efforts is not fetched again.
 - `skipped`: rides left out because the rider has no body weight, the ride has no power stream, the stream is not one sample per second, or the ride never reaches 10 kJ/kg.
 - `curve_check.max_diff_pct`: how far the stream's own best 1, 5 and 20 min power is from the ride's stored intervals.icu curve. It should be close to 0; a large value means the stream is not what the job assumes.
+
+## 11. Add a Staff Member
+
+Public sign-ups are off on the live project (agreed with Kosta, 20 November 2026), so nobody can create their own account; the sign-in form only sends links to existing accounts. Adding someone is a data edit: the coach asks, then:
+
+1. Dashboard → Authentication → Users → **Add user** → **Create new user**, enter their email, tick **Auto Confirm User**, leave the password empty. (Or the admin API, `POST /auth/v1/admin/users` with `{"email": "…", "email_confirm": true}` and the service role key, never stored or printed.)
+2. Give them a role in the SQL editor:
+   ```sql
+   insert into public.staff (user_id, role, display_name)
+   select id, 'viewer', '<Name>' from auth.users where email = '<their email>';
+   ```
+   Roles: `coach` (everything except medical data, writes settings and tests), `analyst` (adds wellness and lab tests to performance), `medical` (kg, wellness, consented cycle data and medical markers), `viewer` (performance and ratings only). New staff start as `viewer` unless the coach says otherwise.
+3. They request a link at `https://app.prolog-cycling.com/`. An account without a `staff` row signs in but sees "no access" and no data.
+
+To remove someone, delete their user in Authentication → Users; the `staff` row goes with it.
+
+## 12. Sign-In Email (Resend)
+
+Magic links are sent through Resend (set up 20 November 2026), not the Supabase default sender, which allows only 2 emails an hour and only to organisation members.
+
+- **Resend:** domain `prolog-cycling.com`, region Ireland (eu-west-1), API key `supabase-auth` with sending access to that domain only. The key lives only in Supabase's SMTP settings; to rotate it, create a new key in Resend, paste it there, then delete the old one.
+- **DNS (Namecheap):** TXT `resend._domainkey`, CNAME `send` and CNAME `rsend` (values from the Resend domain page). The `@` MX and SPF records belong to Namecheap Private Email (the `@prolog-cycling.com` mailboxes) and stay as they are; `_dmarc` is `p=quarantine`, which Resend passes through DKIM.
+- **Supabase** (Authentication → Emails → SMTP Settings): host `smtp.resend.com`, port 465, user `resend`, sender `no-reply@prolog-cycling.com`. Rate limits: 30 emails an hour, one link per address per minute. The magic-link subject is "Your PROLOG Moneyball Sign-In Link"; the template is edited in Authentication → Emails → Templates (the free plan only allows that while custom SMTP is on).
+- **A link does not arrive:** check spam first, then Resend → Emails for the message and its status (delivered, bounced, or missing; missing means Supabase could not reach Resend, usually a wrong key). `auth.users.recovery_sent_at` shows when Supabase last sent a link to an address.
