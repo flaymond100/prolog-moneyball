@@ -175,7 +175,10 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-enable_signup = true
+# Off, as on the live project (agreed with Kosta, 20 November 2026): staff accounts are
+# created by an admin (runbook section 11); magic links for existing accounts still work.
+# Keep [auth.email] enable_signup on: it switches the email provider itself.
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
