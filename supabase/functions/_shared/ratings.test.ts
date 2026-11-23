@@ -204,7 +204,8 @@ describe('rateRiders', () => {
       ],
     })
     // a: mean 93 → between 90 → 12 and 95 → 15.
-    expect(find(rows, 'a', 'durability')).toMatchObject({ value: 93, confidence: 'high' })
+    // Low confidence until a better durability measure exists (KB §6, 23 November 2026).
+    expect(find(rows, 'a', 'durability')).toMatchObject({ value: 93, confidence: 'low' })
     expect(find(rows, 'a', 'durability').rating).toBeCloseTo(13.8, 10)
     expect(find(rows, 'a', 'durability').squad_rating).toBe(20)
     // b: mean 90 → 12.

@@ -208,6 +208,8 @@ Rouleur absolute 20/60 min W uses squad-relative percentiles until a watt-based 
 
 **Confidence:** a power attribute is *high* confidence when at least 3 different days in the 84-day window reach ≥95% of that window's best for the duration; otherwise *low*. Low-confidence attributes render hatched and count at 50% weight in CA.
 
+Durability is always *low* confidence for now (agreed with Kosta, 23 November 2026). It is measured from what a rider did late in her rides, not what she could do: training rides rarely end in a maximal effort, so retained % tends to understate durability, and at full weight it would carry 25% of CA. Kosta is rethinking how durability is measured and shown (open question in TODO).
+
 **Rules**
 
 - Never mix benchmark sets on one scale; each rating row stores its `benchmark_set_id`.
