@@ -4,6 +4,8 @@ export interface ChartTokens {
   series: [string, string, string, string, string]
   riderA: string
   riderB: string
+  riderC: string
+  riderD: string
   reference: string
   grid: string
   text: string
@@ -15,6 +17,8 @@ const FALLBACK: ChartTokens = {
   series: ['#6250d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4'],
   riderA: '#6250d6',
   riderB: '#eb6834',
+  riderC: '#1baf7a',
+  riderD: '#eda100',
   reference: '#8a889c',
   grid: '#ecebf3',
   text: '#1d1b30',
@@ -37,6 +41,8 @@ export function useChartTokens(): ChartTokens {
       ],
       riderA: get('--rider-a', FALLBACK.riderA),
       riderB: get('--rider-b', FALLBACK.riderB),
+      riderC: get('--rider-c', FALLBACK.riderC),
+      riderD: get('--rider-d', FALLBACK.riderD),
       reference: get('--chart-reference', FALLBACK.reference),
       grid: get('--chart-grid', FALLBACK.grid),
       text: get('--foreground', FALLBACK.text),

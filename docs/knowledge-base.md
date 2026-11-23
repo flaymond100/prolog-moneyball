@@ -429,7 +429,7 @@ The app copies the information architecture of the FM scouting tool — profile,
 | FM concept | Cycling view | Must have |
 | --- | --- | --- |
 | Player profile | **Rider profile** | Header (name, age, training age, type badge, CA stars, PA band); three attribute panels (Power, Durability, Physiology) with 1–20 chips and 28-day arrows; Training and Readiness strips; terrain position map (flat sprint, rolling, punchy finish, long climb, TT) shaded by type probability; power-duration curve (season, 84 d, 42 d) with benchmark overlay; durability funnel; lab test timeline; notes |
-| Head-to-head modal | **Compare** | Two rider pickers; radar of A vs B vs squad mean vs squad best (optional pro mean); attribute difference table; durability bubbles (fresh → 10 → 20 → 30 kJ/kg); selection encoded in URL; the same W/kg or W switch (in W, power rows compare watts) |
+| Head-to-head modal | **Compare** | Two to four rider pickers (A–D); radar of the six power durations (durability and VO2max stay in the table), with squad mean, squad best and pro mean each off until switched on (agreed with Kosta, 23 November 2026); attribute table with a Difference column for two riders, the best rider per row highlighted for three or four; durability bubbles (fresh → 10 → 20 → 30 kJ/kg); selection encoded in URL; the same W/kg or W switch (in W, power rows compare watts) |
 | Advanced search | **Filter builder** | AND conditions (metric, operator, value) as chips; saved filters; reused by table and scatter |
 | Scatter plot | **Scatter explorer** | Any two metrics on X/Y; min/max sliders; squad-mean quadrant lines; point size = CTL, colour = rider type; tooltip; click opens the profile |
 | Stats table | **Squad table** | Column-group tabs (General, Power, Durability, Physiology, Training, Readiness); heatmap cells by rating or percentile; sort; pinned name column; min-data filter (rides in 84 days) instead of min minutes; column chooser; saved layouts; CSV export of visible columns; W/kg or W switch for power values (shown, sorted and exported; ratings stay on W/kg; agreed with Kosta, 23 November 2026) |
@@ -437,7 +437,7 @@ The app copies the information architecture of the FM scouting tool — profile,
 | — | **Tests** | Entry forms, per-rider timeline, slope charts, delta table, VO2max × VLamax quadrant |
 | — | **Settings** | Rider profiles, benchmark set, CA weights, PA priors (coach only), consents (medical only), typical error per lab metric, sync health |
 
-**Look and feel:** light theme for readability (agreed with Kosta, 19 November 2026; replaces the dark Espresso / Deep Blue / Champagne Gold theme): white cards on a soft lavender page, near-black ink text, Inter, one violet accent (#6250D6) for actions, selection and rider A, orange (#EB6834) for rider B; text keeps at least 5:1 contrast; chart series from the validated dataviz light palette (tokens in `apps/web/src/index.css`); rating colours from section 6.
+**Look and feel:** light theme for readability (agreed with Kosta, 19 November 2026; replaces the dark Espresso / Deep Blue / Champagne Gold theme): white cards on a soft lavender page, near-black ink text, Inter, one violet accent (#6250D6) for actions, selection and rider A, orange (#EB6834) for rider B, green (#1BAF7A) for rider C and yellow (#EDA100) for rider D in Compare (with legends, as yellow is below 3:1 on white); text keeps at least 5:1 contrast; chart series from the validated dataviz light palette (tokens in `apps/web/src/index.css`); rating colours from section 6.
 
 ## 13. Glossary and references
 
