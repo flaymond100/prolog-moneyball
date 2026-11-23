@@ -178,8 +178,10 @@ export function rateRiders(input: {
   for (const [athleteId, values] of retained) {
     const value = mean(values)
     if (value === null) continue
-    // KB §6 lowers confidence by its days-near-best rule for the power bests only.
-    add({ athlete_id: athleteId, attribute: 'durability', value, confidence: 'high', watts: null })
+    // Always low for now (agreed with Kosta, 23 November 2026): training rides
+    // rarely end in a maximal effort, so retained % tends to understate durability.
+    // Low counts at 50% in CA and renders hatched (KB §6).
+    add({ athlete_id: athleteId, attribute: 'durability', value, confidence: 'low', watts: null })
   }
   for (const row of input.vo2max) {
     add({
