@@ -3,6 +3,9 @@
 -- Per-table behaviour lives in each feature's test file; this file also covers
 -- the paths those files leave out.
 begin;
+-- Start from an empty squad: the synthetic seed (supabase/seed.sql) is rolled back with the test.
+truncate public.athletes, public.sync_runs, public.edit_history cascade;
+delete from auth.users where email in ('coach@example.com', 'viewer@example.com');
 create extension if not exists pgtap with schema extensions;
 
 select plan(60);

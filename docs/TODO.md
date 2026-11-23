@@ -126,7 +126,7 @@ Riders are employees; the legal basis rules are in KB §11. The agent drafts doc
 
 ## Phase 9 – Quality and performance
 
-- [ ] **9.1 Synthetic seed data.** `supabase/seed.sql` with 12 fictional riders aged 18–32, FTP around 4.1 W/kg, mixed types, 6 months of activities, wellness and two INSCYD tests each. AC: every view renders meaningfully on seed data alone. *Do this early, before Phase 6.*
+- [x] **9.1 Synthetic seed data.** `supabase/seed.sql` with 12 fictional riders aged 18–32, FTP around 4.1 W/kg, mixed types, 6 months of activities, wellness and two INSCYD tests each. AC: every view renders meaningfully on seed data alone. *Do this early, before Phase 6.* *Status (23 November 2026): 12 fictional riders (FTP mean 4.0 W/kg, CTL 67–86), generated deterministically in SQL relative to the reset day: rides with power curves, power-curve windows, training-load wellness (no health fields, as on live), durability efforts, two INSCYD tests, anthropometrics, planned 2027 races and workouts, Roster 2027 rows, a sync log and two local logins. `pnpm seed:derive` runs the real ratings and CA/PA jobs over it (runbook section 13); the model types them as 2 sprinters, 4 puncheurs, 1 climber, 1 Rouleur/TT and 4 all-rounders, CA 9.5–14.7. Squad, Form, Compare, Scatter, Tests, Roster, Live Data and the rider profile render on it without errors. Still empty, as the views do not read them yet (4.3, 5.x): the durability funnel and chart (data seeded, not read), eFTP, readiness and compliance. pgTAP tests now clear the seeded tables in their own transaction, so CI runs them with the seed loaded.*
 
 ## Phase 10 – Deployment (GitHub Pages + Supabase)
 

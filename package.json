@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @prolog/web dev",
+    "dev:local": "set -a && eval \"$(supabase status -o env 2>/dev/null </dev/null)\" && set +a && VITE_SUPABASE_URL=\"$API_URL\" VITE_SUPABASE_PUBLISHABLE_KEY=\"$PUBLISHABLE_KEY\" pnpm --filter @prolog/web dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint . --max-warnings 0",
@@ -16,7 +17,9 @@
     "prepare": "husky",
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter @prolog/web test:e2e",
-    "gen:types": "supabase gen types typescript --local --schema public > packages/types/src/db.ts && prettier --write packages/types/src/db.ts"
+    "gen:types": "supabase gen types typescript --local --schema public > packages/types/src/db.ts && prettier --write packages/types/src/db.ts",
+    "db:seed": "supabase db reset --local </dev/null && pnpm seed:derive",
+    "seed:derive": "set -a && eval \"$(supabase status -o env 2>/dev/null </dev/null)\" && set +a && node --experimental-strip-types --no-warnings=ExperimentalWarning supabase/functions/scripts/derive-seed.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
