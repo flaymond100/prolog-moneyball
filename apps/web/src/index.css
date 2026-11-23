@@ -50,6 +50,9 @@
   --rider-b: #eb6834;
   --rider-a-ink: var(--violet-strong);
   --rider-b-ink: #b4471a;
+  /* Riders C and D (Compare, up to four riders): the next hues of the chart palette. */
+  --rider-c: #1baf7a;
+  --rider-d: #eda100;
 
   /* CA stars: decorative, the label carries the value. */
   --star: #eda100;
@@ -124,6 +127,8 @@
   --color-rider-b: var(--rider-b);
   --color-rider-a-ink: var(--rider-a-ink);
   --color-rider-b-ink: var(--rider-b-ink);
+  --color-rider-c: var(--rider-c);
+  --color-rider-d: var(--rider-d);
   --color-star: var(--star);
 
   --color-rating-band-1: var(--rating-band-1);

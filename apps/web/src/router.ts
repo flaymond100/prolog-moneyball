@@ -59,6 +59,8 @@ const squadRoute = createRoute({
 interface CompareSearch {
   a?: string
   b?: string
+  c?: string
+  d?: string
 }
 
 // The selection lives in the URL so a copied link reopens the same comparison.
@@ -68,6 +70,8 @@ const compareRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): CompareSearch => ({
     a: typeof search.a === 'string' ? search.a : undefined,
     b: typeof search.b === 'string' ? search.b : undefined,
+    c: typeof search.c === 'string' ? search.c : undefined,
+    d: typeof search.d === 'string' ? search.d : undefined,
   }),
   component: ComparePage,
 })
