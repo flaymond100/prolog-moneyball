@@ -1,7 +1,7 @@
 import { caOnFmScale } from '@prolog/metrics'
 import { ATTRIBUTES } from '@/data/labels.ts'
 import type { Rider } from '@/data/types.ts'
-import { riderAge, riderTrainingAge } from '@/lib/rider.ts'
+import { powerWatts, riderAge, riderTrainingAge } from '@/lib/rider.ts'
 
 // Metric registry (task 4.3): one definition per metric, reused by the squad
 // table, the filter builder and the scatter explorer. Adding an entry here makes
@@ -36,6 +36,17 @@ const attributeValues: MetricDef[] = ATTRIBUTES.map((a) => ({
   higherIsBetter: true,
   group: a.group === 'physiology' ? 'Physiology' : 'Power',
   get: (r) => r.attributes[a.id].value,
+}))
+
+// Absolute watts beside W/kg, for filters, scatter and the W view of the table.
+const attributeWatts: MetricDef[] = ATTRIBUTES.filter((a) => a.secs !== undefined).map((a) => ({
+  id: `${a.id}Watts`,
+  label: a.label,
+  unit: 'W',
+  decimals: 0,
+  higherIsBetter: true,
+  group: 'Power',
+  get: (r) => powerWatts(r, a.id),
 }))
 
 export const METRICS: readonly MetricDef[] = [
@@ -86,6 +97,7 @@ export const METRICS: readonly MetricDef[] = [
   },
   ...attributeRatings,
   ...attributeValues,
+  ...attributeWatts,
   {
     id: 'vlamax',
     label: 'VLamax',

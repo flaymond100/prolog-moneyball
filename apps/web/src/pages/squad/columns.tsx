@@ -6,10 +6,19 @@ import { RatingChip } from '@/components/rating-chip.tsx'
 import { ReadinessLight } from '@/components/readiness-light.tsx'
 import { attributeMeta, RIDER_TYPE_LABELS } from '@/data/labels.ts'
 import { METRICS, metricLabel, type MetricDef } from '@/data/metric-registry.ts'
+import type { PowerUnit } from '@/data/power-unit-store.ts'
 import type { AttributeId, LabTest, Rider } from '@/data/types.ts'
 import type { CsvCell } from '@/lib/csv.ts'
 import { formatNumber } from '@/lib/format.ts'
-import { primaryType, riderAge, riderTrainingAge } from '@/lib/rider.ts'
+import { cn } from '@/lib/utils.ts'
+import {
+  attributeUnit,
+  attributeValue,
+  powerWatts,
+  primaryType,
+  riderAge,
+  riderTrainingAge,
+} from '@/lib/rider.ts'
 
 export const COLUMN_GROUPS = [
   { id: 'general', label: 'General' },
@@ -46,25 +55,39 @@ function latestLab(rider: Rider): LabTest | undefined {
   return rider.labTests.at(-1)
 }
 
-function ratingColumn(id: AttributeId, group: ColumnGroupId, decimals: number) {
+/**
+ * An attribute's rating chip with its value. In the W view a power column shows,
+ * sorts and exports absolute watts; the chip stays the W/kg rating (KB §6).
+ */
+function ratingColumn(id: AttributeId, group: ColumnGroupId, unit: PowerUnit) {
   const meta = attributeMeta(id)
-  return col.accessor((r) => r.attributes[id].rating, {
+  const watts = unit === 'w' && meta.secs !== undefined
+  const { decimals } = attributeUnit(id, unit)
+  return col.accessor((r) => (watts ? powerWatts(r, id) : r.attributes[id].rating) ?? undefined, {
     id,
-    header: meta.shortLabel,
+    header: watts ? `${meta.shortLabel} (W)` : meta.shortLabel,
+    sortUndefined: 'last',
     cell: ({ row }) => {
       const a = row.original.attributes[id]
       return (
         <span className="inline-flex items-center gap-1.5">
           <RatingChip rating={a.rating} lowConfidence={a.confidence === 'low'} />
           <ChangeArrow change={a.change28d} />
-          <span className="text-xs text-muted-foreground">{formatNumber(a.value, decimals)}</span>
+          <span
+            className={cn(
+              'text-xs',
+              watts ? 'font-medium text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {formatNumber(attributeValue(row.original, id, unit), decimals)}
+          </span>
         </span>
       )
     },
     meta: {
       group,
-      label: `${meta.label} (Rating)`,
-      csv: (r) => r.attributes[id].rating,
+      label: watts ? `${meta.label} (W)` : `${meta.label} (Rating)`,
+      csv: (r) => (watts ? powerWatts(r, id) : r.attributes[id].rating),
       numeric: true,
     },
   })
@@ -91,165 +114,187 @@ function numberColumn(
   })
 }
 
-const handMadeColumns = [
-  col.accessor('name', {
-    id: 'name',
-    header: 'Rider',
-    cell: ({ row }) => (
-      <Link
-        to="/riders/$riderId"
-        params={{ riderId: row.original.id }}
-        className="font-medium hover:text-primary"
-      >
-        {row.original.name}
-      </Link>
-    ),
-    meta: { label: 'Rider', csv: (r) => r.name },
-  }),
+function handMadeColumnsFor(unit: PowerUnit) {
+  return [
+    col.accessor('name', {
+      id: 'name',
+      header: 'Rider',
+      cell: ({ row }) => (
+        <Link
+          to="/riders/$riderId"
+          params={{ riderId: row.original.id }}
+          className="font-medium hover:text-primary"
+        >
+          {row.original.name}
+        </Link>
+      ),
+      meta: { label: 'Rider', csv: (r) => r.name },
+    }),
 
-  // General
-  col.accessor((r) => typeLabel(r), {
-    id: 'type',
-    header: 'Type',
-    meta: { group: 'general', label: 'Rider Type', csv: typeLabel },
-  }),
-  numberColumn('age', 'Age', 'Age', 'general', riderAge),
-  numberColumn('trainingAge', 'Train. Age', 'Training Age (Years)', 'general', riderTrainingAge, 1),
-  col.accessor((r) => r.caPa?.ca ?? null, {
-    id: 'ca',
-    header: 'CA',
-    cell: ({ getValue }) => <RatingChip rating={getValue()} decimals={1} />,
-    meta: {
-      group: 'general',
-      label: 'Current Ability',
-      csv: (r) => r.caPa?.ca ?? null,
-      numeric: true,
-    },
-  }),
-  numberColumn('caFm', 'CA /200', 'Current Ability (0–200)', 'general', (r) =>
-    r.caPa ? caOnFmScale(r.caPa.ca) : null,
-  ),
-  col.accessor((r) => r.caPa?.paP50 ?? null, {
-    id: 'pa',
-    header: 'PA',
-    cell: ({ row }) => {
-      const { paP10, paP50, paP90 } = row.original.caPa ?? {}
-      if (paP10 == null || paP50 == null || paP90 == null) return '–'
-      return (
-        <span>
-          {formatNumber(paP50, 1)}{' '}
-          <span className="text-xs text-muted-foreground">
-            ({formatNumber(paP10, 1)}–{formatNumber(paP90, 1)})
+    // General
+    col.accessor((r) => typeLabel(r), {
+      id: 'type',
+      header: 'Type',
+      meta: { group: 'general', label: 'Rider Type', csv: typeLabel },
+    }),
+    numberColumn('age', 'Age', 'Age', 'general', riderAge),
+    numberColumn(
+      'trainingAge',
+      'Train. Age',
+      'Training Age (Years)',
+      'general',
+      riderTrainingAge,
+      1,
+    ),
+    col.accessor((r) => r.caPa?.ca ?? null, {
+      id: 'ca',
+      header: 'CA',
+      cell: ({ getValue }) => <RatingChip rating={getValue()} decimals={1} />,
+      meta: {
+        group: 'general',
+        label: 'Current Ability',
+        csv: (r) => r.caPa?.ca ?? null,
+        numeric: true,
+      },
+    }),
+    numberColumn('caFm', 'CA /200', 'Current Ability (0–200)', 'general', (r) =>
+      r.caPa ? caOnFmScale(r.caPa.ca) : null,
+    ),
+    col.accessor((r) => r.caPa?.paP50 ?? null, {
+      id: 'pa',
+      header: 'PA',
+      cell: ({ row }) => {
+        const { paP10, paP50, paP90 } = row.original.caPa ?? {}
+        if (paP10 == null || paP50 == null || paP90 == null) return '–'
+        return (
+          <span>
+            {formatNumber(paP50, 1)}{' '}
+            <span className="text-xs text-muted-foreground">
+              ({formatNumber(paP10, 1)}–{formatNumber(paP90, 1)})
+            </span>
           </span>
+        )
+      },
+      meta: {
+        group: 'general',
+        label: 'Potential Ability (P50)',
+        csv: (r) => r.caPa?.paP50 ?? null,
+        numeric: true,
+      },
+    }),
+    numberColumn(
+      'rides84d',
+      'Rides 84 d',
+      'Rides in 84 Days',
+      'general',
+      (r) => r.training.rides84d,
+    ),
+
+    // Power (84-day window)
+    ratingColumn('p5s', 'power', unit),
+    ratingColumn('p30s', 'power', unit),
+    ratingColumn('p1m', 'power', unit),
+    ratingColumn('p5m', 'power', unit),
+    ratingColumn('p20m', 'power', unit),
+    ratingColumn('p60m', 'power', unit),
+
+    // Durability
+    ratingColumn('durability', 'durability', unit),
+
+    // Physiology (latest lab test)
+    ratingColumn('vo2max', 'physiology', unit),
+    numberColumn(
+      'vlamax',
+      'VLamax',
+      'VLamax (mmol/L/s)',
+      'physiology',
+      (r) => latestLab(r)?.vlamaxMmolLS ?? null,
+      2,
+    ),
+    numberColumn(
+      'fatmax',
+      'FatMax W',
+      'FatMax (W)',
+      'physiology',
+      (r) => latestLab(r)?.fatmaxW ?? null,
+    ),
+    numberColumn(
+      'carbmax',
+      'CarbMax g/h',
+      'CarbMax (g/h)',
+      'physiology',
+      (r) => latestLab(r)?.carbmaxGH ?? null,
+    ),
+    numberColumn(
+      'at',
+      'AT W',
+      'Anaerobic Threshold (W)',
+      'physiology',
+      (r) => latestLab(r)?.atW ?? null,
+    ),
+
+    // Training
+    numberColumn('ctl', 'CTL', 'CTL', 'training', (r) => r.training.ctl),
+    numberColumn('atl', 'ATL', 'ATL', 'training', (r) => r.training.atl),
+    numberColumn('tsb', 'TSB', 'TSB', 'training', (r) => r.training.tsb, 0, true),
+    numberColumn('ramp', 'Ramp', 'Ramp Rate', 'training', (r) => r.training.rampRate, 1, true),
+    numberColumn(
+      'compliance',
+      'Compl. 12 wk %',
+      'Compliance, 12 Weeks (%)',
+      'training',
+      (r) => r.training.compliance12wPct,
+    ),
+    numberColumn('indoor', 'Indoor %', 'Indoor Rides (%)', 'training', (r) => r.training.indoorPct),
+
+    // Readiness
+    col.accessor((r) => r.readiness.light, {
+      id: 'readiness',
+      header: 'Readiness',
+      cell: ({ row }) => (
+        <span className="inline-flex flex-col">
+          <ReadinessLight light={row.original.readiness.light} />
+          {row.original.readiness.reasons.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {row.original.readiness.reasons.join(', ')}
+            </span>
+          )}
         </span>
-      )
-    },
-    meta: {
-      group: 'general',
-      label: 'Potential Ability (P50)',
-      csv: (r) => r.caPa?.paP50 ?? null,
-      numeric: true,
-    },
-  }),
-  numberColumn('rides84d', 'Rides 84 d', 'Rides in 84 Days', 'general', (r) => r.training.rides84d),
-
-  // Power (84-day window)
-  ratingColumn('p5s', 'power', 1),
-  ratingColumn('p30s', 'power', 1),
-  ratingColumn('p1m', 'power', 1),
-  ratingColumn('p5m', 'power', 2),
-  ratingColumn('p20m', 'power', 2),
-  ratingColumn('p60m', 'power', 2),
-
-  // Durability
-  ratingColumn('durability', 'durability', 0),
-
-  // Physiology (latest lab test)
-  ratingColumn('vo2max', 'physiology', 1),
-  numberColumn(
-    'vlamax',
-    'VLamax',
-    'VLamax (mmol/L/s)',
-    'physiology',
-    (r) => latestLab(r)?.vlamaxMmolLS ?? null,
-    2,
-  ),
-  numberColumn(
-    'fatmax',
-    'FatMax W',
-    'FatMax (W)',
-    'physiology',
-    (r) => latestLab(r)?.fatmaxW ?? null,
-  ),
-  numberColumn(
-    'carbmax',
-    'CarbMax g/h',
-    'CarbMax (g/h)',
-    'physiology',
-    (r) => latestLab(r)?.carbmaxGH ?? null,
-  ),
-  numberColumn(
-    'at',
-    'AT W',
-    'Anaerobic Threshold (W)',
-    'physiology',
-    (r) => latestLab(r)?.atW ?? null,
-  ),
-
-  // Training
-  numberColumn('ctl', 'CTL', 'CTL', 'training', (r) => r.training.ctl),
-  numberColumn('atl', 'ATL', 'ATL', 'training', (r) => r.training.atl),
-  numberColumn('tsb', 'TSB', 'TSB', 'training', (r) => r.training.tsb, 0, true),
-  numberColumn('ramp', 'Ramp', 'Ramp Rate', 'training', (r) => r.training.rampRate, 1, true),
-  numberColumn(
-    'compliance',
-    'Compl. 12 wk %',
-    'Compliance, 12 Weeks (%)',
-    'training',
-    (r) => r.training.compliance12wPct,
-  ),
-  numberColumn('indoor', 'Indoor %', 'Indoor Rides (%)', 'training', (r) => r.training.indoorPct),
-
-  // Readiness
-  col.accessor((r) => r.readiness.light, {
-    id: 'readiness',
-    header: 'Readiness',
-    cell: ({ row }) => (
-      <span className="inline-flex flex-col">
-        <ReadinessLight light={row.original.readiness.light} />
-        {row.original.readiness.reasons.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {row.original.readiness.reasons.join(', ')}
-          </span>
-        )}
-      </span>
+      ),
+      meta: {
+        group: 'readiness',
+        label: 'Readiness',
+        csv: (r) => [r.readiness.light, ...r.readiness.reasons].join('; '),
+      },
+    }),
+    numberColumn(
+      'hrvZ',
+      'ln rMSSD z',
+      'ln rMSSD vs Baseline (z)',
+      'readiness',
+      (r) => r.readiness.lnRmssdZ,
+      1,
+      true,
     ),
-    meta: {
-      group: 'readiness',
-      label: 'Readiness',
-      csv: (r) => [r.readiness.light, ...r.readiness.reasons].join('; '),
-    },
-  }),
-  numberColumn(
-    'hrvZ',
-    'ln rMSSD z',
-    'ln rMSSD vs Baseline (z)',
-    'readiness',
-    (r) => r.readiness.lnRmssdZ,
-    1,
-    true,
-  ),
-  numberColumn(
-    'rhr',
-    'Resting HR Δ',
-    'Resting HR vs Baseline (bpm)',
-    'readiness',
-    (r) => r.readiness.restingHrDeltaBpm,
-    0,
-    true,
-  ),
-  numberColumn('sleep', 'Sleep h', 'Sleep (Hours)', 'readiness', (r) => r.readiness.sleepHours, 1),
-]
+    numberColumn(
+      'rhr',
+      'Resting HR Δ',
+      'Resting HR vs Baseline (bpm)',
+      'readiness',
+      (r) => r.readiness.restingHrDeltaBpm,
+      0,
+      true,
+    ),
+    numberColumn(
+      'sleep',
+      'Sleep h',
+      'Sleep (Hours)',
+      'readiness',
+      (r) => r.readiness.sleepHours,
+      1,
+    ),
+  ]
+}
 
 // Registry metrics (task 4.3) -------------------------------------------------------
 
@@ -269,14 +314,14 @@ const GROUP_FOR: Record<MetricDef['group'], ColumnGroupId> = {
   Readiness: 'readiness',
 }
 
-const handMadeIds = new Set(handMadeColumns.map((c) => c.id ?? ''))
+const handMadeIds = new Set(handMadeColumnsFor('wkg').map((c) => c.id ?? ''))
 
 /**
  * The hand-made column that shows a registry metric: the same id, an alias, or
  * an attribute's rating column (which shows the value beside the chip).
  */
 export function columnForMetric(metricId: string): string | undefined {
-  const id = REGISTRY_ALIASES[metricId] ?? metricId.replace(/(Rating|Value)$/, '')
+  const id = REGISTRY_ALIASES[metricId] ?? metricId.replace(/(Rating|Value|Watts)$/, '')
   return handMadeIds.has(id) ? id : undefined
 }
 
@@ -285,4 +330,14 @@ const registryColumns = METRICS.filter((m) => columnForMetric(m.id) === undefine
   numberColumn(m.id, m.label, metricLabel(m), GROUP_FOR[m.group], m.get, m.decimals),
 )
 
-export const squadColumns = [...handMadeColumns, ...registryColumns]
+const byUnit = {
+  wkg: [...handMadeColumnsFor('wkg'), ...registryColumns],
+  w: [...handMadeColumnsFor('w'), ...registryColumns],
+}
+
+/** The squad table's columns, with power values in the chosen unit. */
+export function squadColumnsFor(unit: PowerUnit) {
+  return byUnit[unit]
+}
+
+export const squadColumns = byUnit.wkg
