@@ -42,6 +42,9 @@ async function staffRow(page: Page, role: string | null) {
 }
 
 test.beforeEach(async ({ page }) => {
+  // Every other REST read answers as an empty database; routes added later
+  // (the staff lookup) take precedence.
+  await page.route('**/rest/v1/**', (route) => route.fulfill({ json: [] }))
   await page.route('**/auth/v1/**', (route) => {
     const url = route.request().url()
     if (url.includes('/otp')) return route.fulfill({ json: {} })
