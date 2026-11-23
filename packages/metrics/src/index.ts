@@ -1,6 +1,6 @@
 // Pure formulas live here (knowledge base §6–§9). No IO, no DB rows — plain values and arrays only.
 // Relative imports use the `.ts` extension so the same source runs under Deno in Edge Functions.
-export { ageInYears, trainingAgeYears } from './age.ts'
+export { ageInYears, exactAgeYears, trainingAgeYears } from './age.ts'
 export { caOnFmScale, caStars, currentAbility, type CaRating, type CaWeight } from './ca.ts'
 export { bestPowerAfterWork, retainedPct, type PostWorkBest } from './durability.ts'
 export {
@@ -11,6 +11,15 @@ export {
   type LnRmssdStats,
 } from './hrv.ts'
 export { isMeaningfulChange } from './lab.ts'
+export {
+  annualChange,
+  paSeed,
+  potentialAbility,
+  type PaAttribute,
+  type PaInput,
+  type PaPriors,
+  type PaResult,
+} from './pa.ts'
 export { ATL_DAYS, CTL_DAYS, projectLoad, type LoadDay, type LoadState } from './load.ts'
 export {
   RATING_MAX,

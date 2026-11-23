@@ -158,6 +158,7 @@ What the reply tells you:
 - `ratings.without_weight`: power bests left unrated because the rider has no body weight for W/kg.
 - `ratings.without_benchmark`: attributes the active set has no benchmark for.
 - `ca.without_power_profile`: rated riders without a type and CA because they do not have all six power ratings yet.
+- `ca.with_pa`, `ca.without_pa_inputs`: riders with CA that got a PA band, and those that did not because their profile lacks a date of birth or training age (Settings → Rider Profiles).
 
 `compute-ratings` and `compute-ca` run one job each, with the same header and body, and write no log row.
 

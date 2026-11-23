@@ -295,6 +295,7 @@ Resulting expected annual gain for 5–20 min power: training age 1 → 7%, 2 �
 - Deterministic seed = hash(athlete\_id, as\_of) so results reproduce.
 - Property tests: PA ≥ CA always; the band widens as training age falls; a rider over peak + 2 gets PA ≈ CA.
 - Display as "PA 15.5 (13.8–17.2)" with a band bar, never a single number.
+- Computed by `compute-ca` right after CA, with the same type weights (TODO 7.4). The band widens as training age falls only while the caps do not bind; for the youngest riders the caps narrow it again (open question in TODO).
 - After each season, compare observed vs predicted annual change per rider; update g0 by shrinkage (weight n ÷ (n + 20), n = rider-seasons) and log the change in `model_priors` history.
 
 ## 9. Form, readiness and forecasting

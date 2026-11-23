@@ -47,7 +47,7 @@ function rows<T>(result: Result<T>, what: string): T {
   return result.data
 }
 
-interface BenchmarkPointRow {
+export interface BenchmarkPointRow {
   attribute: RatingAttribute
   method: 'z_score' | 'anchors'
   mean: number | null
@@ -57,7 +57,7 @@ interface BenchmarkPointRow {
 }
 
 /** A benchmark_points row as a Benchmark; the table's check keeps the fields in step with the method. */
-function toBenchmark(row: BenchmarkPointRow): Benchmark {
+export function toBenchmark(row: BenchmarkPointRow): Benchmark {
   if (row.method === 'z_score' && row.mean !== null && row.sd !== null) {
     return { method: 'z_score', mean: row.mean, sd: row.sd }
   }
