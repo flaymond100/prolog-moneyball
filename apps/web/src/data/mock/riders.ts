@@ -121,6 +121,23 @@ export const MOCK_RIDERS: Rider[] = [
         atW: 262,
       },
     ],
+    powerTests: [
+      {
+        date: '2026-08-04',
+        method: 'ftp_20min',
+        efforts: [{ durationS: 1200, watts: 268, wkg: 4.96 }],
+        notes: null,
+      },
+      {
+        date: '2026-10-06',
+        method: 'cp',
+        efforts: [
+          { durationS: 180, watts: 352, wkg: 6.52 },
+          { durationS: 720, watts: 272, wkg: 5.04 },
+        ],
+        notes: 'Velodrome, 3 + 12 min',
+      },
+    ],
     training: {
       ctl: 78,
       atl: 85,
@@ -209,6 +226,7 @@ export const MOCK_RIDERS: Rider[] = [
         atW: 228,
       },
     ],
+    powerTests: [],
     training: {
       ctl: 64,
       atl: 58,

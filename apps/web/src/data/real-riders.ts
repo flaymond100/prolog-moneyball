@@ -6,6 +6,7 @@ import type {
   AttributeRating,
   LabTest,
   PowerCurve,
+  PowerTest,
   PowerWindow,
   Rider,
 } from '@/data/types.ts'
@@ -61,44 +62,50 @@ function firstBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T> {
 
 export async function fetchRealSquad(client: Client, asOf: string): Promise<Rider[]> {
   const ridesFrom = daysBefore(asOf, RIDES_WINDOW_DAYS)
-  const [athletes, profiles, wellness, curves, activities, races, labs, model] = await Promise.all([
-    client.from('athletes').select('id, name').eq('active', true).order('name'),
-    client
-      .from('rider_profiles')
-      .select(
-        'athlete_id, date_of_birth, training_age_years, training_age_entered_on, background, primary_type_override, hrv_source, cohort, contract_end',
-      ),
-    // Latest training load per rider; viewers get no wellness rows (KB §11).
-    client
-      .from('wellness')
-      .select('athlete_id, date, ctl, atl, ramp_rate')
-      .gte('date', daysBefore(asOf, 14))
-      .not('ctl', 'is', null)
-      .order('date', { ascending: false }),
-    client
-      .from('power_curves')
-      .select('athlete_id, as_of, time_window, secs, watts, wkg')
-      .gte('as_of', daysBefore(asOf, 14))
-      .order('as_of', { ascending: false }),
-    client
-      .from('activities')
-      .select('athlete_id, type, trainer')
-      .gte('start_date_local', ridesFrom),
-    client
-      .from('planned_events')
-      .select('athlete_id, name, start_date_local, category')
-      .in('category', RACE_CATEGORIES)
-      .gte('start_date_local', asOf)
-      .order('start_date_local'),
-    // Lab tests are for coach, analyst and medical (KB §11); kg columns are not granted.
-    client
-      .from('lab_tests')
-      .select(
-        'athlete_id, test_date, method, vo2max_ml_kg_min, vo2max_l_min, vlamax_mmol_l_s, fatmax_w, fatmax_g_h, carbmax_g_h, at_w, height_cm, tester, notes',
-      )
-      .order('test_date'),
-    fetchModelOutputs(client, asOf),
-  ])
+  const [athletes, profiles, wellness, curves, activities, races, labs, powerTests, model] =
+    await Promise.all([
+      client.from('athletes').select('id, name').eq('active', true).order('name'),
+      client
+        .from('rider_profiles')
+        .select(
+          'athlete_id, date_of_birth, training_age_years, training_age_entered_on, background, primary_type_override, hrv_source, cohort, contract_end',
+        ),
+      // Latest training load per rider; viewers get no wellness rows (KB §11).
+      client
+        .from('wellness')
+        .select('athlete_id, date, ctl, atl, ramp_rate')
+        .gte('date', daysBefore(asOf, 14))
+        .not('ctl', 'is', null)
+        .order('date', { ascending: false }),
+      client
+        .from('power_curves')
+        .select('athlete_id, as_of, time_window, secs, watts, wkg')
+        .gte('as_of', daysBefore(asOf, 14))
+        .order('as_of', { ascending: false }),
+      client
+        .from('activities')
+        .select('athlete_id, type, trainer')
+        .gte('start_date_local', ridesFrom),
+      client
+        .from('planned_events')
+        .select('athlete_id, name, start_date_local, category')
+        .in('category', RACE_CATEGORIES)
+        .gte('start_date_local', asOf)
+        .order('start_date_local'),
+      // Lab tests are for coach, analyst and medical (KB §11); kg columns are not granted.
+      client
+        .from('lab_tests')
+        .select(
+          'athlete_id, test_date, method, vo2max_ml_kg_min, vo2max_l_min, vlamax_mmol_l_s, fatmax_w, fatmax_g_h, carbmax_g_h, at_w, height_cm, tester, notes',
+        )
+        .order('test_date'),
+      // FTP and CP tests with W/kg per effort; the view exposes no kg (KB §10–11).
+      client
+        .from('v_power_tests')
+        .select('athlete_id, test_date, method, durations_s, watts, wkg, notes')
+        .order('test_date'),
+      fetchModelOutputs(client, asOf),
+    ])
 
   const profileBy = firstBy(check(profiles, 'rider profiles'), (p) => p.athlete_id)
   const loadBy = firstBy(check(wellness, 'training load'), (w) => w.athlete_id)
@@ -106,6 +113,7 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
   const raceBy = firstBy(check(races, 'races'), (r) => r.athlete_id)
   const activityRows = check(activities, 'activities')
   const labRows = check(labs, 'lab tests')
+  const powerTestRows = check(powerTests, 'power tests')
 
   return check(athletes, 'athletes').map((athlete): Rider => {
     const profile = profileBy.get(athlete.id)
@@ -139,6 +147,19 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
         heightCm: l.height_cm,
         tester: l.tester,
         notes: l.notes,
+      }))
+
+    const riderPowerTests: PowerTest[] = powerTestRows
+      .filter((t) => t.athlete_id === athlete.id && t.test_date !== null && t.method !== null)
+      .map((t) => ({
+        date: t.test_date ?? '',
+        method: t.method ?? 'ftp_20min',
+        efforts: (t.durations_s ?? []).map((durationS, i) => ({
+          durationS,
+          watts: t.watts?.[i] ?? 0,
+          wkg: t.wkg?.[i] ?? null,
+        })),
+        notes: t.notes,
       }))
 
     // The rating with the value it was calculated from; otherwise the
@@ -176,6 +197,7 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
       powerCurves,
       durability: [],
       labTests,
+      powerTests: riderPowerTests,
       training: {
         ctl: load?.ctl ?? null,
         atl: load?.atl ?? null,

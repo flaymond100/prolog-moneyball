@@ -69,6 +69,24 @@ export interface LabTest {
   notes?: string | null
 }
 
+/** Power field tests (KB §10): the classic 20-min FTP test and Critical Power. */
+export type PowerTestMethod = 'ftp_20min' | 'cp'
+
+/** One maximal effort of a power test; W/kg from the body mass on the test day. */
+export interface PowerTestEffort {
+  durationS: number
+  watts: number
+  wkg: number | null
+}
+
+export interface PowerTest {
+  date: string
+  method: PowerTestMethod
+  /** Shortest first; one 20-min effort for FTP, 2–4 efforts of 2–20 min for CP. */
+  efforts: PowerTestEffort[]
+  notes: string | null
+}
+
 export interface Anthropometric {
   athleteId: string
   date: string
@@ -154,6 +172,8 @@ export interface Rider {
   powerCurves: PowerCurve[]
   durability: DurabilityPoint[]
   labTests: LabTest[]
+  /** Oldest first. */
+  powerTests: PowerTest[]
   training: TrainingSummary
   readiness: ReadinessSummary
   form: FormSeries

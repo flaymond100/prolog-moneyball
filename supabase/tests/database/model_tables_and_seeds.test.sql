@@ -87,8 +87,8 @@ select results_eq(
 
 select results_eq(
   $$select model, count(*)::int from public.model_priors group by model order by model$$,
-  $$values ('pa', 34), ('readiness', 7), ('rider_type', 12)$$,
-  'priors seeded for rider type, PA and readiness');
+  $$values ('pa', 34), ('power_test', 1), ('readiness', 7), ('rider_type', 12)$$,
+  'priors seeded for rider type, PA, power tests and readiness');
 select is((select value from public.model_priors where key = 'peak_age.sprinter'), '28.7'::jsonb,
   'peak age sprinter is 28.7');
 select is((select status::text from public.model_priors where key = 'peak_age.all_rounder'), 'source',
@@ -102,7 +102,7 @@ select is((select value from public.model_priors where key = 'pa.draws'), '1000'
 select is_empty(
   $$select 1 from public.model_priors where citation = '' or label = ''$$,
   'every prior has a label and a citation or prior note');
-select is((select count(*)::int from public.model_priors_history where operation = 'INSERT'), 53,
+select is((select count(*)::int from public.model_priors_history where operation = 'INSERT'), 54,
   'seeding logged every prior in history');
 
 -- Idempotent and edit-safe ----------------------------------------------------
@@ -112,7 +112,7 @@ select lives_ok($$select public.seed_model_reference()$$, 'seeding again runs');
 select lives_ok($$select public.seed_model_reference()$$, 'seeding a third time runs');
 select is((select count(*)::int from public.benchmark_points), 8, 'no duplicate benchmark points');
 select is((select count(*)::int from public.ca_weights), 40, 'no duplicate CA weights');
-select is((select count(*)::int from public.model_priors), 53, 'no duplicate priors');
+select is((select count(*)::int from public.model_priors), 54, 'no duplicate priors');
 select is((select value from public.model_priors where key = 'gain.g0_median'), '0.12'::jsonb,
   're-seeding keeps an edited prior');
 select is(
@@ -182,7 +182,7 @@ select is(
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000002", "role": "authenticated"}', true);
 set local role authenticated;
-select is((select count(*)::int from public.model_priors), 53, 'analyst: reads priors');
+select is((select count(*)::int from public.model_priors), 54, 'analyst: reads priors');
 select is((select count(*)::int from public.ca_weights), 40, 'analyst: reads CA weights');
 select lives_ok($$update public.model_priors set value = '0.5' where key = 'gain.g0_median'$$,
   'analyst: update runs');

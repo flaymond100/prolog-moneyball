@@ -1,9 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { z } from 'zod'
+import { Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button.tsx'
 import { BODY_RANGES, LAB_RANGES, rangeMessage, type RangeField } from '@/data/lab-ranges.ts'
-import { useAddAnthropometric, useAddLabTest } from '@/data/queries.ts'
-import type { LabTest, LabTestMethod, Rider } from '@/data/types.ts'
+import { CP_EFFORTS, POWER_TEST_LABELS, powerTestResult } from '@/data/power-tests.ts'
+import {
+  useAddAnthropometric,
+  useAddLabTest,
+  useAddPowerTest,
+  useFtpFactor,
+} from '@/data/queries.ts'
+import type { LabTest, LabTestMethod, PowerTest, PowerTestMethod, Rider } from '@/data/types.ts'
+import { formatNumber } from '@/lib/format.ts'
+import { supabase } from '@/lib/supabase.ts'
 import { cn } from '@/lib/utils.ts'
 
 const control =
@@ -396,6 +405,290 @@ export function AnthropometricsForm({ riders }: { riders: Rider[] }) {
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={add.isPending}>
           Save Measurements
+        </Button>
+        <Status saved={saved} error={add.error?.message ?? null} />
+      </div>
+    </form>
+  )
+}
+
+// Power tests (KB §10) ------------------------------------------------------------
+
+/** Watts accepted for an effort, as the power_tests check allows. */
+const WATTS = { min: 1, max: 2500 } as const
+
+interface EffortRow {
+  minutes: string
+  watts: string
+}
+
+const DEFAULT_CP_EFFORTS: EffortRow[] = [
+  { minutes: '3', watts: '' },
+  { minutes: '12', watts: '' },
+]
+
+/** The efforts of the form as a test, or the first problem with them. */
+function readPowerTest(
+  method: PowerTestMethod,
+  ftpWatts: string,
+  rows: readonly EffortRow[],
+): { efforts: PowerTest['efforts'] } | { error: string; field: string } {
+  const watts = (text: string, field: string) => {
+    const n = toNumberOrNull(text)
+    if (n === null || Number.isNaN(n) || n < WATTS.min || n > WATTS.max) {
+      return {
+        error: `Power must be between ${String(WATTS.min)} and ${String(WATTS.max)} W.`,
+        field,
+      }
+    }
+    return n
+  }
+  if (method === 'ftp_20min') {
+    const w = watts(ftpWatts, 'ftpWatts')
+    if (typeof w !== 'number') return w
+    return { efforts: [{ durationS: 1200, watts: w, wkg: null }] }
+  }
+  const efforts: PowerTest['efforts'] = []
+  for (const [i, row] of rows.entries()) {
+    const minutes = toNumberOrNull(row.minutes)
+    const durationS = minutes === null ? Number.NaN : Math.round(minutes * 60)
+    if (!(durationS >= CP_EFFORTS.minS && durationS <= CP_EFFORTS.maxS)) {
+      return { error: 'Each effort lasts 2 to 20 minutes.', field: `effort${String(i)}` }
+    }
+    const w = watts(row.watts, `effort${String(i)}`)
+    if (typeof w !== 'number') return w
+    efforts.push({ durationS, watts: w, wkg: null })
+  }
+  efforts.sort((a, b) => a.durationS - b.durationS)
+  if (efforts.some((e, i) => i > 0 && e.durationS === efforts[i - 1]?.durationS)) {
+    return { error: 'Each effort needs a different length.', field: 'efforts' }
+  }
+  return { efforts }
+}
+
+export function PowerTestForm({ riders }: { riders: Rider[] }) {
+  const add = useAddPowerTest()
+  const ftpFactor = useFtpFactor()
+  const [athleteId, setAthleteId] = useState('')
+  const [date, setDate] = useState(today())
+  const [method, setMethod] = useState<PowerTestMethod>('ftp_20min')
+  const [ftpWatts, setFtpWatts] = useState('')
+  const [rows, setRows] = useState<EffortRow[]>(DEFAULT_CP_EFFORTS)
+  const [notes, setNotes] = useState('')
+  const [errors, setErrors] = useState<Errors>({})
+  const [saved, setSaved] = useState<string | null>(null)
+
+  const read = readPowerTest(method, ftpWatts, rows)
+  const preview =
+    'efforts' in read && ftpFactor !== undefined
+      ? powerTestResult({ date, method, efforts: read.efforts, notes: null }, ftpFactor)
+      : null
+
+  function setRow(i: number, patch: Partial<EffortRow>) {
+    setRows((prev) => prev.map((row, j) => (j === i ? { ...row, ...patch } : row)))
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    setSaved(null)
+    const next: Errors = {}
+    if (!athleteId) next.athleteId = 'Choose a rider.'
+    if (!date) next.date = 'Test date is required.'
+    else if (date > today()) next.date = 'Test date cannot be in the future.'
+    if ('error' in read) next[read.field] = read.error
+    else if (method === 'cp' && !preview) {
+      next.efforts = 'These efforts give no valid CP: a longer effort needs a lower power.'
+    }
+    setErrors(next)
+    if (Object.keys(next).length > 0 || !('efforts' in read)) return
+    add.mutate(
+      { athleteId, test: { date, method, efforts: read.efforts, notes: textOrNull(notes) } },
+      {
+        onSuccess: () => {
+          const name = riders.find((r) => r.id === athleteId)?.name ?? 'the rider'
+          setSaved(
+            supabase
+              ? `${POWER_TEST_LABELS[method]} saved for ${name}.`
+              : `${POWER_TEST_LABELS[method]} saved for ${name} (mock data, this session only).`,
+          )
+          setFtpWatts('')
+          setRows(DEFAULT_CP_EFFORTS)
+          setNotes('')
+        },
+      },
+    )
+  }
+
+  return (
+    <form onSubmit={submit} noValidate className="space-y-4" aria-label="New Power Test">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <RiderSelect
+          id="power-rider"
+          riders={riders}
+          value={athleteId}
+          error={errors.athleteId}
+          onChange={setAthleteId}
+        />
+        <Field id="power-date" label="Test Date" error={errors.date}>
+          <input
+            id="power-date"
+            type="date"
+            max={today()}
+            value={date}
+            aria-invalid={errors.date ? true : undefined}
+            onChange={(e) => {
+              setDate(e.target.value)
+            }}
+            className={control}
+          />
+        </Field>
+        <Field id="power-method" label="Test">
+          <select
+            id="power-method"
+            value={method}
+            onChange={(e) => {
+              setMethod(e.target.value as PowerTestMethod)
+              setErrors({})
+            }}
+            className={control}
+          >
+            <option value="ftp_20min">{POWER_TEST_LABELS.ftp_20min}</option>
+            <option value="cp">{POWER_TEST_LABELS.cp}</option>
+          </select>
+        </Field>
+      </div>
+
+      {method === 'ftp_20min' ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field id="power-ftp" label="20-Min Average Power (W)" error={errors.ftpWatts}>
+            <input
+              id="power-ftp"
+              type="number"
+              inputMode="decimal"
+              min={WATTS.min}
+              max={WATTS.max}
+              value={ftpWatts}
+              aria-invalid={errors.ftpWatts ? true : undefined}
+              onChange={(e) => {
+                setFtpWatts(e.target.value)
+              }}
+              className={control}
+            />
+          </Field>
+        </div>
+      ) : (
+        <fieldset className="space-y-2">
+          <legend className="text-xs text-muted-foreground">
+            Maximal efforts: 2 to 4, each 2–20 minutes and a different length (e.g. 3 and 12 min)
+          </legend>
+          {rows.map((row, i) => (
+            <div key={i} className="grid max-w-xl grid-cols-[1fr_1fr_auto] items-end gap-3">
+              <Field
+                id={`power-effort-${String(i)}-min`}
+                label={`Effort ${String(i + 1)}: Minutes`}
+              >
+                <input
+                  id={`power-effort-${String(i)}-min`}
+                  type="number"
+                  inputMode="decimal"
+                  step={0.5}
+                  min={2}
+                  max={20}
+                  value={row.minutes}
+                  aria-invalid={errors[`effort${String(i)}`] ? true : undefined}
+                  onChange={(e) => {
+                    setRow(i, { minutes: e.target.value })
+                  }}
+                  className={control}
+                />
+              </Field>
+              <Field id={`power-effort-${String(i)}-w`} label="Average Power (W)">
+                <input
+                  id={`power-effort-${String(i)}-w`}
+                  type="number"
+                  inputMode="decimal"
+                  min={WATTS.min}
+                  max={WATTS.max}
+                  value={row.watts}
+                  aria-invalid={errors[`effort${String(i)}`] ? true : undefined}
+                  onChange={(e) => {
+                    setRow(i, { watts: e.target.value })
+                  }}
+                  className={control}
+                />
+              </Field>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={`Remove effort ${String(i + 1)}`}
+                disabled={rows.length <= CP_EFFORTS.min}
+                onClick={() => {
+                  setRows((prev) => prev.filter((_, j) => j !== i))
+                }}
+              >
+                <Minus aria-hidden="true" />
+              </Button>
+              {errors[`effort${String(i)}`] && (
+                <p className="col-span-3 text-xs text-destructive">
+                  {errors[`effort${String(i)}`]}
+                </p>
+              )}
+            </div>
+          ))}
+          {errors.efforts && <p className="text-xs text-destructive">{errors.efforts}</p>}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={rows.length >= CP_EFFORTS.max}
+            onClick={() => {
+              setRows((prev) => [...prev, { minutes: '', watts: '' }])
+            }}
+          >
+            <Plus aria-hidden="true" />
+            Add Effort
+          </Button>
+        </fieldset>
+      )}
+
+      <p className="text-sm" aria-live="polite">
+        {preview ? (
+          <>
+            <span className="text-muted-foreground">Result: </span>
+            <span className="font-medium">
+              {preview.label} {formatNumber(preview.watts, 0)} W
+            </span>
+            {preview.wPrimeKj !== null && ` · W′ ${formatNumber(preview.wPrimeKj, 1)} kJ`}
+            {preview.r2 !== null && ` · R² ${formatNumber(preview.r2, 3)}`}
+            <span className="text-muted-foreground">
+              {method === 'ftp_20min'
+                ? ` (${formatNumber((ftpFactor ?? 0) * 100, 0)}% of 20-min power)`
+                : ' (linear work–time model)'}
+            </span>
+          </>
+        ) : (
+          <span className="text-muted-foreground">
+            {method === 'ftp_20min'
+              ? 'Enter the 20-min average power to see FTP.'
+              : 'Enter the efforts to see CP and W′.'}
+          </span>
+        )}
+      </p>
+
+      <Field id="power-notes" label="Notes">
+        <input
+          id="power-notes"
+          value={notes}
+          onChange={(e) => {
+            setNotes(e.target.value)
+          }}
+          className={cn(control, 'max-w-xl')}
+        />
+      </Field>
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={add.isPending}>
+          Save Power Test
         </Button>
         <Status saved={saved} error={add.error?.message ?? null} />
       </div>

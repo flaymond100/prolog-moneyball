@@ -140,12 +140,13 @@ Rules for this pattern:
 | `rider_profiles` | new | `athlete_id` | DOB, training age, background, type override, `cohort`, `data_source` |
 | `lab_tests` | new | id; unique (`athlete_id`, `test_date`, `method`) | INSCYD results (section 10) |
 | `anthropometrics` | new | (`athlete_id`, `date`) | height, weight, body fat outside lab tests |
+| `power_tests` | new | id; unique (`athlete_id`, `test_date`, `method`) | 20-min FTP and Critical Power field tests: `durations_s[]`, `watts[]` (section 10); `v_power_tests` adds W/kg |
 | `power_curves` | new | (`athlete_id`, `as_of`, `window`) | `secs[]`, `watts[]`, `wkg[]` |
 | `planned_events` | new | event id | planned workouts with `icu_training_load` |
 | `durability_efforts` | new | (`activity_id`, `kj_kg_bucket`, `duration_s`) | best power after 10/20/30 kJ/kg |
 | `benchmark_sets`, `benchmark_points` | new | set id | benchmark anchors with citations |
 | `ca_weights` | new | (`rider_type`, `attribute`) | CA weight matrix (section 7) |
-| `model_priors` | new | `key` | PA priors as jsonb (section 8) |
+| `model_priors` | new | `key` | priors as jsonb: rider type, PA, readiness, power tests (sections 7–10) |
 | `rider_ratings` | new | (`athlete_id`, `as_of`, `set_id`, `attribute`) | rating 1–20, confidence |
 | `rider_ca_pa` | new | (`athlete_id`, `as_of`) | CA, PA P10/P50/P90, type probabilities, model version |
 | `forecasts` | new | (`athlete_id`, `created_at`, `metric`, `horizon_date`) | P10/P50/P90, model |
@@ -339,7 +340,7 @@ Current form combines load (CTL/ATL/TSB), recent capacity versus the 84-day best
 
 ## 10. Lab tests (INSCYD) and HRV standardisation
 
-Lab data comes only from INSCYD and is entered manually; HRV is comparable between riders only as deviation from each rider's own baseline.
+Lab data comes only from INSCYD and is entered manually; FTP and Critical Power field tests are entered manually too; HRV is comparable between riders only as deviation from each rider's own baseline.
 
 **`lab_tests` fields**
 
@@ -361,6 +362,19 @@ Lab data comes only from INSCYD and is entered manually; HRV is comparable betwe
 - Only VO2max enters CA. VLamax, FatMax and CarbMax are shown and tracked, and VLamax nudges rider type (section 7).
 - Change between tests is "meaningful" only when it exceeds the typical error the coach enters per metric in settings.
 - Views: VO2max × VLamax squad quadrant, slope chart between tests, delta table, lab AT vs intervals.icu eFTP overlay.
+
+**Power tests: FTP and Critical Power (agreed with Kosta, 23 November 2026)**
+
+| Test | Efforts entered | Result |
+| --- | --- | --- |
+| Classic FTP test (`ftp_20min`) | one 20-min all-out effort, mean power | FTP = 0.95 × 20-min power \[source: Allen & Coggan, `model_priors` `ftp.factor_20min`\] |
+| Critical Power (`cp`) | 2–4 maximal efforts of 2–20 min, each a different length (e.g. 3 and 12 min) | 2-parameter linear work–time model: work = W′ + CP · t, least squares; CP (W), W′ (kJ), R² with 3 or more efforts |
+
+- Entered manually by the coach on the Tests page, optionally with the intervals.icu ride; stored as efforts in `power_tests`, results worked out in `packages/metrics`.
+- No valid CP when CP or W′ would not be positive (e.g. a longer effort at higher power).
+- W/kg uses the body mass on or before the test day (`v_power_tests`, which exposes no kg).
+- Show and track only: FTP and CP do not enter ratings, rider type, CA or PA, which keep using the power curves (section 6).
+- Change between tests of the same kind is meaningful only above the typical error the coach sets for FTP or CP (as for lab metrics).
 
 **HRV standardisation (rider rule)**
 

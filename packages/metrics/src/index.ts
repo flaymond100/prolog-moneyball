@@ -20,6 +20,7 @@ export {
   type PaPriors,
   type PaResult,
 } from './pa.ts'
+export { criticalPower, ftpFrom20Min, type CriticalPowerFit, type Effort } from './power-test.ts'
 export { ATL_DAYS, CTL_DAYS, projectLoad, type LoadDay, type LoadState } from './load.ts'
 export {
   RATING_MAX,

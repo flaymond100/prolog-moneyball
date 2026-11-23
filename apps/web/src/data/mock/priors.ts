@@ -6,3 +6,7 @@ export const MOCK_READINESS_PRIORS = {
   /** A readiness marker needs this many readings in 7 days to count (KB §9). */
   minHrvReadings7d: 3,
 } as const
+
+// The power-test prior from KB §10, for the mock build; the live build reads
+// model_priors (ftp.factor_20min).
+export const MOCK_FTP_FACTOR_20MIN = 0.95

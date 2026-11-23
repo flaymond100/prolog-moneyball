@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button.tsx'
 import { TRACKED_LAB_METRICS } from '@/data/lab-ranges.ts'
+import { POWER_TEST_METRICS } from '@/data/power-tests.ts'
 import { RIDER_TYPE_LABELS, RIDER_TYPES } from '@/data/labels.ts'
 import {
   MOCK_BENCHMARK_SETS,
@@ -472,13 +473,13 @@ export function TypicalErrorSection({ role }: { role: StaffRole }) {
   const canEdit = role === 'coach'
   const typicalErrors = useTypicalErrors()
   return (
-    <Panel title="Typical Error per Lab Metric">
+    <Panel title="Typical Error per Test Metric">
       <p className="text-xs text-muted-foreground">
         A change between tests counts as meaningful only above this value (KB §10). Leave empty
         until known; there are no defaults.
       </p>
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {TRACKED_LAB_METRICS.map((m) => (
+        {[...TRACKED_LAB_METRICS, ...POWER_TEST_METRICS].map((m) => (
           <Labelled key={m.key} id={`te-${m.key}`} label={m.label}>
             <input
               id={`te-${m.key}`}

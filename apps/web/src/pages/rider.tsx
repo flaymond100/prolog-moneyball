@@ -2,7 +2,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { useRider } from '@/data/queries.ts'
 import { DurabilityFunnel, PowerCurveChart } from '@/pages/rider/charts.tsx'
 import { ProfileHeader } from '@/pages/rider/header.tsx'
-import { LabTimeline, NotesPanel } from '@/pages/rider/history.tsx'
+import { LabTimeline, NotesPanel, PowerTestTimeline } from '@/pages/rider/history.tsx'
 import {
   DurabilityPanel,
   PhysiologyPanel,
@@ -57,8 +57,9 @@ export function RiderPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <LabTimeline rider={rider} />
+        <PowerTestTimeline rider={rider} />
         <NotesPanel rider={rider} />
       </div>
     </article>

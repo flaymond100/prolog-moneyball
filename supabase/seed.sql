@@ -382,6 +382,33 @@ select c.athlete_id,
   join seed_riders r on r.id = c.athlete_id
  group by c.athlete_id, w.time_window;
 
+-- Power tests (KB §10) ---------------------------------------------------------------
+-- A 20-min FTP test in late August and early November, and a CP test in mid-October
+-- (3, 7 and 12 min; every third rider adds a 20-min effort).
+
+insert into public.power_tests (athlete_id, test_date, method, durations_s, watts, notes)
+select r.id, current_date - t.days_ago, 'ftp_20min', '{1200}',
+       array[round((pg_temp.profile(r.p, 1200) * r.mass * t.level)::numeric)],
+       t.note
+  from seed_riders r
+ cross join (values
+   (88, 0.99, 'Outdoor climb, dry'),
+   (17, 0.96, 'Indoor on the smart trainer')
+ ) as t (days_ago, level, note);
+
+insert into public.power_tests (athlete_id, test_date, method, durations_s, watts, notes)
+select r.id, current_date - 38, 'cp', d.durations,
+       (select array_agg(
+                 round((pg_temp.profile(r.p, s) * r.mass * 0.98
+                        * pg_temp.r(r.id || ':cp' || s, 0.97, 1.03))::numeric)
+                 order by s)
+          from unnest(d.durations) as s),
+       'Track session, full recovery between efforts'
+  from seed_riders r
+ cross join lateral (
+   select case when r.n % 3 = 0 then '{180,420,720,1200}'::integer[] else '{180,420,720}'::integer[] end
+ ) as d (durations);
+
 -- Planned races and workouts ----------------------------------------------------------
 
 insert into public.planned_events (id, athlete_id, start_date_local, raw)

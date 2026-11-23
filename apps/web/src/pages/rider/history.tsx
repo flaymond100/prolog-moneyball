@@ -1,5 +1,14 @@
+import { isMeaningfulChange } from '@prolog/metrics'
 import { Badge } from '@/components/ui/badge.tsx'
-import type { LabTest, Rider } from '@/data/types.ts'
+import {
+  POWER_TEST_LABELS,
+  formatEffortDuration,
+  powerTestResult,
+  type PowerTestResult,
+} from '@/data/power-tests.ts'
+import { useFtpFactor } from '@/data/queries.ts'
+import { useTypicalErrors } from '@/data/typical-error-store.ts'
+import type { LabTest, PowerTest, Rider } from '@/data/types.ts'
 import { formatDate, formatNumber } from '@/lib/format.ts'
 import { Panel } from '@/pages/rider/panels.tsx'
 
@@ -45,6 +54,103 @@ export function LabTimeline({ rider }: { rider: Rider }) {
               </dl>
             </li>
           ))}
+        </ol>
+      )}
+    </Panel>
+  )
+}
+
+/** Change since the previous test of the same kind, judged against the typical error (KB §10). */
+function ChangeNote({ change, typicalError }: { change: number; typicalError: number | null }) {
+  const meaningful = isMeaningfulChange(change, typicalError)
+  return (
+    <span className="text-xs text-muted-foreground">
+      {formatNumber(change, 0, true)} W since the last test
+      {meaningful === null ? '' : meaningful ? ' · meaningful' : ' · within typical error'}
+    </span>
+  )
+}
+
+function ResultLine({ result }: { result: PowerTestResult }) {
+  return (
+    <dl className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+      <div className="flex gap-1.5">
+        <dt className="text-muted-foreground">{result.label}</dt>
+        <dd className="font-medium">
+          {formatNumber(result.watts, 0)} W
+          {result.wkg !== null && ` · ${formatNumber(result.wkg, 2)} W/kg`}
+        </dd>
+      </div>
+      {result.wPrimeKj !== null && (
+        <div className="flex gap-1.5">
+          <dt className="text-muted-foreground">W′</dt>
+          <dd>{formatNumber(result.wPrimeKj, 1)} kJ</dd>
+        </div>
+      )}
+      {result.r2 !== null && (
+        <div className="flex gap-1.5">
+          <dt className="text-muted-foreground">R²</dt>
+          <dd>{formatNumber(result.r2, 3)}</dd>
+        </div>
+      )}
+    </dl>
+  )
+}
+
+/** FTP and CP tests, newest first, each with its change since the previous test of its kind. */
+export function PowerTestTimeline({ rider }: { rider: Rider }) {
+  const ftpFactor = useFtpFactor()
+  const typicalErrors = useTypicalErrors()
+  const tests = [...rider.powerTests].reverse()
+  const previous = (test: PowerTest, index: number) =>
+    tests.slice(index + 1).find((t) => t.method === test.method)
+
+  return (
+    <Panel title="Power Tests">
+      {tests.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No FTP or CP tests yet.</p>
+      ) : (
+        <ol className="space-y-3 border-l pl-4">
+          {tests.map((test, index) => {
+            const result = ftpFactor === undefined ? null : powerTestResult(test, ftpFactor)
+            const before = previous(test, index)
+            const beforeResult =
+              before && ftpFactor !== undefined ? powerTestResult(before, ftpFactor) : null
+            return (
+              <li key={`${test.date}-${test.method}`} className="relative space-y-1">
+                <span
+                  className="absolute top-1.5 -left-[1.3rem] size-2 rounded-full bg-primary"
+                  aria-hidden="true"
+                />
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  {formatDate(test.date)}
+                  <Badge variant="outline">{POWER_TEST_LABELS[test.method]}</Badge>
+                </p>
+                {result ? (
+                  <ResultLine result={result} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {ftpFactor === undefined ? 'Calculating…' : 'These efforts give no valid CP.'}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {test.efforts
+                    .map(
+                      (e) =>
+                        `${formatEffortDuration(e.durationS)} at ${formatNumber(e.watts, 0)} W`,
+                    )
+                    .join(' · ')}
+                  {test.notes && ` · ${test.notes}`}
+                </p>
+                {result && beforeResult && (
+                  <ChangeNote
+                    change={result.watts - beforeResult.watts}
+                    typicalError={typicalErrors[result.metricKey] ?? null}
+                  />
+                )}
+              </li>
+            )
+          })}
         </ol>
       )}
     </Panel>
