@@ -3,9 +3,10 @@ import { ATTRIBUTES } from '@/data/labels.ts'
 import type { Rider } from '@/data/types.ts'
 import { riderAge, riderTrainingAge } from '@/lib/rider.ts'
 
-// Metric registry (task 4.3): one definition per metric, reused by the filter
-// builder and the scatter explorer. Adding an entry here makes the metric
-// available in both.
+// Metric registry (task 4.3): one definition per metric, reused by the squad
+// table, the filter builder and the scatter explorer. Adding an entry here makes
+// the metric available in all three (the table adds a plain column unless a
+// hand-made one shows it, see pages/squad/columns.tsx).
 
 export interface MetricDef {
   id: string
@@ -93,6 +94,43 @@ export const METRICS: readonly MetricDef[] = [
     higherIsBetter: false,
     group: 'Physiology',
     get: (r) => r.labTests.at(-1)?.vlamaxMmolLS ?? null,
+  },
+  {
+    id: 'fatmax',
+    label: 'FatMax',
+    unit: 'W',
+    decimals: 0,
+    higherIsBetter: true,
+    group: 'Physiology',
+    get: (r) => r.labTests.at(-1)?.fatmaxW ?? null,
+  },
+  {
+    id: 'carbmax',
+    label: 'CarbMax',
+    unit: 'g/h',
+    decimals: 0,
+    higherIsBetter: true,
+    group: 'Physiology',
+    get: (r) => r.labTests.at(-1)?.carbmaxGH ?? null,
+  },
+  {
+    id: 'at',
+    label: 'Anaerobic Threshold',
+    unit: 'W',
+    decimals: 0,
+    higherIsBetter: true,
+    group: 'Physiology',
+    get: (r) => r.labTests.at(-1)?.atW ?? null,
+  },
+  {
+    // intervals.icu's estimate (KB §9); never rated against the 60-min benchmark (KB §6).
+    id: 'eftp',
+    label: 'eFTP',
+    unit: 'W/kg',
+    decimals: 2,
+    higherIsBetter: true,
+    group: 'Training',
+    get: (r) => r.form.eftpWkg.at(-1)?.value ?? null,
   },
   {
     id: 'ctl',

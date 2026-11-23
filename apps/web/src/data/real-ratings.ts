@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@prolog/types'
+import type { RatingMode } from '@/data/rating-mode-store.ts'
 import type { AttributeId, AttributeRating, CaPa } from '@/data/types.ts'
 
 // Reads the Phase 7 outputs for the views (TODO 4.3): the latest ratings of
@@ -33,12 +34,24 @@ function check<T>(result: { data: T | null; error: { message: string } | null },
 function ratingsOn(client: Client, day: string) {
   return client
     .from('rider_ratings')
-    .select('athlete_id, attribute, value, rating, confidence, benchmark_sets!inner(is_active)')
+    .select(
+      'athlete_id, attribute, value, rating, squad_rating, confidence, benchmark_sets!inner(is_active)',
+    )
     .eq('benchmark_sets.is_active', true)
     .eq('as_of', day)
 }
 
-export async function fetchModelOutputs(client: Client, asOf: string): Promise<ModelOutputs> {
+/**
+ * Ratings in the chosen mode: against the benchmark set, or squad-relative
+ * (KB §6; null for riders outside the squad). CA and PA use the benchmark set.
+ */
+export async function fetchModelOutputs(
+  client: Client,
+  asOf: string,
+  mode: RatingMode = 'benchmark',
+): Promise<ModelOutputs> {
+  const pick = (row: { rating: number; squad_rating: number | null }) =>
+    mode === 'squad' ? row.squad_rating : row.rating
   const [latestRating, latestCa] = await Promise.all([
     client
       .from('rider_ratings')
@@ -71,18 +84,22 @@ export async function fetchModelOutputs(client: Client, asOf: string): Promise<M
   const earlier = new Map(
     (before ? check(before, 'ratings 28 days ago') : []).map((row) => [
       `${row.athlete_id}/${row.attribute}`,
-      row.rating,
+      pick(row),
     ]),
   )
   const ratings: ModelOutputs['ratings'] = new Map()
   for (const row of current ? check(current, 'ratings') : []) {
     const then = earlier.get(`${row.athlete_id}/${row.attribute}`)
+    const rating = pick(row)
     const own = ratings.get(row.athlete_id) ?? {}
     own[row.attribute] = {
-      rating: row.rating,
+      rating,
       confidence: row.confidence,
       // Ratings show as whole numbers, so the arrow compares whole numbers.
-      change28d: then === undefined ? null : Math.round(row.rating) - Math.round(then),
+      change28d:
+        rating === null || then === undefined || then === null
+          ? null
+          : Math.round(rating) - Math.round(then),
       value: row.value,
     }
     ratings.set(row.athlete_id, own)

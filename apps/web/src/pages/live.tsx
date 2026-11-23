@@ -60,8 +60,8 @@ export function LivePage() {
       <header>
         <h1 className="text-2xl font-semibold">Live Data</h1>
         <p className="text-sm text-muted-foreground">
-          What the nightly sync has stored for each athlete. The other views still show mock riders
-          until they are connected to this data.
+          What the nightly sync has stored for each athlete, as a check that the sync works. The
+          other views read the same data.
         </p>
       </header>
 

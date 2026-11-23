@@ -15,10 +15,12 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/auth/auth-context.ts'
 import { SyncBanner } from '@/components/sync-banner.tsx'
+import { SquadGate } from '@/components/view-state.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { MOCK_AS_OF } from '@/data/mock/riders.ts'
 import { supabase } from '@/lib/supabase.ts'
+import { useRatingMode } from '@/data/rating-mode-store.ts'
 import { ROLE_LABELS, setRole, useRole, type StaffRole } from '@/data/role-store.ts'
 import { formatDate } from '@/lib/format.ts'
 import { cn } from '@/lib/utils.ts'
@@ -39,7 +41,7 @@ const NAV: readonly NavItem[] = [
   { to: '/settings', label: 'Settings', icon: Settings },
   // Signed riders with their reported numbers, until they sync from intervals.icu.
   { to: '/roster', label: 'Roster 2027', icon: ClipboardList },
-  // Stored sync data, until the views above read it (TODO 4.3).
+  // What the nightly sync stored per athlete, as a check on the sync.
   { to: '/live', label: 'Live Data', icon: Database },
 ]
 
@@ -67,6 +69,7 @@ export function AppShell() {
   const { state, signOut } = useAuth()
   const mock = state.status === 'staff' && state.mock
   const [collapsed, setCollapsed] = useState(loadCollapsed)
+  const ratingMode = useRatingMode()
 
   function toggle() {
     setCollapsed((c) => {
@@ -165,6 +168,11 @@ export function AppShell() {
             As of {formatDate(supabase ? new Date().toISOString().slice(0, 10) : MOCK_AS_OF)}
           </span>
           <div className="flex items-center gap-3">
+            {ratingMode === 'squad' && (
+              <Link to="/settings" title="Change in Settings → Benchmark Set">
+                <Badge variant="secondary">Squad-Relative Ratings</Badge>
+              </Link>
+            )}
             {mock ? (
               // Dev build on mock data: preview what each role sees.
               <label className="flex items-center gap-2 text-muted-foreground">
@@ -205,7 +213,9 @@ export function AppShell() {
         </header>
         <SyncBanner />
         <main aria-label="PROLOG Moneyball" className="flex-1 px-6 py-7">
-          <Outlet />
+          <SquadGate>
+            <Outlet />
+          </SquadGate>
         </main>
       </div>
     </div>

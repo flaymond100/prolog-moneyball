@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button.tsx'
 import { TRACKED_LAB_METRICS } from '@/data/lab-ranges.ts'
 import { POWER_TEST_METRICS } from '@/data/power-tests.ts'
+import { setRatingMode, useRatingMode } from '@/data/rating-mode-store.ts'
 import { RIDER_TYPE_LABELS, RIDER_TYPES } from '@/data/labels.ts'
 import {
   MOCK_BENCHMARK_SETS,
@@ -251,19 +252,34 @@ export function BenchmarkSection({ role }: { role: StaffRole }) {
             ))}
           </select>
         </Labelled>
-        <div className="space-y-1">
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <input type="checkbox" disabled className="accent-primary" />
-            Squad-Relative Mode
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Not available yet: the KB maps squad percentile to 1–20 but does not define the
-            percentile method.
-          </p>
-        </div>
+        <SquadRelativeToggle />
       </div>
       {role !== 'coach' && <ReadOnlyNote role={role} who="Coach" />}
     </Panel>
+  )
+}
+
+/** A viewing preference for every role (KB §6); kept in this browser. */
+function SquadRelativeToggle() {
+  const mode = useRatingMode()
+  return (
+    <div className="space-y-1">
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={mode === 'squad'}
+          onChange={(e) => {
+            setRatingMode(e.target.checked ? 'squad' : 'benchmark')
+          }}
+          className="accent-primary"
+        />
+        Squad-Relative Mode
+      </label>
+      <p className="text-xs text-muted-foreground">
+        Ratings show each rider&rsquo;s place in the squad: the weakest rates 1, the strongest 20.
+        CA and PA stay on the benchmark set. Saved in this browser.
+      </p>
+    </div>
   )
 }
 
