@@ -18,6 +18,9 @@ import type { AttributeId, Rider } from '@/data/types.ts'
 import { axisStyle, tooltipStyle, useChartTokens, type ChartTokens } from '@/lib/chart-theme.ts'
 import { formatNumber } from '@/lib/format.ts'
 import { cn } from '@/lib/utils.ts'
+import { PowerUnitToggle } from '@/components/power-unit-toggle.tsx'
+import { usePowerUnit, type PowerUnit } from '@/data/power-unit-store.ts'
+import { attributeUnit, attributeValue } from '@/lib/rider.ts'
 import { Panel } from '@/pages/rider/panels.tsx'
 
 const route = getRouteApi('/app/compare')
@@ -140,15 +143,20 @@ function radarOption(
  * each attribute as a percentage of the squad's best value for it. Only
  * attributes someone in the squad has a value for are plotted.
  */
-function valueRadarOption(t: ChartTokens, a: Rider, b: Rider, squad: Rider[]): EChartsOption {
-  const attrs = ATTRIBUTES.filter(
-    (attr) => best(squad.map((r) => r.attributes[attr.id].value)) !== null,
-  )
-  const squadBest = attrs.map((attr) => best(squad.map((r) => r.attributes[attr.id].value)) ?? 1)
+function valueRadarOption(
+  t: ChartTokens,
+  a: Rider,
+  b: Rider,
+  squad: Rider[],
+  unit: PowerUnit,
+): EChartsOption {
+  const v = (r: Rider, id: AttributeId) => attributeValue(r, id, unit)
+  const attrs = ATTRIBUTES.filter((attr) => best(squad.map((r) => v(r, attr.id))) !== null)
+  const squadBest = attrs.map((attr) => best(squad.map((r) => v(r, attr.id))) ?? 1)
   const share = (values: (number | null)[]) =>
-    values.map((v, i) => (v === null ? 0 : Math.round((v / (squadBest[i] ?? 1)) * 1000) / 10))
-  const of = (r: Rider) => share(attrs.map((attr) => r.attributes[attr.id].value))
-  const squadMean = share(attrs.map((attr) => mean(squad.map((r) => r.attributes[attr.id].value))))
+    values.map((x, i) => (x === null ? 0 : Math.round((x / (squadBest[i] ?? 1)) * 1000) / 10))
+  const of = (r: Rider) => share(attrs.map((attr) => v(r, attr.id)))
+  const squadMean = share(attrs.map((attr) => mean(squad.map((r) => v(r, attr.id)))))
 
   // Start the scale below the lowest share so small differences stay visible.
   const lowest = Math.min(...of(a), ...of(b), ...squadMean)
@@ -207,7 +215,7 @@ function valueRadarOption(t: ChartTokens, a: Rider, b: Rider, squad: Rider[]): E
   }
 }
 
-function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
+function DifferenceTable({ a, b, unit }: { a: Rider; b: Rider; unit: PowerUnit }) {
   const rows: {
     id: string
     label: string
@@ -238,14 +246,14 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
     })),
   ]
   const attrOf = (id: string) => ATTRIBUTES.find((x) => x.id === id)
+  // Power values in the chosen unit (W/kg or W); ratings stay on W/kg (KB §6).
   const valueOf = (r: Rider, id: string) =>
-    attrOf(id) ? r.attributes[id as AttributeId].value : null
-  const unitOf = (id: string) => attrOf(id)?.unit ?? ''
-  const valueDecimals = (id: string) => (unitOf(id) === 'W/kg' ? 2 : 0)
-  const value = (r: Rider, id: string) => {
-    const attr = attrOf(id)
-    return attr ? `${formatNumber(valueOf(r, id), valueDecimals(id))} ${attr.unit}` : null
-  }
+    attrOf(id) ? attributeValue(r, id as AttributeId, unit) : null
+  const unitOf = (id: string) => (attrOf(id) ? attributeUnit(id as AttributeId, unit).unit : '')
+  const valueDecimals = (id: string) =>
+    attrOf(id) ? attributeUnit(id as AttributeId, unit).decimals : 0
+  const value = (r: Rider, id: string) =>
+    attrOf(id) ? `${formatNumber(valueOf(r, id), valueDecimals(id))} ${unitOf(id)}` : null
 
   return (
     <table className="w-full text-sm">
@@ -267,8 +275,10 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
       </thead>
       <tbody>
         {rows.map((row) => {
-          // Ratings when both are rated; otherwise the measured values (TODO 7.1).
-          const byRating = row.ra !== null && row.rb !== null
+          // Ratings when both are rated, otherwise the measured values (TODO 7.1); in the
+          // W view, power rows compare watts.
+          const wattsRow = unit === 'w' && attrOf(row.id)?.secs !== undefined
+          const byRating = row.ra !== null && row.rb !== null && !wattsRow
           const va = valueOf(a, row.id)
           const vb = valueOf(b, row.id)
           const diff = byRating
@@ -276,7 +286,7 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
             : va !== null && vb !== null
               ? va - vb
               : null
-          const unit = byRating ? '' : unitOf(row.id)
+          const diffUnit = byRating ? '' : unitOf(row.id)
           return (
             <tr key={row.id} className="border-b last:border-b-0">
               <th scope="row" className="py-1.5 text-left font-normal">
@@ -299,7 +309,7 @@ function DifferenceTable({ a, b }: { a: Rider; b: Rider }) {
               >
                 {diff === 0
                   ? '0'
-                  : `${formatNumber(diff, byRating ? row.decimals : valueDecimals(row.id), true)}${unit && diff !== null ? ` ${unit}` : ''}`}
+                  : `${formatNumber(diff, byRating ? row.decimals : valueDecimals(row.id), true)}${diffUnit && diff !== null ? ` ${diffUnit}` : ''}`}
                 {diff !== null && diff !== 0 && (
                   <span className="sr-only"> in favour of {diff > 0 ? a.name : b.name}</span>
                 )}
@@ -408,6 +418,7 @@ export function ComparePage() {
   const navigate = route.useNavigate()
   const t = useChartTokens()
   const [showPro, setShowPro] = useState(false)
+  const unit = usePowerUnit()
 
   const a = riders.find((r) => r.id === search.a) ?? riders[0]
   const b =
@@ -459,6 +470,7 @@ export function ComparePage() {
               />
               Show Pro Mean
             </label>
+            <PowerUnitToggle />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -476,7 +488,7 @@ export function ComparePage() {
                     are calculated.
                   </p>
                   <Chart
-                    option={valueRadarOption(t, a, b, riders)}
+                    option={valueRadarOption(t, a, b, riders, unit)}
                     height={340}
                     label={`Radar of ${a.name} and ${b.name}: best power as a percentage of the squad best`}
                   />
@@ -484,7 +496,7 @@ export function ComparePage() {
               )}
             </Panel>
             <Panel title="Head to Head">
-              <DifferenceTable a={a} b={b} />
+              <DifferenceTable a={a} b={b} unit={unit} />
             </Panel>
           </div>
 

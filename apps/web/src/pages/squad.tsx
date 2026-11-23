@@ -25,7 +25,9 @@ import { useSquad } from '@/data/queries.ts'
 import { downloadCsv, toCsv } from '@/lib/csv.ts'
 import { loadLayouts, storeLayouts, type SquadLayout } from '@/lib/saved-layouts.ts'
 import { cn } from '@/lib/utils.ts'
-import { COLUMN_GROUPS, squadColumns, type ColumnGroupId } from '@/pages/squad/columns.tsx'
+import { PowerUnitToggle } from '@/components/power-unit-toggle.tsx'
+import { usePowerUnit } from '@/data/power-unit-store.ts'
+import { COLUMN_GROUPS, squadColumnsFor, type ColumnGroupId } from '@/pages/squad/columns.tsx'
 
 const inputClass =
   'h-8 rounded-md border bg-transparent px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50'
@@ -37,6 +39,9 @@ export function SquadPage() {
   const [hidden, setHidden] = useState<VisibilityState>({})
   const [sorting, setSorting] = useState<SortingState>([])
   const [minRides, setMinRides] = useState(0)
+  // W/kg or absolute watts for the power columns: shown, sorted and exported.
+  const unit = usePowerUnit()
+  const squadColumns = squadColumnsFor(unit)
   const [layouts, setLayouts] = useState<SquadLayout[]>(loadLayouts)
   const [layoutName, setLayoutName] = useState('')
 
@@ -57,7 +62,7 @@ export function SquadPage() {
       visibility[id] = g === undefined || (g === group && hidden[id] !== false)
     }
     return visibility
-  }, [group, hidden])
+  }, [group, hidden, squadColumns])
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table v8 returns unstable functions; the compiler skips this component
   const table = useReactTable({
@@ -151,6 +156,8 @@ export function SquadPage() {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <PowerUnitToggle />
 
         <label className="flex items-center gap-2 text-sm">
           Min. Rides (84 Days)
