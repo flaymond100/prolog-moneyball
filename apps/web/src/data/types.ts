@@ -120,7 +120,7 @@ export interface FormSeries {
   /** Null without HRV data (not collected until legal sign-off, KB §11). */
   baselineMean: number | null
   baselineSd: number | null
-  /** HRV readings in the last 7 days; fewer than 3 means insufficient data (KB §9). */
+  /** HRV readings in the last 7 days; HRV is optional, and fewer than 3 leave it out of readiness (KB §9). */
   hrvReadings7d: number
   /** Weekly eFTP in W/kg. */
   eftpWkg: DatedValue[]

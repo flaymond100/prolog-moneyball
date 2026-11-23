@@ -319,9 +319,10 @@ Current form combines load (CTL/ATL/TSB), recent capacity versus the 84-day best
 **Readiness traffic light \[prior\]**
 
 - Each marker has a band: ln rMSSD 7-day within baseline ± 0.5 SD; resting HR within baseline + 5 bpm; wellness composite within its 60-day mean − 1 SD; sleep ≥ 6.5 h.
-- Green: all markers in band. Amber: one marker out. Red: two or more markers out for two or more consecutive days.
-- Show the reasons on the card (e.g. "HRV low 3 days, soreness high").
-- Grey "insufficient HRV data" when fewer than 3 HRV readings in the last 7 days. Never infer readiness from missing data.
+- Every marker is optional per rider, HRV, resting HR and sleep included: not every rider wears a device (agreed with Kosta, 23 November 2026). A marker counts when it has at least 3 readings in the last 7 days; a marker that does not count is left out, never inferred.
+- Green: all counted markers in band. Amber: one counted marker out. Red: two or more counted markers out for two or more consecutive days, so a rider with one counted marker is green or amber only.
+- Show the reasons on the card (e.g. "HRV low 3 days, soreness high") and which markers counted.
+- Grey "No readiness data" when no marker counts. Never infer readiness from missing data.
 - ACWR is shown as information only, never as an alert.
 
 **Predicted form**
@@ -363,6 +364,7 @@ Lab data comes only from INSCYD and is entered manually; HRV is comparable betwe
 
 **HRV standardisation (rider rule)**
 
+- HRV is optional (section 9). For riders who measure it:
 - One method for the whole squad: morning reading on waking, lying down, same app and chest strap, at least 3 times a week.
 - Do not mix with overnight watch HRV; it measures something different.
 
