@@ -79,7 +79,7 @@ Collect data first, then build on it. The sync stores every raw response, so all
 ## Phase 5 – Derived metrics
 
 - [x] **5.1 `packages/metrics` core.** Pure functions: `ratingFromZ`, `ratingFromAnchors`, `normaliseWellness`, `lnRmssdStats`, `projectLoad` (CTL/ATL), `retainedPct`. AC: 100% branch coverage; fixtures from KB worked examples (e.g. 5 s 15.3 W/kg → 15, 60 min 4.1 W/kg → ≈14.4). *Status (10 November 2026): `projectLoad` uses the exponential update x + (load − x) · (1 − e^(−1/τ)), which reproduces intervals.icu's `ctl`/`atl` to within 1e-5; TrainingPeaks' 1/τ step was up to 0.5 off for ATL.*
-- [ ] **5.2 `v_form_daily` (materialised).** All metrics in KB §9 table: CTL/ATL/TSB, ramp rate, ln rMSSD 7-day mean, 60-day baseline mean/SD, 7-day CV, readings count, resting HR deviation, wellness composite, sleep. Refreshed by `refresh-derived`. AC: pgTAP compares with hand-calculated fixtures.
+- [ ] **5.2 `v_form_daily` (materialised).** All metrics in KB §9 table: CTL/ATL/TSB, ramp rate, ln rMSSD 7-day mean, 60-day baseline mean/SD, 7-day CV, readings count, resting HR deviation, wellness composite, sleep. Refreshed by `refresh-derived`. AC: pgTAP compares with hand-calculated fixtures. *Readiness markers are all optional per rider (KB §9, 23 November 2026): count only markers with at least 3 readings in 7 days.*
 - [x] **5.3 `v_power_profile`.** Best 5/30/60/300/1200/3600 s in W and W/kg (weight nearest the date: lab → anthropometrics → wellness) for 42 d, 84 d, season; 14-day best ÷ 84-day best; confidence per KB §6 (≥3 days at ≥95% of best). *Status (10 November 2026): built on a new `activity_power_curves` table (one curve per ride, synced nightly and by the backfill); W/kg takes the nearest weight from any source, lab → anthropometrics → wellness on equally near days (agreed with Kosta). Existing riders need one backfill from the season start after deploy.*
 - [ ] **5.4 `v_efficiency_trends`.** EF on Z2 rides (>60 min, >70% in Z1–2), 7-ride rolling; decoupling on rides over 2 h.
 - [ ] **5.5 `v_consistency`.** Weekly planned vs completed load from `planned_events` and activities; 12-week compliance %; indoor/outdoor ratio; intensity distribution from zone views.
@@ -160,7 +160,7 @@ These do not block Phases 0–7; the agent should ask about each one when it rea
 | Custom domain | 10.2 | Use e.g. `dashboard.prolog-cycling.com`? |
 | Supabase region | 2.1 | Is the existing project in an EU region? If not, migrate before real rider data arrives. **Answered:** `eu-central-1` (Frankfurt), Postgres 17 (19 October 2026). |
 | Rider data | 2.4 | Date of birth, training age, background and HRV method for all 12 riders |
-| HRV method | 2.4 | Which app and chest strap will the squad standardise on? |
+| HRV method | 2.4 | Which app and chest strap will the squad standardise on? **Partly answered:** HRV, resting HR and sleep are optional per rider; readiness uses the markers each rider tracks (23 November 2026). The method for those who measure HRV is still open; a phone-camera app (e.g. HRV4Training) needs no strap. |
 | Medical role | 2.3, 8.x | Who holds the `medical` role (team doctor, physio, nobody yet)? **Answered:** nobody yet; the role exists and KB rules apply, so medical-only data stays hidden until someone is assigned (19 October 2026). |
 | Retention | 8.4 | Is 12 months after contract end the right period? |
 | Rouleur benchmark | 7.1 | Watt-based benchmark for absolute 20/60-min power, or keep squad-relative? |

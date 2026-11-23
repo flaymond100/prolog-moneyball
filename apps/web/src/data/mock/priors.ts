@@ -3,6 +3,6 @@
 export const MOCK_READINESS_PRIORS = {
   /** 7-day ln rMSSD is in band within baseline ± this many SD. */
   lnRmssdBandSd: 0.5,
-  /** Fewer HRV readings than this in 7 days shows "insufficient HRV data". */
+  /** A readiness marker needs this many readings in 7 days to count (KB §9). */
   minHrvReadings7d: 3,
 } as const

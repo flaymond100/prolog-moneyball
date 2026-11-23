@@ -5,7 +5,8 @@ const LIGHTS: Record<Light, { label: string; className: string }> = {
   green: { label: 'Green', className: 'bg-rating-band-3' },
   amber: { label: 'Amber', className: 'bg-rating-band-2' },
   red: { label: 'Red', className: 'bg-rating-band-1' },
-  grey: { label: 'Insufficient HRV data', className: 'bg-muted-foreground' },
+  // Every marker is optional (KB §9): grey when none the rider tracks has enough readings.
+  grey: { label: 'No readiness data', className: 'bg-muted-foreground' },
 }
 
 export function ReadinessLight({ light, className }: { light: Light; className?: string }) {

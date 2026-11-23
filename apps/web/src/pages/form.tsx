@@ -82,8 +82,8 @@ function LnRmssdBand({ rider }: { rider: Rider }) {
 
 function FormCard({ rider }: { rider: Rider }) {
   const { readiness, training, form } = rider
-  const insufficient = form.hrvReadings7d < MIN_HRV_READINGS
-  const light = insufficient ? 'grey' : readiness.light
+  // HRV is optional (KB §9): the band shows only for a rider who measures it.
+  const tracksHrv = form.hrvReadings7d > 0
   const first = form.eftpWkg[0]
   const last = form.eftpWkg.at(-1)
 
@@ -103,8 +103,8 @@ function FormCard({ rider }: { rider: Rider }) {
               {rider.name}
             </Link>
           </h2>
-          <ReadinessLight light={light} className="text-sm" />
-          {!insufficient && readiness.reasons.length > 0 && (
+          <ReadinessLight light={readiness.light} className="text-sm" />
+          {readiness.reasons.length > 0 && (
             <p className="text-xs text-muted-foreground">{readiness.reasons.join(', ')}</p>
           )}
         </div>
@@ -117,19 +117,21 @@ function FormCard({ rider }: { rider: Rider }) {
         </div>
       </header>
 
-      <section aria-label="HRV" className="space-y-1">
-        <p className="text-xs text-muted-foreground">
-          7-day ln rMSSD · band = baseline ± {lnRmssdBandSd} SD · {form.hrvReadings7d} readings in 7
-          days
-        </p>
-        {insufficient ? (
-          <p className="rounded-sm border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-            Insufficient HRV data: fewer than {MIN_HRV_READINGS} readings in the last 7 days.
+      {tracksHrv && (
+        <section aria-label="HRV" className="space-y-1">
+          <p className="text-xs text-muted-foreground">
+            7-day ln rMSSD · band = baseline ± {lnRmssdBandSd} SD · {form.hrvReadings7d} readings in
+            7 days
           </p>
-        ) : (
-          <LnRmssdBand rider={rider} />
-        )}
-      </section>
+          {form.hrvReadings7d < MIN_HRV_READINGS ? (
+            <p className="rounded-sm border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
+              Too few HRV readings this week to count: fewer than {MIN_HRV_READINGS} in 7 days.
+            </p>
+          ) : (
+            <LnRmssdBand rider={rider} />
+          )}
+        </section>
+      )}
 
       <div className="flex flex-wrap items-end justify-between gap-4 border-t pt-3">
         <div className="space-y-1">
@@ -174,8 +176,9 @@ export function FormPage() {
         Form
       </h1>
       <p className="text-sm text-muted-foreground">
-        Readiness: green when every marker is in band, amber with one out, red with two or more out
-        for two or more days. ACWR is not used for alerts.
+        Readiness uses the markers each rider tracks: HRV, resting HR, sleep and wellness scores,
+        all optional. Green when every tracked marker is in band, amber with one out, red with two
+        or more out for two or more days. ACWR is not used for alerts.
       </p>
       <div className="grid gap-4 lg:grid-cols-2">
         {riders.map((r) => (
