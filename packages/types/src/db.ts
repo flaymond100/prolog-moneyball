@@ -983,6 +983,71 @@ export type Database = {
           },
         ]
       }
+      power_tests: {
+        Row: {
+          activity_id: string | null
+          athlete_id: string
+          created_at: string
+          durations_s: number[]
+          entered_by: string | null
+          id: string
+          method: Database['public']['Enums']['power_test_method']
+          notes: string | null
+          test_date: string
+          updated_at: string
+          watts: number[]
+        }
+        ComputedFields: never
+        Insert: {
+          activity_id?: string | null
+          athlete_id: string
+          created_at?: string
+          durations_s: number[]
+          entered_by?: string | null
+          id?: string
+          method: Database['public']['Enums']['power_test_method']
+          notes?: string | null
+          test_date: string
+          updated_at?: string
+          watts: number[]
+        }
+        Update: {
+          activity_id?: string | null
+          athlete_id?: string
+          created_at?: string
+          durations_s?: number[]
+          entered_by?: string | null
+          id?: string
+          method?: Database['public']['Enums']['power_test_method']
+          notes?: string | null
+          test_date?: string
+          updated_at?: string
+          watts?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'power_tests_activity_id_fkey'
+            columns: ['activity_id']
+            isOneToOne: false
+            referencedRelation: 'activities'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'power_tests_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'athletes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'power_tests_athlete_id_fkey'
+            columns: ['athlete_id']
+            isOneToOne: false
+            referencedRelation: 'v_sync_health'
+            referencedColumns: ['athlete_id']
+          },
+        ]
+      }
       rider_ca_pa: {
         Row: {
           as_of: string
@@ -1543,6 +1608,22 @@ export type Database = {
         ComputedFields: never
         Relationships: []
       }
+      v_power_tests: {
+        Row: {
+          activity_id: string | null
+          athlete_id: string | null
+          created_at: string | null
+          durations_s: number[] | null
+          id: string | null
+          method: Database['public']['Enums']['power_test_method'] | null
+          notes: string | null
+          test_date: string | null
+          watts: number[] | null
+          wkg: number[] | null
+        }
+        ComputedFields: never
+        Relationships: []
+      }
       v_roster: {
         Row: {
           athlete_id: string | null
@@ -1748,6 +1829,21 @@ export type Database = {
           freshness_pct: number
         }[]
       }
+      staff_power_tests: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          activity_id: string
+          athlete_id: string
+          created_at: string
+          durations_s: number[]
+          id: string
+          method: Database['public']['Enums']['power_test_method']
+          notes: string
+          test_date: string
+          watts: number[]
+          wkg: number[]
+        }[]
+      }
       sync_upsert_activity: { Args: { p_activity: Json; p_intervals: Json }; Returns: undefined }
     }
     Enums: {
@@ -1756,6 +1852,7 @@ export type Database = {
       evidence_status: 'source' | 'prior'
       lab_test_method: 'inscyd_lab' | 'inscyd_ppd_field'
       power_curve_window: '42d' | '84d' | 'season'
+      power_test_method: 'ftp_20min' | 'cp'
       rating_attribute: 'p5s' | 'p30s' | 'p1m' | 'p5m' | 'p20m' | 'p60m' | 'durability' | 'vo2max'
       rating_confidence: 'high' | 'low'
       rider_cohort: 'squad' | 'prospect' | 'alumni'
@@ -1880,6 +1977,7 @@ export const Constants = {
       evidence_status: ['source', 'prior'],
       lab_test_method: ['inscyd_lab', 'inscyd_ppd_field'],
       power_curve_window: ['42d', '84d', 'season'],
+      power_test_method: ['ftp_20min', 'cp'],
       rating_attribute: ['p5s', 'p30s', 'p1m', 'p5m', 'p20m', 'p60m', 'durability', 'vo2max'],
       rating_confidence: ['high', 'low'],
       rider_cohort: ['squad', 'prospect', 'alumni'],

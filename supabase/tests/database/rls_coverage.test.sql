@@ -8,7 +8,7 @@ truncate public.athletes, public.sync_runs, public.edit_history cascade;
 delete from auth.users where email in ('coach@example.com', 'viewer@example.com');
 create extension if not exists pgtap with schema extensions;
 
-select plan(60);
+select plan(61);
 
 -- Inventory -------------------------------------------------------------------
 
@@ -16,11 +16,11 @@ select tables_are('public', array[
   'activities', 'activity_intervals', 'activity_power_curves', 'anthropometrics', 'app_settings', 'athletes', 'benchmark_points',
   'benchmark_sets', 'ca_weights', 'consents', 'cycle_data', 'durability_efforts', 'edit_history',
   'forecasts', 'lab_tests', 'medical_markers', 'model_priors', 'model_priors_history',
-  'planned_events', 'power_curves', 'rider_ca_pa', 'rider_profiles', 'rider_ratings', 'roster_entries',
+  'planned_events', 'power_curves', 'power_tests', 'rider_ca_pa', 'rider_profiles', 'rider_ratings', 'roster_entries',
   'saved_filters', 'saved_layouts', 'staff', 'sync_runs', 'wellness'
 ], 'public tables are exactly the known set; add a new table here with its tests');
 
-select views_are('public', array['v_body_mass', 'v_durability', 'v_power_profile', 'v_roster', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
+select views_are('public', array['v_body_mass', 'v_durability', 'v_power_profile', 'v_power_tests', 'v_roster', 'v_sync_health', 'v_sync_last_run'], 'public views are exactly the known set');
 
 select is_empty(
   $$select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -61,6 +61,9 @@ select policies_are('public', 'model_priors', array['Staff read model priors', '
 select policies_are('public', 'model_priors_history', array['Staff read model priors history']);
 select policies_are('public', 'activity_power_curves', array['Staff read activity power curves']);
 select policies_are('public', 'planned_events', array['Staff read planned events']);
+select policies_are('public', 'power_tests', array[
+  'Staff read power tests', 'Coach inserts power tests',
+  'Coach updates power tests', 'Coach deletes power tests']);
 select policies_are('public', 'power_curves', array['Staff read power curves']);
 select policies_are('public', 'rider_ca_pa', array['Staff read rider CA and PA']);
 select policies_are('public', 'rider_profiles', array[
@@ -108,7 +111,7 @@ select throws_ok(
   $$insert into public.staff (user_id, role) values ('00000000-0000-0000-0000-000000000005', 'coach')$$,
   '42501', null, 'viewer: cannot add staff');
 select is((select count(*)::int from public.activity_intervals), 1, 'viewer: reads activity intervals');
-select is((select count(*)::int from public.model_priors_history), 54, 'viewer: reads priors history');
+select is((select count(*)::int from public.model_priors_history), 55, 'viewer: reads priors history');
 reset role;
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000001", "role": "authenticated"}', true);
@@ -143,7 +146,7 @@ select throws_ok(
   '42501', null, 'coach: cannot insert benchmark points');
 select lives_ok($$update public.benchmark_points set mean = 1$$, 'coach: benchmark point update runs');
 reset role;
-select is((select count(*)::int from public.model_priors_history), 54, 'coach: priors history delete removes nothing');
+select is((select count(*)::int from public.model_priors_history), 55, 'coach: priors history delete removes nothing');
 select is((select mean from public.benchmark_points where attribute = 'p5s'), 15.3,
   'coach: benchmark point update changes nothing');
 

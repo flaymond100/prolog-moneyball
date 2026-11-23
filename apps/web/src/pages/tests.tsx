@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.tsx'
 import { useAnthropometrics, useSquad } from '@/data/queries.ts'
 import { formatDate, formatNumber } from '@/lib/format.ts'
-import { LabTimeline } from '@/pages/rider/history.tsx'
+import { LabTimeline, PowerTestTimeline } from '@/pages/rider/history.tsx'
 import { Panel } from '@/pages/rider/panels.tsx'
 import { DeltaTable, SlopeChart, Vo2VlaQuadrant } from '@/pages/tests/analysis.tsx'
-import { AnthropometricsForm, LabTestForm } from '@/pages/tests/forms.tsx'
+import { AnthropometricsForm, LabTestForm, PowerTestForm } from '@/pages/tests/forms.tsx'
 
 export function TestsPage() {
   const { data: riders = [] } = useSquad()
@@ -23,10 +23,14 @@ export function TestsPage() {
         <Tabs defaultValue="lab">
           <TabsList>
             <TabsTrigger value="lab">Lab Test</TabsTrigger>
+            <TabsTrigger value="power">Power Test</TabsTrigger>
             <TabsTrigger value="body">Measurements</TabsTrigger>
           </TabsList>
           <TabsContent value="lab" className="pt-3">
             <LabTestForm riders={riders} />
+          </TabsContent>
+          <TabsContent value="power" className="pt-3">
+            <PowerTestForm riders={riders} />
           </TabsContent>
           <TabsContent value="body" className="space-y-4 pt-3">
             <AnthropometricsForm riders={riders} />
@@ -86,6 +90,7 @@ export function TestsPage() {
             </select>
           </label>
           {rider && <LabTimeline rider={rider} />}
+          {rider && <PowerTestTimeline rider={rider} />}
         </div>
         <Vo2VlaQuadrant riders={riders} />
       </div>

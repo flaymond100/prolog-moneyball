@@ -2,7 +2,15 @@ import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/r
 import { MOCK_RIDERS } from '@/data/mock/riders.ts'
 import { MOCK_SYNC_HEALTH } from '@/data/mock/sync-health.ts'
 import { fetchRealSquad } from '@/data/real-riders.ts'
-import type { Anthropometric, LabTest, Rider, SyncHealth, SyncOutcome } from '@/data/types.ts'
+import { MOCK_FTP_FACTOR_20MIN } from '@/data/mock/priors.ts'
+import type {
+  Anthropometric,
+  LabTest,
+  PowerTest,
+  Rider,
+  SyncHealth,
+  SyncOutcome,
+} from '@/data/types.ts'
 import { supabase } from '@/lib/supabase.ts'
 
 // The one place views get rider data from (TODO 4.3). With Supabase settings
@@ -123,6 +131,64 @@ export function useSyncHealth() {
 
 const DUPLICATE_LAB_TEST = 'This rider already has a test with this date and method.'
 const DUPLICATE_MEASUREMENT = 'This rider already has measurements on this date.'
+const DUPLICATE_POWER_TEST = 'This rider already has a test of this kind on this date.'
+
+async function insertPowerTest({ athleteId, test }: { athleteId: string; test: PowerTest }) {
+  if (supabase) {
+    const { error } = await supabase.from('power_tests').insert({
+      athlete_id: athleteId,
+      test_date: test.date,
+      method: test.method,
+      durations_s: test.efforts.map((e) => e.durationS),
+      watts: test.efforts.map((e) => e.watts),
+      notes: test.notes,
+    })
+    if (error) throw writeError(error, DUPLICATE_POWER_TEST)
+    return
+  }
+  // Mock: mirrors the unique constraint power_tests_one_per_athlete_date_method.
+  const rider = mockRiders.find((r) => r.id === athleteId)
+  if (!rider) throw new Error('Unknown rider.')
+  if (rider.powerTests.some((t) => t.date === test.date && t.method === test.method)) {
+    throw new Error(DUPLICATE_POWER_TEST)
+  }
+  const powerTests = [...rider.powerTests, test].sort((a, b) => a.date.localeCompare(b.date))
+  mockRiders = mockRiders.map((r) => (r.id === athleteId ? { ...r, powerTests } : r))
+}
+
+/** The 20-min FTP factor from model_priors (KB §10). */
+async function fetchFtpFactor(): Promise<number> {
+  if (!supabase) return MOCK_FTP_FACTOR_20MIN
+  const { data, error } = await supabase
+    .from('model_priors')
+    .select('value')
+    .eq('key', 'ftp.factor_20min')
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (typeof data?.value !== 'number') throw new Error('model_priors ftp.factor_20min is missing')
+  return data.value
+}
+
+export const ftpFactorQuery = queryOptions({
+  queryKey: ['ftp-factor'],
+  queryFn: fetchFtpFactor,
+  staleTime: Infinity,
+})
+
+export function useFtpFactor() {
+  return useQuery(ftpFactorQuery).data
+}
+
+export function useAddPowerTest() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: insertPowerTest,
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: ['squad'] })
+      await client.invalidateQueries({ queryKey: ['rider'] })
+    },
+  })
+}
 
 async function insertLabTest({ athleteId, test }: { athleteId: string; test: LabTest }) {
   if (supabase) {
