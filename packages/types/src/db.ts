@@ -1587,6 +1587,17 @@ export type Database = {
         ComputedFields: never
         Relationships: []
       }
+      v_eftp_weekly: {
+        Row: {
+          as_of: string | null
+          athlete_id: string | null
+          eftp_w: number | null
+          eftp_wkg: number | null
+          week_start: string | null
+        }
+        ComputedFields: never
+        Relationships: []
+      }
       v_power_profile: {
         Row: {
           as_of: string | null
@@ -1807,6 +1818,16 @@ export type Database = {
           fresh_84d_w: number
           kj_kg_bucket: number
           retained_pct: number
+        }[]
+      }
+      staff_eftp_weekly: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          as_of: string
+          athlete_id: string
+          eftp_w: number
+          eftp_wkg: number
+          week_start: string
         }[]
       }
       staff_power_profile: {

@@ -350,7 +350,14 @@ begin
           'ctl', round(ctl::numeric, 1),
           'atl', round(atl::numeric, 1),
           'rampRate', case when cardinality(ctl_hist) > 7
-            then round((ctl - ctl_hist[cardinality(ctl_hist) - 7])::numeric, 1) end
+            then round((ctl - ctl_hist[cardinality(ctl_hist) - 7])::numeric, 1) end,
+          -- intervals.icu's power-model estimate, as the live sync stores it.
+          'sportInfo', jsonb_build_array(jsonb_build_object(
+            'type', 'Ride',
+            'eftp', round(r.p[6] * r.mass * (1 - 0.04 * ((d - 100) / 100.0) ^ 2)
+                          * (1 + 0.06 / (1 + r.training_age) * (1 - d / 182.0))
+                          * pg_temp.r(key || ':eftp', 0.98, 1.02))
+          ))
         )
       );
     end loop;

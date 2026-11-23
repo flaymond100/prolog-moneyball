@@ -7,6 +7,7 @@ import {
   redirect,
 } from '@tanstack/react-router'
 import { AuthGate } from '@/auth/auth-gate.tsx'
+import { RouteError } from '@/components/view-state.tsx'
 import { ComparePage } from '@/pages/compare.tsx'
 import { FormPage } from '@/pages/form.tsx'
 import { LivePage } from '@/pages/live.tsx'
@@ -42,7 +43,7 @@ const indexRoute = createRoute({
   },
 })
 
-// Stored sync data per athlete, until the views read it (TODO 4.3).
+// Stored sync data per athlete, as a check on the nightly sync.
 const liveRoute = createRoute({
   getParentRoute: () => appRoute,
   path: '/live',
@@ -140,7 +141,12 @@ const routeTree = rootRoute.addChildren([
 ])
 
 export function createAppRouter() {
-  return createRouter({ routeTree, history: createHashHistory() })
+  // A view that fails to render shows an error card; the sidebar stays (TODO 4.3).
+  return createRouter({
+    routeTree,
+    history: createHashHistory(),
+    defaultErrorComponent: RouteError,
+  })
 }
 
 declare module '@tanstack/react-router' {

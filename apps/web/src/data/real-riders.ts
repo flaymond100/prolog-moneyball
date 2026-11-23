@@ -1,9 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@prolog/types'
 import { fetchModelOutputs } from '@/data/real-ratings.ts'
+import type { RatingMode } from '@/data/rating-mode-store.ts'
 import type {
   AttributeId,
   AttributeRating,
+  DurabilityPoint,
   LabTest,
   PowerCurve,
   PowerTest,
@@ -12,9 +14,9 @@ import type {
 } from '@/data/types.ts'
 
 // Builds the riders the views show from the live database (TODO 4.3).
-// What exists is shown: measured values, and the ratings, rider type and CA
-// the nightly jobs wrote. What is not calculated yet (PA, durability,
-// readiness, eFTP) is left empty for the views to mark.
+// What exists is shown: measured values, durability, weekly eFTP, and the
+// ratings, rider type, CA and PA the nightly jobs wrote. What is not collected
+// or calculated yet (readiness, compliance) is left empty for the views to mark.
 // Columns are named explicitly: client roles have column grants (TODO 2.10).
 
 type Client = SupabaseClient<Database>
@@ -40,6 +42,10 @@ const ATTRIBUTE_IDS: AttributeId[] = [
   'vo2max',
 ]
 const RACE_CATEGORIES = ['RACE_A', 'RACE_B', 'RACE_C']
+// The Form board's eFTP sparkline (KB §12).
+const EFTP_WEEKS = 8
+// Durability funnel points: fresh, then after 10, 20 and 30 kJ/kg (KB §6).
+const DURABILITY_BUCKETS = [10, 20, 30] as const
 
 function daysBefore(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00Z`)
@@ -60,52 +66,75 @@ function firstBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T> {
   return out
 }
 
-export async function fetchRealSquad(client: Client, asOf: string): Promise<Rider[]> {
+export async function fetchRealSquad(
+  client: Client,
+  asOf: string,
+  ratingMode: RatingMode = 'benchmark',
+): Promise<Rider[]> {
   const ridesFrom = daysBefore(asOf, RIDES_WINDOW_DAYS)
-  const [athletes, profiles, wellness, curves, activities, races, labs, powerTests, model] =
-    await Promise.all([
-      client.from('athletes').select('id, name').eq('active', true).order('name'),
-      client
-        .from('rider_profiles')
-        .select(
-          'athlete_id, date_of_birth, training_age_years, training_age_entered_on, background, primary_type_override, hrv_source, cohort, contract_end',
-        ),
-      // Latest training load per rider; viewers get no wellness rows (KB §11).
-      client
-        .from('wellness')
-        .select('athlete_id, date, ctl, atl, ramp_rate')
-        .gte('date', daysBefore(asOf, 14))
-        .not('ctl', 'is', null)
-        .order('date', { ascending: false }),
-      client
-        .from('power_curves')
-        .select('athlete_id, as_of, time_window, secs, watts, wkg')
-        .gte('as_of', daysBefore(asOf, 14))
-        .order('as_of', { ascending: false }),
-      client
-        .from('activities')
-        .select('athlete_id, type, trainer')
-        .gte('start_date_local', ridesFrom),
-      client
-        .from('planned_events')
-        .select('athlete_id, name, start_date_local, category')
-        .in('category', RACE_CATEGORIES)
-        .gte('start_date_local', asOf)
-        .order('start_date_local'),
-      // Lab tests are for coach, analyst and medical (KB §11); kg columns are not granted.
-      client
-        .from('lab_tests')
-        .select(
-          'athlete_id, test_date, method, vo2max_ml_kg_min, vo2max_l_min, vlamax_mmol_l_s, fatmax_w, fatmax_g_h, carbmax_g_h, at_w, height_cm, tester, notes',
-        )
-        .order('test_date'),
-      // FTP and CP tests with W/kg per effort; the view exposes no kg (KB §10–11).
-      client
-        .from('v_power_tests')
-        .select('athlete_id, test_date, method, durations_s, watts, wkg, notes')
-        .order('test_date'),
-      fetchModelOutputs(client, asOf),
-    ])
+  const [
+    athletes,
+    profiles,
+    wellness,
+    curves,
+    activities,
+    races,
+    labs,
+    powerTests,
+    durability,
+    eftp,
+    model,
+  ] = await Promise.all([
+    client.from('athletes').select('id, name').eq('active', true).order('name'),
+    client
+      .from('rider_profiles')
+      .select(
+        'athlete_id, date_of_birth, training_age_years, training_age_entered_on, background, primary_type_override, hrv_source, cohort, contract_end',
+      ),
+    // Latest training load per rider; viewers get no wellness rows (KB §11).
+    client
+      .from('wellness')
+      .select('athlete_id, date, ctl, atl, ramp_rate')
+      .gte('date', daysBefore(asOf, 14))
+      .not('ctl', 'is', null)
+      .order('date', { ascending: false }),
+    client
+      .from('power_curves')
+      .select('athlete_id, as_of, time_window, secs, watts, wkg')
+      .gte('as_of', daysBefore(asOf, 14))
+      .order('as_of', { ascending: false }),
+    client
+      .from('activities')
+      .select('athlete_id, type, trainer')
+      .gte('start_date_local', ridesFrom),
+    client
+      .from('planned_events')
+      .select('athlete_id, name, start_date_local, category')
+      .in('category', RACE_CATEGORIES)
+      .gte('start_date_local', asOf)
+      .order('start_date_local'),
+    // Lab tests are for coach, analyst and medical (KB §11); kg columns are not granted.
+    client
+      .from('lab_tests')
+      .select(
+        'athlete_id, test_date, method, vo2max_ml_kg_min, vo2max_l_min, vlamax_mmol_l_s, fatmax_w, fatmax_g_h, carbmax_g_h, at_w, height_cm, tester, notes',
+      )
+      .order('test_date'),
+    // FTP and CP tests with W/kg per effort; the view exposes no kg (KB §10–11).
+    client
+      .from('v_power_tests')
+      .select('athlete_id, test_date, method, durations_s, watts, wkg, notes')
+      .order('test_date'),
+    // Retained % of fresh 5/20-min power after work, over 84 days (KB §6).
+    client.from('v_durability').select('athlete_id, kj_kg_bucket, duration_s, retained_pct'),
+    // Weekly eFTP with W/kg; the view exposes no kg (KB §9, §11).
+    client
+      .from('v_eftp_weekly')
+      .select('athlete_id, week_start, eftp_wkg')
+      .gte('week_start', daysBefore(asOf, EFTP_WEEKS * 7))
+      .order('week_start'),
+    fetchModelOutputs(client, asOf, ratingMode),
+  ])
 
   const profileBy = firstBy(check(profiles, 'rider profiles'), (p) => p.athlete_id)
   const loadBy = firstBy(check(wellness, 'training load'), (w) => w.athlete_id)
@@ -114,6 +143,8 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
   const activityRows = check(activities, 'activities')
   const labRows = check(labs, 'lab tests')
   const powerTestRows = check(powerTests, 'power tests')
+  const durabilityRows = check(durability, 'durability')
+  const eftpRows = check(eftp, 'eFTP')
 
   return check(athletes, 'athletes').map((athlete): Rider => {
     const profile = profileBy.get(athlete.id)
@@ -148,6 +179,39 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
         tester: l.tester,
         notes: l.notes,
       }))
+
+    // Durability funnel: fresh 84-day W/kg, then that times the retained % after work.
+    const freshWkg = (secs: number) => {
+      const i = curve84?.secs.indexOf(secs) ?? -1
+      return i >= 0 ? (curve84?.wkg?.[i] ?? null) : null
+    }
+    const retained = (bucket: number, secs: number) =>
+      durabilityRows.find(
+        (d) => d.athlete_id === athlete.id && d.kj_kg_bucket === bucket && d.duration_s === secs,
+      )?.retained_pct ?? null
+    const fresh5 = freshWkg(300)
+    const fresh20 = freshWkg(1200)
+    const afterWork: DurabilityPoint[] =
+      fresh5 === null || fresh20 === null
+        ? []
+        : DURABILITY_BUCKETS.flatMap((bucket): DurabilityPoint[] => {
+            const r5 = retained(bucket, 300)
+            const r20 = retained(bucket, 1200)
+            return r5 === null || r20 === null
+              ? []
+              : [{ kjPerKg: bucket, p5mWkg: (fresh5 * r5) / 100, p20mWkg: (fresh20 * r20) / 100 }]
+          })
+    // Without any post-work point the funnel has nothing to show.
+    const riderDurability: DurabilityPoint[] =
+      fresh5 !== null && fresh20 !== null && afterWork.length > 0
+        ? [{ kjPerKg: 0, p5mWkg: fresh5, p20mWkg: fresh20 }, ...afterWork]
+        : []
+
+    const eftpWkg = eftpRows.flatMap((e) =>
+      e.athlete_id === athlete.id && e.week_start !== null && e.eftp_wkg !== null
+        ? [{ date: e.week_start, value: e.eftp_wkg }]
+        : [],
+    )
 
     const riderPowerTests: PowerTest[] = powerTestRows
       .filter((t) => t.athlete_id === athlete.id && t.test_date !== null && t.method !== null)
@@ -195,7 +259,7 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
       attributes,
       caPa: model.caPa.get(athlete.id) ?? null,
       powerCurves,
-      durability: [],
+      durability: riderDurability,
       labTests,
       powerTests: riderPowerTests,
       training: {
@@ -220,7 +284,7 @@ export async function fetchRealSquad(client: Client, asOf: string): Promise<Ride
         baselineMean: null,
         baselineSd: null,
         hrvReadings7d: 0,
-        eftpWkg: [],
+        eftpWkg,
         nextRace: race
           ? {
               name: race.name ?? 'Race',

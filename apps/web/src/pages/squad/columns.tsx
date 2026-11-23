@@ -5,6 +5,7 @@ import { ChangeArrow } from '@/components/change-arrow.tsx'
 import { RatingChip } from '@/components/rating-chip.tsx'
 import { ReadinessLight } from '@/components/readiness-light.tsx'
 import { attributeMeta, RIDER_TYPE_LABELS } from '@/data/labels.ts'
+import { METRICS, metricLabel, type MetricDef } from '@/data/metric-registry.ts'
 import type { AttributeId, LabTest, Rider } from '@/data/types.ts'
 import type { CsvCell } from '@/lib/csv.ts'
 import { formatNumber } from '@/lib/format.ts'
@@ -90,7 +91,7 @@ function numberColumn(
   })
 }
 
-export const squadColumns = [
+const handMadeColumns = [
   col.accessor('name', {
     id: 'name',
     header: 'Rider',
@@ -249,3 +250,39 @@ export const squadColumns = [
   ),
   numberColumn('sleep', 'Sleep h', 'Sleep (Hours)', 'readiness', (r) => r.readiness.sleepHours, 1),
 ]
+
+// Registry metrics (task 4.3) -------------------------------------------------------
+
+/** Registry metrics a hand-made column shows under another id. */
+const REGISTRY_ALIASES: Partial<Record<string, string>> = {
+  rampRate: 'ramp',
+  lnRmssdZ: 'hrvZ',
+  restingHr: 'rhr',
+}
+
+const GROUP_FOR: Record<MetricDef['group'], ColumnGroupId> = {
+  General: 'general',
+  Ratings: 'power',
+  Power: 'power',
+  Physiology: 'physiology',
+  Training: 'training',
+  Readiness: 'readiness',
+}
+
+const handMadeIds = new Set(handMadeColumns.map((c) => c.id ?? ''))
+
+/**
+ * The hand-made column that shows a registry metric: the same id, an alias, or
+ * an attribute's rating column (which shows the value beside the chip).
+ */
+export function columnForMetric(metricId: string): string | undefined {
+  const id = REGISTRY_ALIASES[metricId] ?? metricId.replace(/(Rating|Value)$/, '')
+  return handMadeIds.has(id) ? id : undefined
+}
+
+/** Every registry metric without a hand-made column gets a plain one. */
+const registryColumns = METRICS.filter((m) => columnForMetric(m.id) === undefined).map((m) =>
+  numberColumn(m.id, m.label, metricLabel(m), GROUP_FOR[m.group], m.get, m.decimals),
+)
+
+export const squadColumns = [...handMadeColumns, ...registryColumns]

@@ -1,10 +1,13 @@
+import { squadRatings } from '@prolog/metrics'
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MOCK_RIDERS } from '@/data/mock/riders.ts'
 import { MOCK_SYNC_HEALTH } from '@/data/mock/sync-health.ts'
 import { fetchRealSquad } from '@/data/real-riders.ts'
+import { useRatingMode, type RatingMode } from '@/data/rating-mode-store.ts'
 import { MOCK_FTP_FACTOR_20MIN } from '@/data/mock/priors.ts'
 import type {
   Anthropometric,
+  AttributeId,
   LabTest,
   PowerTest,
   Rider,
@@ -31,12 +34,44 @@ function writeError(error: { code?: string; message: string }, duplicate: string
   return new Error(error.message)
 }
 
-async function fetchSquad(): Promise<Rider[]> {
-  return supabase ? fetchRealSquad(supabase, today()) : mockRiders
+const ATTRIBUTE_IDS: AttributeId[] = [
+  'p5s',
+  'p30s',
+  'p1m',
+  'p5m',
+  'p20m',
+  'p60m',
+  'durability',
+  'vo2max',
+]
+
+/** Mock riders rated within the squad (KB §6); the live build reads the stored squad ratings. */
+function withSquadRatings(riders: Rider[]): Rider[] {
+  const squad = riders.map((r) => r.cohort === 'squad')
+  const byAttribute = new Map(
+    ATTRIBUTE_IDS.map((id) => [
+      id,
+      squadRatings(riders.map((r, i) => (squad[i] ? r.attributes[id].value : null))),
+    ]),
+  )
+  return riders.map((r, i) => ({
+    ...r,
+    attributes: Object.fromEntries(
+      ATTRIBUTE_IDS.map((id) => [
+        id,
+        { ...r.attributes[id], rating: byAttribute.get(id)?.[i] ?? null, change28d: null },
+      ]),
+    ) as Rider['attributes'],
+  }))
 }
 
-async function fetchRider(id: string): Promise<Rider | null> {
-  return (await fetchSquad()).find((r) => r.id === id) ?? null
+async function fetchSquad(mode: RatingMode): Promise<Rider[]> {
+  if (supabase) return fetchRealSquad(supabase, today(), mode)
+  return mode === 'squad' ? withSquadRatings(mockRiders) : mockRiders
+}
+
+async function fetchRider(id: string, mode: RatingMode): Promise<Rider | null> {
+  return (await fetchSquad(mode)).find((r) => r.id === id) ?? null
 }
 
 async function fetchAnthropometrics(): Promise<Anthropometric[]> {
@@ -57,10 +92,12 @@ async function fetchAnthropometrics(): Promise<Anthropometric[]> {
   }))
 }
 
-export const squadQuery = queryOptions({ queryKey: ['squad'], queryFn: fetchSquad })
+export function squadQuery(mode: RatingMode) {
+  return queryOptions({ queryKey: ['squad', mode], queryFn: () => fetchSquad(mode) })
+}
 
-export function riderQuery(id: string) {
-  return queryOptions({ queryKey: ['rider', id], queryFn: () => fetchRider(id) })
+export function riderQuery(id: string, mode: RatingMode) {
+  return queryOptions({ queryKey: ['rider', id, mode], queryFn: () => fetchRider(id, mode) })
 }
 
 export const anthropometricsQuery = queryOptions({
@@ -69,11 +106,11 @@ export const anthropometricsQuery = queryOptions({
 })
 
 export function useSquad() {
-  return useQuery(squadQuery)
+  return useQuery(squadQuery(useRatingMode()))
 }
 
 export function useRider(id: string) {
-  return useQuery(riderQuery(id))
+  return useQuery(riderQuery(id, useRatingMode()))
 }
 
 export function useAnthropometrics() {
