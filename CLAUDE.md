@@ -38,7 +38,11 @@ pnpm lint                 # ESLint, zero warnings allowed
 pnpm format               # Prettier write
 pnpm test                 # Vitest across workspaces
 pnpm test:e2e             # Playwright tests against a production build served from /prolog-moneyball/
+pnpm db:seed              # local only: reset the database with the synthetic seed, then run the model jobs over it
+pnpm dev:local            # dev server against the local Supabase stack (sign in as coach@example.com via Mailpit)
 ```
+
+`supabase/seed.sql` holds 12 fictional riders (TODO 9.1) and is loaded by every `supabase db reset`, locally and in CI. It never goes to the live project (no `--include-seed`). pgTAP tests start by clearing the seeded tables inside their own transaction, so they pass with or without the seed.
 
 Routing uses TanStack Router with hash history (`src/router.ts`), so deep links survive a refresh on GitHub Pages. The Vite `base` comes from `VITE_BASE_PATH` (`/prolog-moneyball/` on GitHub Pages, `/` for a custom domain). See `apps/web/.env.example`.
 

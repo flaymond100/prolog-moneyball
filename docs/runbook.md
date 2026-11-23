@@ -219,3 +219,17 @@ Magic links are sent through Resend (set up 20 November 2026), not the Supabase 
 - **DNS (Namecheap):** TXT `resend._domainkey`, CNAME `send` and CNAME `rsend` (values from the Resend domain page). The `@` MX and SPF records belong to Namecheap Private Email (the `@prolog-cycling.com` mailboxes) and stay as they are; `_dmarc` is `p=quarantine`, which Resend passes through DKIM.
 - **Supabase** (Authentication → Emails → SMTP Settings): host `smtp.resend.com`, port 465, user `resend`, sender `no-reply@prolog-cycling.com`. Rate limits: 30 emails an hour, one link per address per minute. The magic-link subject is "Your PROLOG Moneyball Sign-In Link"; the template is edited in Authentication → Emails → Templates (the free plan only allows that while custom SMTP is on).
 - **A link does not arrive:** check spam first, then Resend → Emails for the message and its status (delivered, bounced, or missing; missing means Supabase could not reach Resend, usually a wrong key). `auth.users.recovery_sent_at` shows when Supabase last sent a link to an address.
+
+## 13. Local Development With Synthetic Riders
+
+`supabase/seed.sql` (TODO 9.1) gives the local stack 12 fictional riders, so every view can be checked without real data: six months of rides with power curves, training load, durability efforts on long rides, two INSCYD tests each, planned 2027 races, Roster 2027 rows and a healthy sync log. Dates are relative to the day of the reset.
+
+```bash
+supabase start
+pnpm db:seed      # supabase db reset --local, then the ratings, type, CA and PA jobs (weekly for 16 weeks and today)
+pnpm dev:local    # the app against the local stack
+```
+
+Sign in with `coach@example.com` (coach) or `viewer@example.com` (viewer): the magic link arrives in Mailpit at <http://127.0.0.1:54324>. `pnpm dev` without `:local` uses `apps/web/.env.local`, which points at the live project.
+
+Never load the seed into the live project: no `supabase db push --include-seed`, no pasting it into the SQL editor. `seed:derive` refuses any database that is not on localhost.
