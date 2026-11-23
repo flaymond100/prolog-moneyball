@@ -15,6 +15,15 @@ export function ageInYears(dateOfBirth: string, asOf: string): number {
   return years
 }
 
+/** Age on `asOf` in years with fractions (days ÷ 365.25), for the PA projection. */
+export function exactAgeYears(dateOfBirth: string, asOf: string): number {
+  return (
+    (parseIsoDate(asOf).getTime() - parseIsoDate(dateOfBirth).getTime()) /
+    MS_PER_DAY /
+    DAYS_PER_YEAR
+  )
+}
+
 /** Training age on `asOf`: the years entered at `enteredOn` plus the years since then. */
 export function trainingAgeYears(atEntry: number, enteredOn: string, asOf: string): number {
   const elapsedDays =

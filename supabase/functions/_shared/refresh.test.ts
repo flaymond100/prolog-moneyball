@@ -5,7 +5,7 @@ import type { Benchmark } from '@prolog/metrics'
 import type { RatingAttribute, RatingRow, RatingsStore } from './ratings.ts'
 import { REFRESH_JOB, runRefreshDerived, type RunLog } from './refresh.ts'
 import type { RunResult } from './sync.ts'
-import { api } from './test-helpers.ts'
+import { PA_PRIOR_ROWS, api } from './test-helpers.ts'
 
 const AS_OF = '2026-11-12'
 const NOW = new Date('2026-11-12T03:15:00.000Z')
@@ -82,7 +82,16 @@ class FakeDb implements RunLog, DurabilityStore, RatingsStore, CaStore {
     return Promise.resolve(SET_ID)
   }
   riders() {
-    return Promise.resolve([{ athlete_id: 'a', in_squad: true, type_override: null }])
+    return Promise.resolve([
+      {
+        athlete_id: 'a',
+        in_squad: true,
+        type_override: null,
+        date_of_birth: null,
+        training_age_years: null,
+        training_age_entered_on: null,
+      },
+    ])
   }
   powerProfile() {
     return Promise.resolve(
@@ -119,6 +128,12 @@ class FakeDb implements RunLog, DurabilityStore, RatingsStore, CaStore {
         })),
       ),
     )
+  }
+  paPriors() {
+    return Promise.resolve(PA_PRIOR_ROWS)
+  }
+  benchmarks() {
+    return this.activeBenchmarks().then((set) => set.points)
   }
   riderTypePriors() {
     if (this.failCa) return Promise.resolve([])

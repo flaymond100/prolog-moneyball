@@ -2,9 +2,10 @@
 // bypasses RLS and may call body_mass_as_of).
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { CaWeight, RiderType } from '@prolog/metrics'
+import type { Benchmark, CaWeight, RiderType } from '@prolog/metrics'
 import { z } from 'zod'
 import type { CaRider, CaRow, CaStore, PriorRow, RatedAttribute } from './ca.ts'
+import { toBenchmark, type BenchmarkPointRow } from './supabase-ratings-store.ts'
 
 interface Result<T> {
   data: T | null
@@ -45,6 +46,9 @@ export class SupabaseCaStore implements CaStore {
       athlete_id: string
       cohort: string
       primary_type_override: RiderType | null
+      date_of_birth: string | null
+      training_age_years: number | null
+      training_age_entered_on: string | null
     }
     const [athletes, profiles] = await Promise.all([
       this.db
@@ -54,7 +58,9 @@ export class SupabaseCaStore implements CaStore {
         .overrideTypes<{ id: string }[], { merge: false }>(),
       this.db
         .from('rider_profiles')
-        .select('athlete_id, cohort, primary_type_override')
+        .select(
+          'athlete_id, cohort, primary_type_override, date_of_birth, training_age_years, training_age_entered_on',
+        )
         .overrideTypes<Profile[], { merge: false }>(),
     ])
     const byAthlete = new Map(
@@ -67,6 +73,9 @@ export class SupabaseCaStore implements CaStore {
         athlete_id: athlete.id,
         in_squad: (profile?.cohort ?? 'squad') === 'squad',
         type_override: profile?.primary_type_override ?? null,
+        date_of_birth: profile?.date_of_birth ?? null,
+        training_age_years: profile?.training_age_years ?? null,
+        training_age_entered_on: profile?.training_age_entered_on ?? null,
       }
     })
   }
@@ -75,7 +84,7 @@ export class SupabaseCaStore implements CaStore {
     return rows(
       await this.db
         .from('rider_ratings')
-        .select('athlete_id, attribute, rating, confidence, watts, watts_squad_rating')
+        .select('athlete_id, attribute, value, rating, confidence, watts, watts_squad_rating')
         .eq('as_of', asOf)
         .eq('set_id', setId)
         .overrideTypes<RatedAttribute[], { merge: false }>(),
@@ -103,6 +112,29 @@ export class SupabaseCaStore implements CaStore {
       weight: row.weight,
       absoluteWatts: row.absolute_watts,
     }))
+  }
+
+  async benchmarks(setId: string): Promise<Map<string, Benchmark>> {
+    const points = rows(
+      await this.db
+        .from('benchmark_points')
+        .select('attribute, method, mean, sd, anchor_values, anchor_ratings')
+        .eq('set_id', setId)
+        .overrideTypes<BenchmarkPointRow[], { merge: false }>(),
+      'read benchmark points',
+    )
+    return new Map(points.map((point) => [point.attribute, toBenchmark(point)]))
+  }
+
+  async paPriors(): Promise<PriorRow[]> {
+    return rows(
+      await this.db
+        .from('model_priors')
+        .select('key, value')
+        .eq('model', 'pa')
+        .overrideTypes<PriorRow[], { merge: false }>(),
+      'read PA priors',
+    )
   }
 
   async riderTypePriors(): Promise<PriorRow[]> {

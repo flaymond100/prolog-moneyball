@@ -150,3 +150,42 @@ export function api(routes: Record<string, unknown>, fallback?: Resolver) {
   })
   return { client, requests }
 }
+
+// KB §8 PA priors, as seeded in model_priors ----------------------------------
+
+export const PA_PRIOR_ROWS: { key: string; value: unknown }[] = Object.entries({
+  'peak_age.sprinter': 28.7,
+  'peak_age.all_rounder': 27.0,
+  'peak_age.climber': 27.0,
+  'peak_age.puncheur': 27.5,
+  'peak_age.rouleur_tt': 28.5,
+  'peak_age.noise_sd': 1.5,
+  'gain.g0_median': 0.1,
+  'gain.g0_sigma_factor': 1.5,
+  'gain.decay': 0.35,
+  'multiplier.p5s': 0.3,
+  'multiplier.p30s': 0.5,
+  'multiplier.p1m': 0.7,
+  'multiplier.p5m': 1.0,
+  'multiplier.p20m': 1.0,
+  'multiplier.p60m': 1.1,
+  'multiplier.post_fatigue': 1.3,
+  'multiplier.vo2max': 0.8,
+  'taper.full_years_before_peak': 3,
+  'taper.factor_at_peak': 0.3,
+  'taper.zero_years_after_peak': 2,
+  'taper.decline_from_age': 31,
+  'taper.decline_pct_per_year': 0.75,
+  'cap.p5m_p60m': 20,
+  'cap.p30s_p1m': 12,
+  'cap.p5s': 8,
+  'cap.vo2max': 10,
+  'cap.durability_retained_max': 100,
+  'modifier.vo2max_rating_gap': 2,
+  'modifier.vo2max_bonus': 0.5,
+  'modifier.young_training_age_below': 3,
+  'modifier.young_ca_min': 13,
+  'modifier.young_bonus': 0.5,
+  'pa.draws': 1000,
+  'recalibration.shrinkage_n': 20,
+}).map(([key, value]) => ({ key, value }))

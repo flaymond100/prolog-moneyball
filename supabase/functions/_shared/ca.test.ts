@@ -1,4 +1,4 @@
-import { RIDER_TYPES, type CaWeight, type RiderType } from '@prolog/metrics'
+import { RIDER_TYPES, paSeed, type Benchmark, type CaWeight, type RiderType } from '@prolog/metrics'
 import { describe, expect, it } from 'vitest'
 import {
   MODEL_VERSION,
@@ -11,7 +11,9 @@ import {
   type PriorRow,
   type RatedAttribute,
 } from './ca.ts'
+import { parsePaModel } from './pa.ts'
 import type { Confidence, RatingAttribute } from './ratings.ts'
+import { PA_PRIOR_ROWS } from './test-helpers.ts'
 
 // KB §7 seeds, as rows of model_priors and ca_weights -----------------------------
 
@@ -30,6 +32,7 @@ const PRIOR_ROWS: PriorRow[] = [
   { key: 'type.softmax_tau', value: 4 },
 ]
 const PRIORS = parseRiderTypePriors(PRIOR_ROWS)
+const PA_MODEL = parsePaModel(PA_PRIOR_ROWS)
 
 // Columns in RIDER_TYPES order.
 const MATRIX: Record<string, readonly number[]> = {
@@ -51,6 +54,11 @@ const WEIGHTS: CaWeight[] = Object.entries(MATRIX).flatMap(([attribute, row]) =>
   })),
 )
 
+// Every attribute on a scale where value v rates v (mean 15, SD 2.5), so a
+// rating row's value equals its rating.
+const IDENTITY: Benchmark = { method: 'z_score', mean: 15, sd: 2.5 }
+const BENCHMARKS = new Map<string, Benchmark>(Object.keys(MATRIX).map((a) => [a, IDENTITY]))
+
 // Riders ----------------------------------------------------------------------------
 
 const AS_OF = '2026-11-12'
@@ -58,7 +66,25 @@ const COMPUTED_AT = '2026-11-12T03:20:00.000Z'
 const SET_ID = 'female-pro-coggan-v1'
 
 function rider(id: string, extra: Partial<CaRider> = {}): CaRider {
-  return { athlete_id: id, in_squad: true, type_override: null, ...extra }
+  return {
+    athlete_id: id,
+    in_squad: true,
+    type_override: null,
+    date_of_birth: null,
+    training_age_years: null,
+    training_age_entered_on: null,
+    ...extra,
+  }
+}
+
+/** A rider with the ages PA needs: 22 on AS_OF, training age 2. */
+function aged(id: string, extra: Partial<CaRider> = {}): CaRider {
+  return rider(id, {
+    date_of_birth: '2004-11-12',
+    training_age_years: 2,
+    training_age_entered_on: AS_OF,
+    ...extra,
+  })
 }
 
 function rated(
@@ -70,6 +96,7 @@ function rated(
   return {
     athlete_id: athleteId,
     attribute,
+    value: rating,
     rating,
     confidence: extra.confidence ?? 'high',
     watts: extra.watts ?? null,
@@ -118,6 +145,8 @@ function rate(input: {
     priors: PRIORS,
     vlamax: new Map(Object.entries(input.vlamax ?? {})),
     bodyMass: new Map(Object.entries(input.bodyMass ?? {})),
+    paModel: PA_MODEL,
+    benchmarks: BENCHMARKS,
   })
 }
 
@@ -274,6 +303,84 @@ describe('rateAbility', () => {
   })
 })
 
+describe('rateAbility: PA', () => {
+  it('adds a PA band with its seed for a rider with date of birth and training age', () => {
+    const { rows, withoutPaInputs } = rate({
+      riders: [aged('e'), rider('n')],
+      ratings: [...erika('e'), ...erika('n')],
+    })
+    expect(withoutPaInputs).toBe(1)
+    const row = find(rows, 'e')
+    expect(row.seed).toBe(paSeed('e', AS_OF))
+    expect(row.pa_p10).toBeGreaterThanOrEqual(row.ca)
+    expect(row.pa_p50).toBeGreaterThanOrEqual(row.pa_p10 ?? Infinity)
+    expect(row.pa_p90).toBeGreaterThan(row.pa_p50 ?? Infinity)
+    expect(row.pa_p90).toBeLessThanOrEqual(20)
+    expect(row.ca_12m_p50).toBeGreaterThan(row.ca)
+    expect(find(rows, 'n')).toMatchObject({
+      pa_p10: null,
+      pa_p50: null,
+      pa_p90: null,
+      ca_12m_p50: null,
+      seed: null,
+    })
+  })
+
+  it('needs all three ages: date of birth, training age and its entry date', () => {
+    const { withoutPaInputs } = rate({
+      riders: [
+        aged('a', { date_of_birth: null }),
+        aged('b', { training_age_years: null }),
+        aged('c', { training_age_entered_on: null }),
+      ],
+      ratings: ['a', 'b', 'c'].flatMap((id) => erika(id)),
+    })
+    expect(withoutPaInputs).toBe(3)
+  })
+
+  it('reproduces CA when nothing can grow: PA = CA well past the peak, and a 12-month decline', () => {
+    const row = find(
+      rate({
+        // Age 38, training age 15: no modifier applies.
+        riders: [aged('e', { date_of_birth: '1988-11-12', training_age_years: 15 })],
+        ratings: erika(),
+      }).rows,
+      'e',
+    )
+    expect(row.pa_p10).toBeCloseTo(row.ca, 10)
+    expect(row.pa_p90).toBeCloseTo(row.ca, 10)
+    expect(row.ca_12m_p50).toBeLessThan(row.ca)
+  })
+
+  it('projects with the override type weights', () => {
+    const computed = find(rate({ riders: [aged('e')], ratings: erika() }).rows, 'e')
+    const overridden = find(
+      rate({ riders: [aged('e', { type_override: 'sprinter' })], ratings: erika() }).rows,
+      'e',
+    )
+    expect(overridden.ca).not.toBeCloseTo(computed.ca, 2)
+    expect(overridden.pa_p10).toBeGreaterThanOrEqual(overridden.ca)
+    expect(overridden.pa_p50).not.toBeCloseTo(computed.pa_p50 ?? 0, 2)
+  })
+
+  it('re-rates a Rouleur/TT rider’s projected absolute watts within the squad', () => {
+    // Three squad rouleurs; r is weakest on absolute watts, so growth lifts her rank.
+    // The Rouleur/TT prototype shape around 12.
+    const rouleur = [11, 11, 11, 12, 13.5, 14]
+    const ratings = [
+      ...power('r', rouleur, 200).map((x) =>
+        x.attribute === 'p20m' ? { ...x, watts_squad_rating: 1 } : x,
+      ),
+      ...power('s', rouleur, 210),
+      ...power('t', rouleur, 260),
+    ]
+    const row = find(rate({ riders: [aged('r'), aged('s'), aged('t')], ratings }).rows, 'r')
+    expect(row.primary_type).toBe('rouleur_tt')
+    expect(row.pa_p90).toBeGreaterThan(row.pa_p10 ?? Infinity)
+    expect(Number.isFinite(row.pa_p50)).toBe(true)
+  })
+})
+
 // In-memory CaStore keyed like rider_ca_pa -------------------------------------------
 
 class FakeCaStore implements CaStore {
@@ -282,6 +389,7 @@ class FakeCaStore implements CaStore {
   ratingRows: RatedAttribute[] = []
   weights: CaWeight[] = WEIGHTS
   priors: PriorRow[] = PRIOR_ROWS
+  paRows: PriorRow[] = PA_PRIOR_ROWS
   vlamax = new Map<string, number>()
   mass = new Map<string, number>()
   ca = new Map<string, CaRow>()
@@ -302,6 +410,13 @@ class FakeCaStore implements CaStore {
   }
   riderTypePriors() {
     return Promise.resolve(this.priors)
+  }
+  paPriors() {
+    return Promise.resolve(this.paRows)
+  }
+  benchmarks(setId: string) {
+    this.asked.push(`benchmarks ${setId}`)
+    return Promise.resolve(BENCHMARKS)
   }
   latestVlamax(asOf: string) {
     this.asked.push(`vlamax ${asOf}`)
@@ -339,8 +454,11 @@ describe('runComputeCa', () => {
       riders: 1,
       deleted: 0,
       without_power_profile: 1,
+      with_pa: 0,
+      without_pa_inputs: 1,
     })
     expect(store.asked.sort()).toEqual([
+      `benchmarks ${SET_ID}`,
       'mass 2026-11-10',
       `ratings 2026-11-10 ${SET_ID}`,
       'vlamax 2026-11-10',

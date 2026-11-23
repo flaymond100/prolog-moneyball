@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageInYears, trainingAgeYears } from './age.ts'
+import { ageInYears, exactAgeYears, trainingAgeYears } from './age.ts'
 
 describe('ageInYears', () => {
   it('counts a birthday earlier in the year', () => {
@@ -34,5 +34,13 @@ describe('trainingAgeYears', () => {
 
   it('adds part of a year', () => {
     expect(trainingAgeYears(3, '2026-01-01', '2026-10-19')).toBeCloseTo(3.8, 1)
+  })
+})
+
+describe('exactAgeYears', () => {
+  it('counts years with fractions', () => {
+    expect(exactAgeYears('2000-01-01', '2000-01-01')).toBe(0)
+    expect(exactAgeYears('2000-01-01', '2026-01-01')).toBeCloseTo(26, 2)
+    expect(exactAgeYears('2000-01-01', '2000-07-02')).toBeCloseTo(0.5, 2)
   })
 })
