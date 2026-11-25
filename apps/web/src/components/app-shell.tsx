@@ -14,6 +14,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useAuth } from '@/auth/auth-context.ts'
+import prologLogo from '@/assets/prolog-logo.svg'
+import prologMark from '@/assets/prolog-mark.svg'
 import { SyncBanner } from '@/components/sync-banner.tsx'
 import { SquadGate } from '@/components/view-state.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
@@ -88,23 +90,12 @@ export function AppShell() {
           collapsed ? 'w-16' : 'w-56',
         )}
       >
-        <div
-          className={cn('flex items-center gap-2.5 py-5', collapsed ? 'justify-center' : 'px-5')}
-        >
-          <span
-            aria-hidden="true"
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground"
-          >
-            P
-          </span>
-          <span
-            className={cn(
-              'text-sm font-semibold whitespace-nowrap text-foreground',
-              collapsed && 'sr-only',
-            )}
-          >
-            PROLOG <span className="text-sidebar-primary">Moneyball</span>
-          </span>
+        <div className={cn('flex items-center py-5', collapsed ? 'justify-center' : 'px-5')}>
+          {collapsed ? (
+            <img src={prologMark} alt="PROLOG Audare Cycling Team" className="h-8 w-auto" />
+          ) : (
+            <img src={prologLogo} alt="PROLOG Audare Cycling Team" className="h-11 w-auto" />
+          )}
         </div>
         <p
           className={cn(

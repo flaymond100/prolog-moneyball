@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button.tsx'
 import { AppShell } from '@/components/app-shell.tsx'
 import { useAuth } from '@/auth/auth-context.ts'
+import prologLogo from '@/assets/prolog-logo.svg'
 
 // Every staff view sits behind this gate (TODO 4.1). Dev pages stay public.
 export function AuthGate() {
@@ -46,9 +47,11 @@ function Screen({ title, children }: { title: string; children: ReactNode }) {
       aria-label="PROLOG Moneyball"
       className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 text-sm"
     >
-      <p className="text-xs font-semibold tracking-wide">
-        PROLOG <span className="text-primary">Moneyball</span>
-      </p>
+      <img
+        src={prologLogo}
+        alt="PROLOG Audare Cycling Team"
+        className="mb-2 h-14 w-auto self-start"
+      />
       <h1 className="text-xl font-semibold">{title}</h1>
       {children}
     </main>
