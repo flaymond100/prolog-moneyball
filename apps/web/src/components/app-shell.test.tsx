@@ -12,14 +12,13 @@ describe('AppShell', () => {
     expect(await screen.findByRole('heading', { name: 'Squad', level: 1 })).toBeInTheDocument()
   })
 
-  it('lists the six views in KB order, then Roster 2027 and Live Data', async () => {
+  it('links the logo home, then lists the six views in KB order, Roster 2027 and Live Data', async () => {
     renderAt('/squad')
     const nav = await screen.findByRole('navigation', { name: 'Main' })
-    expect(
-      within(nav)
-        .getAllByRole('link')
-        .map((l) => l.textContent),
-    ).toEqual([
+    const [logo, ...views] = within(nav).getAllByRole('link')
+    expect(logo).toHaveAccessibleName('PROLOG Audare Cycling Team, Home')
+    expect(logo).toHaveAttribute('href', '/#/')
+    expect(views.map((l) => l.textContent)).toEqual([
       'Squad',
       'Form',
       'Compare',
