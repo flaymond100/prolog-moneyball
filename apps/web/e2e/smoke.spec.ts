@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test'
 
 test('production build loads from the sub-path', async ({ page }) => {
   await page.goto('./')
-  await expect(page).toHaveTitle('PROLOG Moneyball')
-  await expect(page.getByRole('main', { name: 'PROLOG Moneyball' })).toBeAttached()
+  await expect(page).toHaveTitle('PROLOG Audare Cycling Team')
+  await expect(page.getByRole('main', { name: 'PROLOG Audare Cycling Team' })).toBeAttached()
 })
 
 test('a deep link survives a hard refresh', async ({ page }) => {

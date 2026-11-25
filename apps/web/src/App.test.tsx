@@ -9,6 +9,8 @@ describe('App', () => {
 
   it('renders the main landmark', async () => {
     render(<App />)
-    expect(await screen.findByRole('main', { name: 'PROLOG Moneyball' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('main', { name: 'PROLOG Audare Cycling Team' }),
+    ).toBeInTheDocument()
   })
 })
