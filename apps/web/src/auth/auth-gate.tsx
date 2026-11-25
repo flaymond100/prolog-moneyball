@@ -12,7 +12,7 @@ export function AuthGate() {
       return <AppShell />
     case 'loading':
       return (
-        <Screen title="PROLOG Moneyball">
+        <Screen title="Loading">
           <p role="status" className="text-muted-foreground">
             Checking your sign-in…
           </p>
@@ -44,7 +44,7 @@ export function AuthGate() {
 function Screen({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main
-      aria-label="PROLOG Moneyball"
+      aria-label="PROLOG Audare Cycling Team"
       className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 text-sm"
     >
       <img
