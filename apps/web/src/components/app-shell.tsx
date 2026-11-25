@@ -209,7 +209,7 @@ export function AppShell() {
           </div>
         </header>
         <SyncBanner />
-        <main aria-label="PROLOG Audare Cycling Team" className="flex-1 px-6 py-7">
+        <main aria-label="PROLOG Team Dashboard" className="flex-1 px-6 py-7">
           <SquadGate>
             <Outlet />
           </SquadGate>

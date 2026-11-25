@@ -44,7 +44,7 @@ export function AuthGate() {
 function Screen({ title, children }: { title: string; children: ReactNode }) {
   return (
     <main
-      aria-label="PROLOG Audare Cycling Team"
+      aria-label="PROLOG Team Dashboard"
       className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 text-sm"
     >
       <img

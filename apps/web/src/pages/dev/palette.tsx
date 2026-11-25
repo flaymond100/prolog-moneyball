@@ -17,7 +17,7 @@ const swatches = [
 
 export function PalettePage() {
   return (
-    <main aria-label="PROLOG Audare Cycling Team" className="mx-auto max-w-4xl space-y-8 p-6">
+    <main aria-label="PROLOG Team Dashboard" className="mx-auto max-w-4xl space-y-8 p-6">
       <h1 className="text-2xl font-semibold">Palette</h1>
 
       <section className="space-y-3">
