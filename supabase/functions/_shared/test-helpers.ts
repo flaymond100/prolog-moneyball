@@ -58,6 +58,10 @@ export class FakeStore implements SyncStore {
   wellnessScope() {
     return Promise.resolve(this.scope)
   }
+  excluded = new Set<string>()
+  excludedAthletes() {
+    return Promise.resolve(this.excluded)
+  }
   upsertAthletes(rows: AthleteRow[]) {
     for (const row of rows) this.athletes.set(row.id, row)
     return Promise.resolve()

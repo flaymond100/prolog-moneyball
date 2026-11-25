@@ -70,6 +70,20 @@ Send the rider the guide in section 7, then:
 3. Create their `rider_profiles` row (date of birth, training age, background, contract end) in Settings, or ask the agent.
 4. Backfill their history (section 3) with their `athlete_id`.
 
+### Remove an athlete who is not on the team
+
+The sync stores every athlete the coach account follows in intervals.icu, including staff and test accounts. To remove one for good, add their intervals.icu id to the exclusion list, then delete them (this cascades to all their data):
+
+```sql
+update public.app_settings
+   set value = value || '["<id>"]'::jsonb
+ where key = 'sync_excluded_athletes';
+delete from public.athletes where id = '<id>';
+delete from public.edit_history where athlete_id = '<id>';
+```
+
+The last line clears the audit trail of their lab tests, body mass and power tests. Never put the ids in a migration: the repo is public.
+
 ## 3. Run a Backfill
 
 The `backfill` function syncs activities, wellness and each ride's power curve for a date range in 30-day chunks. Each call stops within its call and time budget and returns `next`; the script keeps calling until the range is done. It keeps 500 calls a day free for the nightly sync and stops when the day's budget (5,000) is spent; run the printed command again the next day.

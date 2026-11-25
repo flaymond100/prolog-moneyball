@@ -117,19 +117,30 @@ export class SupabaseSyncStore implements SyncStore {
     return settings[0]?.value === 'all' ? 'all' : 'training_load'
   }
 
+  async excludedAthletes(): Promise<Set<string>> {
+    const settings = rows(
+      await this.db
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'sync_excluded_athletes')
+        .overrideTypes<{ value: unknown }[], { merge: false }>(),
+      'read excluded athletes',
+    )
+    // A check constraint keeps the value an array of strings; missing means none.
+    const value = settings[0]?.value
+    return new Set(Array.isArray(value) ? value.filter((id) => typeof id === 'string') : [])
+  }
+
   async upsertAthletes(athletes: AthleteRow[]): Promise<void> {
     if (athletes.length === 0) return
     ok(await this.db.from('athletes').upsert(athletes, { onConflict: 'id' }), 'upsert athletes')
   }
 
   async deactivateAthletesExcept(ids: string[]): Promise<number> {
+    const active = this.db.from('athletes').update({ active: false }).eq('active', true)
+    // Every coached athlete can be excluded; `not.in.()` is no valid filter.
     const changed = rows(
-      await this.db
-        .from('athletes')
-        .update({ active: false })
-        .eq('active', true)
-        .not('id', 'in', inList(ids))
-        .select('id'),
+      await (ids.length > 0 ? active.not('id', 'in', inList(ids)) : active).select('id'),
       'deactivate athletes',
     )
     return changed.length
