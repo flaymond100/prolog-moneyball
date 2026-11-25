@@ -50,7 +50,7 @@ function Screen({ title, children }: { title: string; children: ReactNode }) {
       <img
         src={prologLogo}
         alt="PROLOG Audare Cycling Team"
-        className="mb-2 h-14 w-auto self-start"
+        className="mb-2 h-10 w-auto self-start"
       />
       <h1 className="text-xl font-semibold">{title}</h1>
       {children}

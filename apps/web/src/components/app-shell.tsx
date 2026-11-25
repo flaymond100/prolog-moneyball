@@ -91,11 +91,17 @@ export function AppShell() {
         )}
       >
         <div className={cn('flex items-center py-5', collapsed ? 'justify-center' : 'px-5')}>
-          {collapsed ? (
-            <img src={prologMark} alt="PROLOG Audare Cycling Team" className="h-8 w-auto" />
-          ) : (
-            <img src={prologLogo} alt="PROLOG Audare Cycling Team" className="h-11 w-auto" />
-          )}
+          <Link
+            to="/"
+            title="Home"
+            className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          >
+            {collapsed ? (
+              <img src={prologMark} alt="PROLOG Audare Cycling Team, Home" className="h-7 w-auto" />
+            ) : (
+              <img src={prologLogo} alt="PROLOG Audare Cycling Team, Home" className="h-8 w-auto" />
+            )}
+          </Link>
         </div>
         <p
           className={cn(
