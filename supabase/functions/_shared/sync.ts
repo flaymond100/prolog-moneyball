@@ -106,6 +106,8 @@ export interface SyncStore {
   cycleConsentAthletes(): Promise<Set<string>>
   /** app_settings.wellness_scope; anything unexpected reads as `training_load`. */
   wellnessScope(): Promise<WellnessScope>
+  /** app_settings.sync_excluded_athletes: intervals.icu ids the sync never stores. */
+  excludedAthletes(): Promise<Set<string>>
   upsertAthletes(rows: AthleteRow[]): Promise<void>
   /** Marks athletes missing from the summary inactive; returns how many changed. */
   deactivateAthletesExcept(ids: string[]): Promise<number>
@@ -403,14 +405,21 @@ export async function syncPlannedEvents(ctx: SyncContext, athleteId: string, tod
 
 /**
  * Reads the coached athletes and upserts them; returns their ids in summary
- * order. With `deactivateMissing`, athletes no longer coached are marked inactive.
+ * order. Athletes on the exclusion list (accounts coached in intervals.icu
+ * but not on the team) are skipped entirely. With `deactivateMissing`,
+ * athletes no longer coached are marked inactive.
  */
 export async function syncAthletes(
   ctx: SyncContext,
   deactivateMissing: boolean,
 ): Promise<string[]> {
-  const summary = await ctx.client.get('/athlete/0/athlete-summary.json', icuAthleteSummarySchema)
-  const athletes = latestSummaryPerAthlete(summary)
+  const [summary, excluded] = await Promise.all([
+    ctx.client.get('/athlete/0/athlete-summary.json', icuAthleteSummarySchema),
+    ctx.store.excludedAthletes(),
+  ])
+  const coached = latestSummaryPerAthlete(summary)
+  const athletes = coached.filter((s) => !excluded.has(s.athlete_id))
+  count(ctx, 'athletes_excluded', coached.length - athletes.length)
   const syncedAt = ctx.now()
   await ctx.store.upsertAthletes(
     athletes.map((s) => ({
@@ -424,7 +433,7 @@ export async function syncAthletes(
   count(ctx, 'athletes', athletes.length)
   const ids = athletes.map((s) => s.athlete_id)
   // An empty summary is more likely an API problem than a squad of none.
-  if (deactivateMissing && ids.length > 0) {
+  if (deactivateMissing && coached.length > 0) {
     count(ctx, 'athletes_deactivated', await ctx.store.deactivateAthletesExcept(ids))
   }
   return ids

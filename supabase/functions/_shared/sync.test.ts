@@ -86,6 +86,7 @@ describe('runNightlySync', () => {
     expect(result.errors).toEqual([])
     expect(result.athlete_ids).toEqual(['i1'])
     expect(result.counts).toEqual({
+      athletes_excluded: 0,
       athletes: 1,
       athletes_deactivated: 0,
       activities_skipped_strava: 1,
@@ -271,6 +272,23 @@ describe('runNightlySync', () => {
     const result = await runNightlySync({ client: squadApi().client, store, today: TODAY })
     expect(result.counts.athletes_deactivated).toBe(1)
     expect(store.athletes.get('old')?.active).toBe(false)
+  })
+
+  it('skips excluded athletes entirely and marks a stored one inactive', async () => {
+    const store = new FakeStore()
+    store.excluded = new Set(['i2'])
+    store.athletes.set('i2', { id: 'i2', name: 'Staff', active: true, raw: {}, synced_at: 't' })
+    const { client, requests } = api({
+      '/athlete/0/athlete-summary.json': [
+        { athlete_id: 'i2', athlete_name: 'Staff', date: '2026-11-02' },
+      ],
+    })
+    const result = await runNightlySync({ client, store, today: TODAY })
+    expect(result.status).toBe('succeeded')
+    expect(result.athlete_ids).toEqual([])
+    expect(result.counts.athletes_excluded).toBe(1)
+    expect(store.athletes.get('i2')?.active).toBe(false)
+    expect(requests.some((u) => u.pathname.startsWith('/athlete/i2'))).toBe(false)
   })
 
   it('leaves athletes alone when the summary is empty', async () => {

@@ -4,7 +4,7 @@ truncate public.athletes, public.sync_runs, public.edit_history cascade;
 delete from auth.users where email in ('coach@example.com', 'viewer@example.com');
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(18);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-000000000001', 'coach@test.local'),
@@ -30,6 +30,18 @@ select throws_ok(
 select lives_ok(
   $$update public.app_settings set value = '"all"' where key = 'wellness_scope'$$,
   'wellness scope can be switched to all');
+
+select is((select value from public.app_settings where key = 'sync_excluded_athletes'), '[]'::jsonb,
+  'sync exclusion list starts empty');
+select lives_ok(
+  $$update public.app_settings set value = '["i1", "i2"]' where key = 'sync_excluded_athletes'$$,
+  'sync exclusion list takes intervals.icu ids');
+select throws_ok(
+  $$update public.app_settings set value = '"i1"' where key = 'sync_excluded_athletes'$$,
+  '23514', null, 'sync exclusion list must be an array');
+select throws_ok(
+  $$update public.app_settings set value = '["i1", 2]' where key = 'sync_excluded_athletes'$$,
+  '23514', null, 'sync exclusion list holds strings only');
 
 select set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000001", "role": "authenticated"}', true);
 set local role authenticated;
